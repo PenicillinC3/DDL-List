@@ -1,6 +1,15 @@
 package com.gammac3.ddlapp.ui.list
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,20 +33,25 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gammac3.ddlapp.DdlApplication
 import com.gammac3.ddlapp.logic.DdlGrouper
 import com.gammac3.ddlapp.model.DdlGroup
 import com.gammac3.ddlapp.model.DdlRow
@@ -72,6 +86,33 @@ fun DdlListScreen(
 
     val snackbar = remember { SnackbarHostState() }
 
+    // 通知权限（Android 13+）
+    val context = LocalContext.current
+    val notifGranted = remember {
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+    }
+    var notifDenied by remember { mutableStateOf(false) }
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) notifDenied = true
+    }
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notifGranted) {
+            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    // 精确闹钟（Android 12+，canScheduleExact 内部处理低版本）
+    var exactOk by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        exactOk = (context.applicationContext as DdlApplication)
+            .container.scheduler.canScheduleExact()
+    }
+
     LaunchedEffect(state.lastDeleted) {
         val deleted = state.lastDeleted
         if (deleted != null) {
@@ -93,6 +134,41 @@ fun DdlListScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            // 精确闹钟引导（Android 12+ 未授权）
+            if (!exactOk) {
+                TextButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                                Uri.parse("package:${context.packageName}"),
+                            )
+                        )
+                    },
+                ) {
+                    Text(
+                        "⚠ 精确提醒未开启，点击去设置（关闭后提醒可能略晚）",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+            // 通知权限被拒绝提示（Android 13+）
+            if (notifDenied) {
+                Text(
+                    "🔔 通知权限未开启，将收不到提醒，点击去系统设置",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            context.startActivity(
+                                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            )
+                        }
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
             // 过滤 chips
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
