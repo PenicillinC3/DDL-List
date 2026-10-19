@@ -38,7 +38,10 @@ han_text = extra + "".join(sorted(set(hanzi)))
 tmp = ROOT / "tools/_han_charset.txt"
 tmp.write_text(han_text, encoding="utf-8")
 
-data_text = extra + "".join(sorted(set("0123456789−:．·天小时日周分秒")))
+# Countdown must render ALL CJK (剩/天/小时/分/钟/已过期…) via the Source Han
+# member of DataFont for uniform metrics — putting CJK here made Maple's own
+# hanzi glyphs render units and broke letter-spacing (R33).
+data_text = "0123456789−:. "
 tmp2 = ROOT / "tools/_maple_charset.txt"
 tmp2.write_text("".join(sorted(set(data_text))), encoding="utf-8")
 
@@ -53,7 +56,7 @@ report = {}
 for w in (400, 500, 600, 700):
     inst = ROOT / f"tools/_sanh_{w}.otf"
     run(["-m", "fontTools.varLib.instancer", str(sanh),
-         f"wght={w}", "-o", str(inst)])
+         f"wght={w}", "-o", str(inst), "--no-recalc-timestamp"])
     dst = FONT_OUT / f"source_han_cn_{w}.otf"
     run(["-m", "fontTools.subset", str(inst), f"--text-file={tmp}",
          f"--output-file={dst}", "--layout-features=*"])

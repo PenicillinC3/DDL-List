@@ -1,7 +1,9 @@
 package com.gammac3.ddlapp.ui.editor
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -114,18 +116,30 @@ fun DdlEditorSheet(
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = "📅 ${z.year}年${z.monthValue}月${z.dayOfMonth}日",
-                    onValueChange = {}, readOnly = true, label = { Text("日期") },
-                    modifier = Modifier.weight(3f), singleLine = true,
-                    trailingIcon = { TextButton(onClick = { showDate = true }) { Text("改") } },
-                )
-                OutlinedTextField(
-                    value = "⏰ ${z.hour.toString().padStart(2, '0')}:${z.minute.toString().padStart(2, '0')}",
-                    onValueChange = {}, readOnly = true, label = { Text("时间") },
-                    modifier = Modifier.weight(2f), singleLine = true,
-                    trailingIcon = { TextButton(onClick = { showTime = true }) { Text("改") } },
-                )
+                Box(Modifier.weight(3f)) {
+                    OutlinedTextField(
+                        value = "📅 ${z.year}年${z.monthValue}月${z.dayOfMonth}日",
+                        onValueChange = {}, readOnly = true, label = { Text("日期") },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    )
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clickable(onClickLabel = "更改日期") { showDate = true },
+                    )
+                }
+                Box(Modifier.weight(2f)) {
+                    OutlinedTextField(
+                        value = "⏰ ${z.hour.toString().padStart(2, '0')}:${z.minute.toString().padStart(2, '0')}",
+                        onValueChange = {}, readOnly = true, label = { Text("时间") },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    )
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clickable(onClickLabel = "更改时间") { showTime = true },
+                    )
+                }
             }
             OutlinedTextField(
                 value = note, onValueChange = { note = it }, label = { Text("备注（可选）") },
