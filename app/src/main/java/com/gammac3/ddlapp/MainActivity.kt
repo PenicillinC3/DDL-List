@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,7 +27,7 @@ class MainActivity : ComponentActivity() {
                 val model = viewModel { DdlListViewModel(app.container.repository) }
                 val state by model.uiState.collectAsStateWithLifecycle()
                 var editing by remember { mutableStateOf<DdlRow?>(null) }
-                var sheetOpen by rememberSaveable { mutableStateOf(false) }
+                var sheetOpen by remember { mutableStateOf(false) }
                 // 行可能在弹窗打开后被系统外改动；派生最新快照，避免完成按钮状态陈旧。
                 val editingFresh = editing?.let { e -> state.rows.firstOrNull { it.id == e.id } } ?: editing
                 DdlListScreen(

@@ -212,7 +212,11 @@ fun DdlListScreen(
                 if (state.rows.isEmpty()) {
                     item(key = "empty") {
                         Text(
-                            text = "还没有 DDL，点右下角 ＋ 添加",
+                            text = if (state.filter == DdlFilter.ALL) {
+                                "还没有 DDL，点右下角 ＋ 添加"
+                            } else {
+                                "该筛选下暂无条目，试试切换筛选"
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
