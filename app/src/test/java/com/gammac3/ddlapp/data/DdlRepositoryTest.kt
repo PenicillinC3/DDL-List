@@ -5,10 +5,10 @@ import com.gammac3.ddlapp.notify.AlarmScheduler
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -68,7 +68,7 @@ class DdlRepositoryTest {
         val repo = DdlRepository(dao, sch) { now }
         val id = repo.upsert(newEntity(now + 3_600_000L))
         repo.setDone(id, true)
-        assertTrue(sch.scheduled[id] == null)
+        assertNull(sch.scheduled[id])
     }
 
     @Test
@@ -88,6 +88,8 @@ class DdlRepositoryTest {
         val id = repo.upsert(newEntity(now + 3_600_000L))
         val deleted = repo.delete(id)!!
         assertEquals(id, deleted.id)
+        assertTrue(sch.cancelled.contains(id))
+        assertNull(sch.scheduled[id])
         assertNull(dao.byId(id))
     }
 
@@ -98,9 +100,8 @@ class DdlRepositoryTest {
         val a = repo.upsert(newEntity(now + 3_600_000L))
         val b = repo.upsert(newEntity(now + 5_400_000L))
         repo.setDone(b, true)
-        val flowList = dao.observeAll().first()
         repo.rescheduleAll()
-        assertEquals(true, sch.scheduled.keys.contains(a))
-        assertEquals(false, sch.scheduled.keys.contains(b))
+        assertTrue(sch.scheduled.keys.contains(a))
+        assertFalse(sch.scheduled.keys.contains(b))
     }
 }
