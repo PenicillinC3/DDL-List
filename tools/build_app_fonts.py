@@ -31,7 +31,7 @@ assert len(set(hanzi)) == 3500, f"gsc parse fail: {len(set(hanzi))}"
 extra = "".join(chr(c) for c in range(0x20, 0x7F))        # ASCII printable
 extra += "".join(chr(c) for c in range(0x3000, 0x3040))   # CJK punct (、。「」…)
 extra += "".join(chr(c) for c in range(0xFF01, 0xFF60))   # fullwidth forms
-extra += "−–—·▸，：;天小时日周分秒已完期限提剥剥" # extras (trim dupes below)
+extra += "−–—·▸，：;天小时日周分秒已完期限" # extras
 extra = "".join(sorted(set(extra)))
 
 han_text = extra + "".join(sorted(set(hanzi)))
