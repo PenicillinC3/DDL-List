@@ -7,8 +7,12 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +47,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +55,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -285,22 +291,26 @@ fun DdlListScreen(
                                     }
                                     .padding(top = 8.dp, bottom = 2.dp),
                             ) {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        append(groupName(group))
-                                        append("（")
-                                        withStyle(SpanStyle(fontFamily = FigureFont)) {
-                                            append("${rows.size}")
-                                        }
-                                        append("）")
-                                        if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
-                                    },
-                                    fontFamily = HanFont,
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    letterSpacing = 0.6.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                                if (group == DdlGroup.OVERDUE) {
+                                    OverdueSeal(count = rows.size)
+                                } else {
+                                    Text(
+                                        text = buildAnnotatedString {
+                                            append(groupName(group))
+                                            append("（")
+                                            withStyle(SpanStyle(fontFamily = FigureFont)) {
+                                                append("${rows.size}")
+                                            }
+                                            append("）")
+                                            if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
+                                        },
+                                        fontFamily = HanFont,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        letterSpacing = 0.6.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
                             }
                         }
                         if (group == DdlGroup.DONE && !doneExpanded) return@forEach
@@ -360,5 +370,62 @@ private fun SwipeRow(
         },
     ) {
         DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = onClick)
+    }
+}
+
+/** 逾期组头小印章：朱文阳刻（纸底红框红字），斜盖 3°；首次出现或新增逾期项时「盖章」落下。 */
+@Composable
+private fun OverdueSeal(count: Int) {
+    // 计数变化（含首次出现）重触发盖章；已定格后保持斜角
+    var stampedSize by remember { mutableIntStateOf(-1) }
+    // press: 0 = 起手（略大更斜未蘸墨），1 = 盖定；spring 回弹让缩放/角度越过终点形成「回压」手感
+    val press = remember { Animatable(1f) }
+    LaunchedEffect(count) {
+        if (count != stampedSize) {
+            stampedSize = count
+            press.snapTo(0f)
+            press.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            )
+        }
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "逾期",
+            fontSize = 10.5.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.graphicsLayer {
+                val p = press.value
+                scaleX = 1.7f - 0.7f * p
+                scaleY = 1.7f - 0.7f * p
+                rotationZ = -13f + 10f * p
+                alpha = (p * 4f).coerceIn(0f, 1f)
+            }
+                .border(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.error,
+                    shape = RoundedCornerShape(3.dp),
+                )
+                .padding(start = 7.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+        )
+        Text(
+            text = buildAnnotatedString {
+                append("（")
+                withStyle(SpanStyle(fontFamily = FigureFont)) { append("$count") }
+                append("）")
+            },
+            fontFamily = HanFont,
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.6.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 6.dp),
+        )
     }
 }
