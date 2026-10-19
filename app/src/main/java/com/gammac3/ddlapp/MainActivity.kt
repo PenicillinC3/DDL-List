@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gammac3.ddlapp.model.DdlRow
+import com.gammac3.ddlapp.ui.editor.DdlEditorSheet
 import com.gammac3.ddlapp.ui.list.DdlListScreen
 import com.gammac3.ddlapp.ui.list.DdlListViewModel
 import com.gammac3.ddlapp.ui.theme.DdlAppTheme
@@ -29,20 +30,20 @@ class MainActivity : ComponentActivity() {
                     viewModel = model,
                     onEdit = { row -> editing = row; sheetOpen = true },
                 )
-                // TODO(T8): uncomment when DdlEditorSheet lands
-                // DdlEditorSheet(
-                //     editing = if (sheetOpen) editing else null,
-                //     onDismiss = { sheetOpen = false },
-                //     onSave = { draft, editingId ->
-                //         model.save(draft, editingId)
-                //         sheetOpen = false
-                //     },
-                //     onToggleDone = { row -> model.toggleDone(row) },
-                //     onDelete = { row ->
-                //         model.delete(row)
-                //         sheetOpen = false
-                //     },
-                // )
+                DdlEditorSheet(
+                    open = sheetOpen,
+                    editing = editing,
+                    onDismiss = { sheetOpen = false },
+                    onSave = { draft, editingId ->
+                        model.save(draft, editingId)
+                        sheetOpen = false
+                    },
+                    onToggleDone = { row -> model.toggleDone(row) },
+                    onDelete = { row ->
+                        model.delete(row)
+                        sheetOpen = false
+                    },
+                )
             }
         }
     }
