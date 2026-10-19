@@ -25,7 +25,7 @@
         android:fillColor="#C93A2C" />
     <!-- 深红斜杠 -->
     <path
-        android:pathData="M26,90 L82,50"
+        android:pathData="M35,79 L76,55"
         android:strokeColor="#8F2A20"
         android:strokeWidth="7"
         android:strokeLineCap="round"
