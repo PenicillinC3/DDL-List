@@ -14,7 +14,7 @@ object Format {
         return "${z.monthValue}月${z.dayOfMonth}日 $h:$m"
     }
 
-    /** 「剩 3天14:22」式倒计时 / 「已过期 2小时」，1 分钟跳变。 */
+    /** 「剩3天14:22」式倒计时 / 「已过期2小时」，1 分钟跳变。不插空格：Maple 等宽空格占 0.6em，会让数字在「剩」与单位之间偏右（R35）。 */
     fun remaining(deadlineMillis: Long, nowMillis: Long): String {
         val diff = deadlineMillis - nowMillis
         val past = diff < 0
@@ -28,7 +28,7 @@ object Format {
             minutes > 0 -> "${minutes}分钟"
             else -> "1分钟内"
         }
-        return if (past) "已过期 $body" else "剩 $body"
+        return if (past) "已过期$body" else "剩$body"
     }
 
     fun leadText(minutes: Long): String = LeadLabels.text(minutes)
