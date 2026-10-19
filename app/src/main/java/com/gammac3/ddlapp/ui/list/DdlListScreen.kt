@@ -53,8 +53,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
@@ -64,6 +67,9 @@ import com.gammac3.ddlapp.DdlApplication
 import com.gammac3.ddlapp.logic.DdlGrouper
 import com.gammac3.ddlapp.model.DdlGroup
 import com.gammac3.ddlapp.model.DdlRow
+import com.gammac3.ddlapp.ui.theme.FigureFont
+import com.gammac3.ddlapp.ui.theme.HanFont
+import com.gammac3.ddlapp.ui.theme.TitleFont
 import java.time.ZoneId
 import kotlinx.coroutines.delay
 
@@ -140,6 +146,7 @@ fun DdlListScreen(
                 title = {
                     Text(
                         "DDL 清单",
+                        fontFamily = TitleFont,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -158,7 +165,7 @@ fun DdlListScreen(
                 shape = RoundedCornerShape(18.dp),
                 containerColor = MaterialTheme.colorScheme.inverseSurface,
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-            ) { Text("＋", fontSize = 24.sp) }
+            ) { Text("＋", fontFamily = HanFont, fontSize = 24.sp) }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -279,10 +286,16 @@ fun DdlListScreen(
                                     .padding(top = 8.dp, bottom = 2.dp),
                             ) {
                                 Text(
-                                    text = buildString {
-                                        append("${groupName(group)}（${rows.size}）")
+                                    text = buildAnnotatedString {
+                                        append(groupName(group))
+                                        append("（")
+                                        withStyle(SpanStyle(fontFamily = FigureFont)) {
+                                            append("${rows.size}")
+                                        }
+                                        append("）")
                                         if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
                                     },
+                                    fontFamily = HanFont,
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     letterSpacing = 0.6.sp,

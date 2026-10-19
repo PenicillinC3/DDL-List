@@ -86,6 +86,7 @@ private val DarkColors = darkColorScheme(
 fun DdlAppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
+        typography = DdlTypography,
         content = content
     )
 }

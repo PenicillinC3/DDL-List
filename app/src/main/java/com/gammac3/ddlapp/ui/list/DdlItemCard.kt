@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.Format
+import com.gammac3.ddlapp.ui.theme.DataFont
+import com.gammac3.ddlapp.ui.theme.FigureFont
 
 @Composable
 fun DdlItemCard(
@@ -63,6 +65,7 @@ fun DdlItemCard(
                 Text(
                     text = Format.remaining(row.deadlineMillis, nowMillis),
                     style = MaterialTheme.typography.headlineSmall.copy(
+                        fontFamily = DataFont,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.ExtraBold,
                         fontFeatureSettings = "tnum",
@@ -74,6 +77,7 @@ fun DdlItemCard(
             }
             Text(
                 text = "期限 " + Format.absolute(row.deadlineMillis),
+                fontFamily = FigureFont,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),
