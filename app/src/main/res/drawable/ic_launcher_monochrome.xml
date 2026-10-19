@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 主题图标：仅 alpha 参与着色 -->
+    <path
+        android:pathData="M33,43 A7,7 0 0 1 40,36 H68 A7,7 0 0 1 75,43 V69 A7,7 0 0 1 68,76 H40 A7,7 0 0 1 33,69 Z M42,25 V37 M66,25 V37"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M26,90 L82,50"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+</vector>

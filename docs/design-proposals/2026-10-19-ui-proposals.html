@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDL 清单 · UI 方向提案（4 版）</title>
+<style>
+  :root{
+    --ink:#1c1e21; --ink-2:#5a6068; --hair:#e4e7ec;
+    --v1-accent:#3a5af0; --v1-danger:#e5484d;
+    --v2-bg:#0d1117; --v2-card:#161b22; --v2-txt:#e6edf3; --v2-sub:#8b949e;
+    --v3-bg:#faf5ec; --v3-ink:#3a3530; --v3-red:#d34e3a; --v3-teal:#3e5c55;
+    --v4-grad-a:#ff6a5e; --v4-grad-b:#ffa42e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);background:#f0f2f5;padding:32px 24px 80px}
+  h1{font-size:26px;margin-bottom:6px}
+  .sub{color:var(--ink-2);margin-bottom:24px;max-width:820px;line-height:1.7}
+  nav{position:sticky;top:0;z-index:9;background:#f0f2f5ee;backdrop-filter:blur(6px);padding:10px 0;border-bottom:1px solid var(--hair);margin-bottom:32px}
+  nav a{display:inline-block;margin-right:10px;padding:6px 14px;border-radius:999px;background:#fff;border:1px solid var(--hair);color:var(--ink);text-decoration:none;font-size:13px}
+  nav a:hover{border-color:var(--ink-2)}
+  .version{margin-bottom:64px}
+  .vhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .vnum{font-size:12px;font-weight:700;letter-spacing:1px;color:#fff;background:var(--ink);border-radius:6px;padding:3px 8px}
+  .vtitle{font-size:20px;font-weight:700}
+  .vtag{font-size:12px;color:var(--ink-2);border:1px solid var(--hair);border-radius:999px;padding:3px 10px}
+  .vrules{list-style:none;color:var(--ink-2);font-size:13.5px;line-height:1.9;margin-bottom:18px;max-width:640px}
+  .vrules li::before{content:"▸ ";color:var(--ink)}
+  .row{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  /* ---------- phone frame ---------- */
+  .phone{width:375px;height:812px;border-radius:42px;overflow:hidden;position:relative;flex:0 0 auto;
+         box-shadow:0 24px 60px rgba(0,0,0,.18),0 0 0 10px #101114,0 0 0 12px #2b2e33}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 6px;font-size:12.5px;font-weight:600}
+  .apptitle{font-size:22px;font-weight:800;padding:8px 20px 2px}
+  .appsub{font-size:12.5px;padding:0 20px;margin-bottom:10px}
+  .chips{display:flex;gap:8px;padding:6px 20px 12px}
+  .chip{font-size:12.5px;padding:7px 16px;border-radius:999px;border:1px solid var(--hair)}
+  .chip.on{font-weight:700;color:#fff}
+  .group{display:flex;align-items:baseline;gap:8px;padding:14px 20px 8px}
+  .gname{font-size:13px;font-weight:800;letter-spacing:.4px}
+  .gcount{font-size:11.5px;color:var(--ink-2)}
+  .card{margin:8px 16px;padding:14px 16px;border-radius:16px}
+  .ctitle{font-size:15.5px;font-weight:700;line-height:1.35}
+  .cnote{font-size:12px;margin-top:3px}
+  .cmeta{margin-top:10px;font-size:11.8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .fab{position:absolute;right:20px;bottom:28px;width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 12px 28px rgba(0,0,0,.25)}
+  .navrow{position:absolute;left:0;right:0;bottom:0;height:20px}
+  .fname{position:absolute;bottom:8px;width:100%;text-align:center;font-size:10.5px;letter-spacing:2px}
+  /* ---------- 现状 ---------- */
+  .now .phone{background:#fff}
+  .now .apptitle{color:#1c1b1f}.now .appsub{color:#49454f}
+  .now .chips .chip{color:#49454f;border-color:#cac4d0}.now .chips .chip.on{background:#eaddff;color:#21005d;border-color:transparent}
+  .now .group .gname{color:#1d192b}.now .gcount{color:#49454f}
+  .now .card{background:#f7f2fa;border:1px solid #e8e0ec}
+  .now .ctitle{color:#1d1b20}.now .cnote{color:#49454f}
+  .now .cdl{color:#49454f}.now .cline{color:#6750a4;font-weight:600}
+  .now .fab{background:#6750a4;color:#fff;border-radius:16px}
+  /* ---------- V1 净白 ---------- */
+  .v1 .phone{background:#f6f7f9}
+  .v1 .apptitle{color:#111}.v1 .appsub{color:#8a9099}
+  .v1 .chips .chip{color:#5a6068;border-color:#e4e7ec;background:#fff}
+  .v1 .chips .chip.on{background:#111;border-color:#111;color:#fff}
+  .v1 .gname{color:#9aa0a8;text-transform:uppercase}
+  .v1 .card{background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.06)}
+  .v1 .ctitle{color:#111}.v1 .cnote{color:#98a0aa}
+  .v1 .big{font-variant-numeric:tabular-nums;font-size:26px;font-weight:800;letter-spacing:-.5px;margin-top:6px}
+  .v1 .big.red{color:var(--v1-danger)}
+  .v1 .big.blue{color:var(--v1-accent)}
+  .v1 .cdl{color:#98a0aa;font-size:12px;margin-top:2px}
+  .v1 .lead{font-size:11px;color:var(--v1-accent);background:#eef2ff;border-radius:6px;padding:2px 8px}
+  .v1 .fab{background:#111;color:#fff}
+  .v1 .hair{height:1px;background:var(--hair);margin:2px 16px}
+  /* ---------- V2 暗夜 ---------- */
+  .v2 .phone{background:var(--v2-bg)}
+  .v2 .statusbar{color:var(--v2-txt)}
+  .v2 .apptitle{color:var(--v2-txt)}
+  .v2 .appsub{color:var(--v2-sub)}
+  .v2 .chips .chip{color:var(--v2-sub);background:transparent;border-color:#30363d}
+  .v2 .chips .chip.on{background:var(--v2-txt);color:#0d1117;border-color:transparent}
+  .v2 .gname{color:#7ee2d1}
+  .v2 .card{background:var(--v2-card);border:1px solid #23282f;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .v2 .bar{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+  .v2 .ctitle{color:var(--v2-txt)}
+  .v2 .cnote{color:var(--v2-sub)}
+  .v2 .big{font-size:30px;font-weight:800;margin-top:8px;font-variant-numeric:tabular-nums}
+  .v2 .big.amber{color:var(--v2-amber,#ff8a3d);text-shadow:0 0 18px rgba(255,138,61,.35)}
+  .v2 .big.tq{color:#39d2c0;text-shadow:0 0 18px rgba(57,210,192,.3)}
+  .v2 .big.r{color:#ff5c5c;text-shadow:0 0 18px rgba(255,92,92,.35)}
+  .v2 .cdl{color:var(--v2-sub);font-size:12px;margin-top:4px}
+  .v2 .lead{font-size:11px;color:#39d2c0;border:1px solid #1d4f49;border-radius:6px;padding:2px 8px}
+  .v2 .fab{background:linear-gradient(135deg,#ff8a3d,#ff5c5c);color:#fff;box-shadow:0 0 30px rgba(255,120,70,.45)}
+  /* ---------- V3 纸感 ---------- */
+  .v3 .phone{background:var(--v3-bg)}
+  .v3 .apptitle,.v3 .gname,.v3 .statusbar{font-family:Georgia,"Noto Serif SC","Songti SC",serif}
+  .v3 .apptitle{color:var(--v3-ink)}
+  .v3 .appsub{color:#8b8378}
+  .v3 .chips .chip{color:var(--v3-ink);border-color:#d9d0bf;background:#fff9ef}
+  .v3 .chips .chip.on{background:var(--v3-ink);border-color:var(--v3-ink);color:#faf5ec}
+  .v3 .gname{color:#8b8378;font-style:italic}
+  .v3 .card{background:#fffdf7;border:1px solid #e7ddca;box-shadow:0 1px 0 #e7ddca,0 8px 18px rgba(120,105,80,.08)}
+  .v3 .ctitle{color:var(--v3-ink);font-size:16.5px}
+  .v3 .cnote{color:#9a9184}
+  .v3 .rule{height:0;border-bottom:1px dotted #d8cdb8;margin-top:10px}
+  .v3 .big{font-family:Georgia,serif;font-size:22px;font-weight:700;color:var(--v3-teal);margin-top:8px}
+  .v3 .big.late{color:var(--v3-red)}
+  .v3 .cdl{color:#9a9184;font-size:12px;margin-top:4px}
+  .v3 .stamp{display:inline-block;border:1.5px solid var(--v3-red);color:var(--v3-red);border-radius:4px;padding:1px 7px;font-size:10.5px;font-weight:700;transform:rotate(-3deg);letter-spacing:1px}
+  .v3 .lead{font-size:11px;color:var(--v3-teal);border-bottom:1px dotted var(--v3-teal)}
+  .v3 .fab{background:var(--v3-ink);color:#faf5ec;border-radius:50%}
+  /* ---------- V4 活力 ---------- */
+  .v4 .phone{background:#f4f2ff}
+  .v4 .apptitle{color:#17173a}
+  .v4 .appsub{color:#7a7a9e}
+  .v4 .chips .chip{color:#5b5b86;background:#fff;border-color:#e0ddfa}
+  .v4 .chips .chip.on{background:#5b48e8;border-color:#5b48e8;color:#fff;box-shadow:0 6px 14px rgba(91,72,232,.30)}
+  .v4 .gname{color:#5b5b86}
+  .v4 .card{color:#fff;border-radius:22px;padding:16px;border:none}
+  .v4 .c-g1{background:linear-gradient(135deg,#ff5f6d,#ff9068);box-shadow:0 10px 24px rgba(255,95,109,.35)}
+  .v4 .c-g2{background:linear-gradient(135deg,#f7971e,#ffd200);box-shadow:0 10px 24px rgba(247,151,30,.30)}
+  .v4 .c-g3{background:linear-gradient(135deg,#5b48e8,#8f7bff);box-shadow:0 10px 24px rgba(91,72,232,.30)}
+  .v4 .c-g4{background:linear-gradient(135deg,#2b93e8,#6dd5ed)}
+  .v4 .ctitle{color:#fff}
+  .v4 .cnote{color:rgba(255,255,255,.75)}
+  .v4 .big{font-size:28px;font-weight:800;margin-top:6px;color:#fff;font-variant-numeric:tabular-nums}
+  .v4 .cdl{color:rgba(255,255,255,.75);font-size:12px;margin-top:2px}
+  .v4 .lead{font-size:11px;background:rgba(255,255,255,.18);border-radius:999px;padding:2px 9px;color:#fff}
+  .v4 .gcount{color:#7a7a9e}
+  .v4 .fab{background:linear-gradient(135deg,#5b48e8,#e85bb1);color:#fff;border-radius:20px;box-shadow:0 12px 26px rgba(151,90,232,.4)}
+  .note{font-size:12.5px;color:var(--ink-2);margin-top:14px;max-width:700px;line-height:1.8}
+  .pair{display:inline-block;background:#fff;border:1px solid var(--hair);border-radius:8px;padding:4px 10px;font-size:12px;margin:2px}
+</style>
+</head>
+<body>
+
+<h1>DDL 清单 · UI 方向提案</h1>
+<p class="sub">现状 = 默认 Material3 紫色 + 系统模板图标（左一）。以下 4 个方向只改「视觉与观感」，信息架构（分组、倒计时、侧滑、筛选）均不变。看中哪版直接指；组合混搭也行（比如 V1 的排字 + V2 的暗色）。</p>
+
+<nav>
+  <a href="#now">现状对照</a>
+  <a href="#v1">V1 净白聚焦</a>
+  <a href="#v2">V2 暗夜高能</a>
+  <a href="#v3">V3 纸感手账</a>
+  <a href="#v4">V4 分组趣弹</a>
+</nav>
+
+<!-- ================= 现状 ================= -->
+<div class="version now" id="now">
+  <div class="vhead"><span class="vnum">现状</span><span class="vtitle">默认 Material3</span><span class="vtag">默认紫色调 · 无品牌感</span></div>
+  <ul class="vrules">
+    <li>Compose 默认配色，所有界面一种紫，无版式层级</li>
+    <li>倒计时只是一行小字，没有计时器的主视觉</li>
+    <li>图标是 Android 模板机器人，与产品无关</li>
+  </ul>
+  <div class="row">
+    <div class="phone">
+      <div class="statusbar"><span>19:36</span><span>▮▮▮ ⌁ ▉</span></div>
+      <div class="apptitle">DDL 清单</div>
+      <div class="appsub">10月19日 · 周一</div>
+      <div class="chips"><span class="chip on">全部</span><span class="chip">待办</span><span class="chip">已完成</span></div>
+      <div class="group"><span class="gname">已逾期 1</span><span class="gcount"></span></div>
+      <div class="card"><div class="ctitle">组会 PPT 定稿</div><div class="cnote">补上实验对比图</div><div class="cmeta"><span class="cdl">昨天 17:00</span><span class="cline">已逾期</span></div></div>
+      <div class="group"><span class="gname">今天 1</span></div>
+      <div class="card"><div class="ctitle">提交实验数据</div><div class="cmeta"><span class="cdl">今天 23:59</span><span class="cline">剩 4:23</span></div></div>
+      <div class="group"><span class="gname">明天 1</span></div>
+      <div class="card"><div class="ctitle">论文开题报告</div><div class="cmeta"><span class="cdl">明天 10:00</span><span class="cline">剩 14:24</span></div></div>
+      <div class="group"><span class="gname">已完成（3）</span></div>
+      <div class="fab">＋</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= V1 ================= -->
+<div class="version v1" id="v1">
+  <div class="vhead"><span class="vnum">V1</span><span class="vtitle">净白 · 聚焦</span><span class="vtag">工具感 · 专业克制</span></div>
+  <ul class="vrules">
+    <li>白灰画布 + 墨黑主色，唯一强调色（靛蓝）只用于倒计时与提醒标签</li>
+    <li>倒计时升级为大号等宽数字（tabular），是每张卡的视觉主角</li>
+    <li>细发丝分隔 + 上浮白卡，分组标题小写灰；FAB 全黑方形圆角</li>
+    <li>逾期红 #E5484D 一秒可辨；除红与靛蓝之外再无色相</li>
+  </ul>
+  <div class="row">
+    <div class="phone">
+      <div class="statusbar"><span>19:36</span><span>▮▮▮ ⌁ ▉</span></div>
+      <div class="apptitle">DDL 清单</div>
+      <div class="appsub">10月19日 · 周一 · 4 项进行中</div>
+      <div class="chips"><span class="chip on">全部</span><span class="chip">待办</span><span class="chip">已完成</span></div>
+      <div class="group"><span class="gname">已逾期</span><span class="gcount">1</span></div>
+      <div class="card"><div class="ctitle">组会 PPT 定稿</div><div class="cnote">补上实验对比图</div><div class="big red">−17 小时 36 分</div><div class="cdl">期限 昨天 17:00</div></div>
+      <div class="hair"></div>
+      <div class="group"><span class="gname">今天</span><span class="gcount">1</span></div>
+      <div class="card"><div class="ctitle">提交实验数据</div><div class="big blue">4:23:07</div><div class="cdl">期限 今天 23:59</div><div class="cmeta"><span class="lead">🔔 提前 1 小时</span></div></div>
+      <div class="hair"></div>
+      <div class="group"><span class="gname">明天</span><span class="gcount">1</span></div>
+      <div class="card"><div class="ctitle">论文开题报告</div><div class="big blue">1天 14:24</div><div class="cdl">期限 明天 10:00</div><div class="cmeta"><span class="lead">🔔 提前 1 天 · 2 小时</span></div></div>
+      <div class="group"><span class="gname">已完成</span><span class="gcount">3 ▸</span></div>
+      <div class="fab">＋</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= V2 ================= -->
+<div class="version v2" id="v2">
+  <div class="vhead"><span class="vnum">V2</span><span class="vtitle">暗夜 · 高能</span><span class="vtag">深色沉浸 · 程序员/夜猫向</span></div>
+  <ul class="vrules">
+    <li>GitHub Dark 系底色；倒计时 30px 带微光的荧光数字，暗室里一眼可见</li>
+    <li>卡片左缘 3px 危险条表达紧急度：红=已逾期 / 橙=今天 / 青=更远</li>
+    <li>提醒标签发光胶囊；FAB 橙红渐变 + 辉光投影</li>
+    <li>天然支持深色模式（V2 本身即暗色主题，可做多版深浅两套色）</li>
+  </ul>
+  <div class="row">
+    <div class="phone">
+      <div class="statusbar"><span>23:36</span><span>▮▮▮ ⌁ ▉</span></div>
+      <div class="apptitle">DDL 清单</div>
+      <div class="appsub">10月19日 · 周一深夜 · 3 项逼近</div>
+      <div class="chips"><span class="chip on">全部</span><span class="chip">待办</span><span class="chip">已完成</span></div>
+      <div class="group"><span class="gname">已逾期</span><span class="gcount">1</span></div>
+      <div class="card"><span class="bar" style="background:#ff5c5c"></span><div class="ctitle">组会 PPT 定稿</div><div class="cnote">补上实验对比图</div><div class="big r">−17:36:22</div><div class="cdl">期限 昨天 17:00</div></div>
+      <div class="group"><span class="gname">今天</span><span class="gcount">1</span></div>
+      <div class="card"><span class="bar" style="background:#ff8a3d"></span><div class="ctitle">提交实验数据</div><div class="big amber">0:23:07</div><div class="cdl">期限 今天 23:59</div><div class="cmeta"><span class="lead">🔔 提前 1 小时</span></div></div>
+      <div class="group"><span class="gname">明天</span><span class="gcount">1</span></div>
+      <div class="card"><span class="bar" style="background:#39d2c0"></span><div class="ctitle">论文开题报告</div><div class="big tq">1d 14:24</div><div class="cdl">期限 明天 10:00</div><div class="cmeta"><span class="lead">🔔 提前 1 天 · 2 小时</span></div></div>
+      <div class="group"><span class="gname">已完成</span><span class="gcount">3 ▸</span></div>
+      <div class="fab">＋</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= V3 ================= -->
+<div class="version v3" id="v3">
+  <div class="vhead"><span class="vnum">V3</span><span class="vtitle">纸感 · 手账</span><span class="vtag">温和文艺 · 学生向</span></div>
+  <ul class="vrules">
+    <li>暖纸底 + 衬线标题，像一本摊开的进度手账；分隔用点线而非卡片硬边</li>
+    <li>「已逾期」做成旋转小印章；墨青色承载倒计时，朱红只留给逾期</li>
+    <li>节奏宽松、弱对比，长时间看列表不刺眼</li>
+    <li>图标建议配 印章/描边风（见图标页 E/C）</li>
+  </ul>
+  <div class="row">
+    <div class="phone">
+      <div class="statusbar"><span>19:36</span><span>▮▮▮ ⌁ ▉</span></div>
+      <div class="apptitle">DDL 清单</div>
+      <div class="appsub">十月十九日 · 周一</div>
+      <div class="chips"><span class="chip on">全部</span><span class="chip">待办</span><span class="chip">已完成</span></div>
+      <div class="group"><span class="gname">✦ 已逾期</span><span class="gcount">1</span></div>
+      <div class="card"><div class="ctitle">组会 PPT 定稿</div><div class="cnote">补上实验对比图</div><div class="rule"></div><div class="cmeta"><span class="stamp">已逾期</span><span class="cdl">期限 昨天 17:00</span></div></div>
+      <div class="group"><span class="gname">✦ 今天</span><span class="gcount">1</span></div>
+      <div class="card"><div class="ctitle">提交实验数据</div><div class="rule"></div><div class="big">余 4 时 23 分</div><div class="cdl">期限 今天 23:59</div><div class="cmeta"><span class="lead">🔔 提前 1 小时</span></div></div>
+      <div class="group"><span class="gname">✦ 明天</span><span class="gcount">1</span></div>
+      <div class="card"><div class="ctitle">论文开题报告</div><div class="rule"></div><div class="big">余一日又 14 时</div><div class="cdl">期限 明天 10:00</div><div class="cmeta"><span class="lead">🔔 提前 1 天</span></div></div>
+      <div class="group"><span class="gname">✦ 已完成</span><span class="gcount">3 ▸</span></div>
+      <div class="fab">＋</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= V4 ================= -->
+<div class="version v4" id="v4">
+  <div class="vhead"><span class="vnum">V4</span><span class="vtitle">分组趣弹</span><span class="vtag">色彩叙事 · 年轻活泼</span></div>
+  <ul class="vrules">
+    <li>用「颜色即分组」讲故事：逾期珊瑚红 → 今天橙金 → 七日蓝紫，进度意识不读字也能感知</li>
+    <li>白字大数字压在渐变卡上，卡片即计时刻度；圆角 22 蓬松感</li>
+    <li>蓝紫渐变 FAB + 大投影；筛选胶囊选中带色影</li>
+    <li>图标建议配 现代几何款（见图标页 D/B）</li>
+  </ul>
+  <div class="row">
+    <div class="phone">
+      <div class="statusbar"><span>19:36</span><span>▮▮▮ ⌁ ▉</span></div>
+      <div class="apptitle">DDL 清单</div>
+      <div class="appsub">10月19日 · 周一</div>
+      <div class="chips"><span class="chip on">全部</span><span class="chip">待办</span><span class="chip">已完成</span></div>
+      <div class="group"><span class="gname">已逾期</span><span class="gcount">1</span></div>
+      <div class="card c-g1"><div class="ctitle">组会 PPT 定稿</div><div class="cnote">补上实验对比图</div><div class="big">逾期 17h</div><div class="cdl">期限 昨天 17:00</div></div>
+      <div class="group"><span class="gname">今天</span><span class="gcount">1</span></div>
+      <div class="card c-g2"><div class="ctitle">提交实验数据</div><div class="big">4:23:07</div><div class="cmeta"><span class="lead">🔔 提前 1 小时</span></div></div>
+      <div class="group"><span class="gname">7 天内</span><span class="gcount">1</span></div>
+      <div class="card c-g3"><div class="ctitle">论文开题报告</div><div class="big">1 天</div><div class="cdl">期限 明天 10:00</div><div class="cmeta"><span class="lead">🔔 提前 1 天 · 2 小时</span></div></div>
+      <div class="group"><span class="gname">已完成</span><span class="gcount">3 ▸</span></div>
+      <div class="card c-g4" style="opacity:.55"><div class="ctitle">周报已交</div><div class="cdl">已完成 · 周日 18:00</div></div>
+      <div class="fab">＋</div>
+    </div>
+  </div>
+</div>
+
+<p class="note">
+  选择参考：<span class="pair">V1 想要「耐看专业、信息清楚」</span>
+  <span class="pair">V2 深色主力、夜猫党</span>
+  <span class="pair">V3 手账氛围、减压迫感</span>
+  <span class="pair">V4 视觉冲击、社交截图好看</span>
+  也可以混搭（在自由回答里写，如「V2 卡片 + V4 的分组色」）。
+</p>
+
+</body>
+</html>

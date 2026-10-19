@@ -4,24 +4,30 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 表针 -->
+    <!-- 挂环 -->
     <path
-        android:pathData="M54,42 V54 L63,59"
+        android:pathData="M42,25 V37 M66,25 V37"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="4"
+        android:strokeWidth="5"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
-    <!-- 表盘 -->
+    <!-- 白色日历页 -->
     <path
-        android:pathData="M54,30 a24,24 0 1,1 -0.001,0"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="5"
-        android:fillColor="#00000000" />
-    <!-- 报时脚 -->
+        android:pathData="M40,36 H68 A7,7 0 0 1 75,43 V69 A7,7 0 0 1 68,76 H40 A7,7 0 0 1 33,69 V43 A7,7 0 0 1 40,36 Z"
+        android:fillColor="#FFFFFFFF" />
+    <!-- 红色页眉（仅上缘圆角） -->
     <path
-        android:pathData="M34,79 l-7,7 M74,79 l7,7"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="5"
+        android:pathData="M33,49 V43 A7,7 0 0 1 40,36 H68 A7,7 0 0 1 75,43 V49 Z"
+        android:fillColor="#C93A2C" />
+    <!-- 日期标记 -->
+    <path
+        android:pathData="M42,58 H64 A2,2 0 0 1 64,62 H42 A2,2 0 0 1 42,58 Z"
+        android:fillColor="#C93A2C" />
+    <!-- 深红斜杠 -->
+    <path
+        android:pathData="M26,90 L82,50"
+        android:strokeColor="#8F2A20"
+        android:strokeWidth="7"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
 </vector>

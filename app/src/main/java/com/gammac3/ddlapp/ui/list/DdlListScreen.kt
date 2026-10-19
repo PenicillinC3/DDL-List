@@ -7,6 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -21,9 +22,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -34,6 +38,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
@@ -131,7 +137,17 @@ fun DdlListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("DDL 清单", fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        "DDL 清单",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -139,6 +155,9 @@ fun DdlListScreen(
             FloatingActionButton(
                 onClick = { onEdit(null) },
                 modifier = Modifier.semantics { contentDescription = "添加 DDL" },
+                shape = RoundedCornerShape(18.dp),
+                containerColor = MaterialTheme.colorScheme.inverseSurface,
+                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
             ) { Text("＋", fontSize = 24.sp) }
         },
     ) { padding ->
@@ -185,8 +204,9 @@ fun DdlListScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 DdlFilter.entries.forEach { f ->
+                    val selected = state.filter == f
                     FilterChip(
-                        selected = state.filter == f,
+                        selected = selected,
                         label = {
                             Text(
                                 when (f) {
@@ -197,6 +217,17 @@ fun DdlListScreen(
                             )
                         },
                         onClick = { viewModel.setFilter(f) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                            selectedLabelColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (selected) MaterialTheme.colorScheme.inverseSurface
+                            else MaterialTheme.colorScheme.outlineVariant,
+                        ),
                     )
                 }
             }
@@ -218,31 +249,44 @@ fun DdlListScreen(
                                 "该筛选下暂无条目，试试切换筛选"
                             },
                             style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 40.dp),
                         )
                     }
                 } else {
+                    var firstGroup = true
                     groupOrder.forEach { group ->
                         val rows = grouped[group].orEmpty()
                         if (rows.isEmpty()) return@forEach
+                        if (!firstGroup) {
+                            item(key = "separator_$group") {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
+                        }
+                        firstGroup = false
                         item(key = "header_$group") {
                             Row(
                                 Modifier.fillMaxWidth()
                                     .clickable(enabled = group == DdlGroup.DONE) {
                                         doneExpanded = !doneExpanded
                                     }
-                                    .padding(top = 8.dp),
+                                    .padding(top = 8.dp, bottom = 2.dp),
                             ) {
                                 Text(
                                     text = buildString {
                                         append("${groupName(group)}（${rows.size}）")
                                         if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
                                     },
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (group == DdlGroup.OVERDUE) MaterialTheme.colorScheme.error
-                                    else MaterialTheme.colorScheme.primary,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    letterSpacing = 0.6.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
