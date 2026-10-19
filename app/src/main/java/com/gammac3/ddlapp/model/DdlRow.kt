@@ -7,6 +7,7 @@ data class DdlRow(
     val deadlineMillis: Long,
     val leadsMinutes: List<Long>,
     val isDone: Boolean,
+    val muted: Boolean = false,
 )
 
 enum class DdlGroup { OVERDUE, TODAY, TOMORROW, THIS_WEEK, LATER, DONE }

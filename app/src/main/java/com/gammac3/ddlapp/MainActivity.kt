@@ -7,7 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.editor.DdlEditorSheet
@@ -24,15 +26,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             DdlAppTheme {
                 val model = viewModel { DdlListViewModel(app.container.repository) }
+                val state by model.uiState.collectAsStateWithLifecycle()
                 var editing by remember { mutableStateOf<DdlRow?>(null) }
-                var sheetOpen by remember { mutableStateOf(false) }
+                var sheetOpen by rememberSaveable { mutableStateOf(false) }
+                // 行可能在弹窗打开后被系统外改动；派生最新快照，避免完成按钮状态陈旧。
+                val editingFresh = editing?.let { e -> state.rows.firstOrNull { it.id == e.id } } ?: editing
                 DdlListScreen(
                     viewModel = model,
                     onEdit = { row -> editing = row; sheetOpen = true },
                 )
                 DdlEditorSheet(
                     open = sheetOpen,
-                    editing = editing,
+                    editing = editingFresh,
                     onDismiss = { sheetOpen = false },
                     onSave = { draft, editingId ->
                         model.save(draft, editingId)

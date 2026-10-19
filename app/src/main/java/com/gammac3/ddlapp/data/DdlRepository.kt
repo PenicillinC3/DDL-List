@@ -12,7 +12,10 @@ class DdlRepository(
     fun observeAll(): Flow<List<DdlEntity>> = dao.observeAll()
 
     suspend fun upsert(entity: DdlEntity): Long {
-        val id = if (entity.id == 0L) dao.insert(entity) else { dao.update(entity); entity.id }
+        val id = if (entity.id == 0L) dao.insert(entity) else {
+            // Room @Update 对已删除的行影响 0 行；撤销删除时须以原 id 重新插入。
+            if (dao.update(entity) == 0) dao.insert(entity) else entity.id
+        }
         rescheduleFor(id)
         return id
     }
@@ -34,7 +37,7 @@ class DdlRepository(
     suspend fun rescheduleFor(id: Long) {
         val entity = dao.byId(id) ?: return
         scheduler.cancelAll(id)
-        if (entity.isDone) return
+        if (entity.isDone || entity.muted) return
         val triggers = ReminderTimeCalculator.futureTriggers(entity.deadlineEpochMillis, entity.leadsMinutes, clock())
         if (triggers.isNotEmpty()) scheduler.reschedule(id, entity.title, triggers)
     }

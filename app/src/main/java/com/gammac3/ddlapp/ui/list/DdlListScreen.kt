@@ -2,7 +2,6 @@ package com.gammac3.ddlapp.ui.list
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -42,14 +41,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gammac3.ddlapp.DdlApplication
 import com.gammac3.ddlapp.logic.DdlGrouper
@@ -83,34 +86,37 @@ fun DdlListScreen(
         }
     }
     val zone = remember { ZoneId.systemDefault() }
+    var doneExpanded by rememberSaveable { mutableStateOf(false) }
 
     val snackbar = remember { SnackbarHostState() }
 
-    // 通知权限（Android 13+）
+    // 通知权限（Android 13+）：以系统通知开关为真源，每次回前台刷新
     val context = LocalContext.current
-    val notifGranted = remember {
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            ContextCompat.checkSelfPermission(
-                context, Manifest.permission.POST_NOTIFICATIONS,
-            ) == PackageManager.PERMISSION_GRANTED
+    var notifGranted by remember {
+        mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled())
     }
     var notifDenied by remember { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted ->
-        if (!granted) notifDenied = true
+        notifDenied = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !granted
     }
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notifGranted) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !notifGranted && !notifDenied
+        ) {
             launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
     // 精确闹钟（Android 12+，canScheduleExact 内部处理低版本）
     var exactOk by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
+    LifecycleResumeEffect(Unit) {
+        notifGranted = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        if (notifGranted) notifDenied = false
         exactOk = (context.applicationContext as DdlApplication)
             .container.scheduler.canScheduleExact()
+        onPauseOrDispose { }
     }
 
     LaunchedEffect(state.lastDeleted) {
@@ -130,7 +136,10 @@ fun DdlListScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { onEdit(null) }) { Text("＋", fontSize = 24.sp) }
+            FloatingActionButton(
+                onClick = { onEdit(null) },
+                modifier = Modifier.semantics { contentDescription = "添加 DDL" },
+            ) { Text("＋", fontSize = 24.sp) }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -200,28 +209,50 @@ fun DdlListScreen(
                 contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                groupOrder.forEach { group ->
-                    val rows = grouped[group].orEmpty()
-                    if (rows.isEmpty()) return@forEach
-                    item(key = "header_$group") {
+                if (state.rows.isEmpty()) {
+                    item(key = "empty") {
                         Text(
-                            text = "${groupName(group)}（${rows.size}）",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (group == DdlGroup.OVERDUE) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 8.dp),
+                            text = "还没有 DDL，点右下角 ＋ 添加",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
                         )
                     }
-                    items(rows, key = { it.id }) { row ->
-                        SwipeRow(
-                            row = row,
-                            nowMillis = now,
-                            overdue = group == DdlGroup.OVERDUE,
-                            onClick = { onEdit(row) },
-                            onDelete = { viewModel.delete(row) },
-                            onToggleDone = { viewModel.toggleDone(row) },
-                        )
+                } else {
+                    groupOrder.forEach { group ->
+                        val rows = grouped[group].orEmpty()
+                        if (rows.isEmpty()) return@forEach
+                        item(key = "header_$group") {
+                            Row(
+                                Modifier.fillMaxWidth()
+                                    .clickable(enabled = group == DdlGroup.DONE) {
+                                        doneExpanded = !doneExpanded
+                                    }
+                                    .padding(top = 8.dp),
+                            ) {
+                                Text(
+                                    text = buildString {
+                                        append("${groupName(group)}（${rows.size}）")
+                                        if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
+                                    },
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (group == DdlGroup.OVERDUE) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+                        if (group == DdlGroup.DONE && !doneExpanded) return@forEach
+                        items(rows, key = { it.id }) { row ->
+                            SwipeRow(
+                                row = row,
+                                nowMillis = now,
+                                overdue = group == DdlGroup.OVERDUE,
+                                onClick = { onEdit(row) },
+                                onDelete = { viewModel.delete(row) },
+                                onToggleDone = { viewModel.toggleDone(row) },
+                            )
+                        }
                     }
                 }
             }

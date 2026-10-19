@@ -14,8 +14,9 @@ interface DdlDao {
     @Insert
     suspend fun insert(entity: DdlEntity): Long
 
+    /** @return 受影响行数；行不存在时为 0（Room @Update 语义）。 */
     @Update
-    suspend fun update(entity: DdlEntity)
+    suspend fun update(entity: DdlEntity): Int
 
     @Query("DELETE FROM ddls WHERE id = :id")
     suspend fun deleteById(id: Long)

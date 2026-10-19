@@ -18,6 +18,7 @@ data class DdlDraft(
     val note: String,
     val deadlineMillis: Long,
     val leadsMinutes: List<Long>,
+    val muted: Boolean = false,
 )
 
 enum class DdlFilter { ALL, ACTIVE, DONE }
@@ -28,7 +29,7 @@ data class DdlListUiState(
     val lastDeleted: DdlRow? = null,
 )
 
-private fun DdlEntity.toRow() = DdlRow(id, title, note, deadlineEpochMillis, leadsMinutes, isDone)
+private fun DdlEntity.toRow() = DdlRow(id, title, note, deadlineEpochMillis, leadsMinutes, isDone, muted)
 
 class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
 
@@ -75,6 +76,7 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
                     leadsMinutes = draft.leadsMinutes.distinct(),
                     isDone = isDone,
                     createdAt = createdAt,
+                    muted = draft.muted,
                 )
             )
         }

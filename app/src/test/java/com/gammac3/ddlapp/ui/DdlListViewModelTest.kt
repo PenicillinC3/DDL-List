@@ -36,10 +36,13 @@ class DdlListViewModelTest {
         private fun refresh() { flow.value = store.values.toList() }
         override fun observeAll(): Flow<List<DdlEntity>> = flow
         override suspend fun insert(entity: DdlEntity): Long {
-            val id = (store.keys.maxOrNull() ?: 0L) + 1
+            val id = if (entity.id != 0L) entity.id else (store.keys.maxOrNull() ?: 0L) + 1
             store[id] = entity.copy(id = id); refresh(); return id
         }
-        override suspend fun update(entity: DdlEntity) { store[entity.id] = entity; refresh() }
+        override suspend fun update(entity: DdlEntity): Int {
+            if (!store.containsKey(entity.id)) return 0
+            store[entity.id] = entity; refresh(); return 1
+        }
         override suspend fun deleteById(id: Long) { store.remove(id); refresh() }
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }

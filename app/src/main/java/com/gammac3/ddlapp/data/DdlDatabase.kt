@@ -6,13 +6,15 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [DdlEntity::class], version = 1, exportSchema = false)
+@Database(entities = [DdlEntity::class], version = 2, exportSchema = false)
 @TypeConverters(LeadsConverter::class)
 abstract class DdlDatabase : RoomDatabase() {
     abstract fun dao(): DdlDao
 
     companion object {
         fun build(context: Context): DdlDatabase =
-            Room.databaseBuilder(context, DdlDatabase::class.java, "ddl.db").build()
+            Room.databaseBuilder(context, DdlDatabase::class.java, "ddl.db")
+                .fallbackToDestructiveMigration(true)
+                .build()
     }
 }

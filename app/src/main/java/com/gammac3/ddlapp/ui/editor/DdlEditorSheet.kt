@@ -34,13 +34,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.gammac3.ddlapp.model.DdlRow
+import com.gammac3.ddlapp.notify.CandidateLeads
 import com.gammac3.ddlapp.notify.LeadLabels
 import com.gammac3.ddlapp.ui.list.DdlDraft
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
-private val LEAD_CHOICES = listOf(5L, 15L, 30L, 60L, 180L, 1440L, 4320L, 10080L)
+private val LEAD_CHOICES: List<Long> = CandidateLeads.ALL.filter { it > 0 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -68,6 +70,7 @@ fun DdlEditorSheet(
         )
     }
     var leads by remember(stateKey) { mutableStateOf(editing?.leadsMinutes?.toSet() ?: emptySet()) }
+    var muted by remember(stateKey) { mutableStateOf(editing?.muted ?: false) }
 
     var showDate by remember { mutableStateOf(false) }
     var showTime by remember { mutableStateOf(false) }
@@ -115,12 +118,23 @@ fun DdlEditorSheet(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                FilterChip(
+                    selected = muted,
+                    label = { Text("不提醒") },
+                    onClick = {
+                        muted = !muted
+                        if (muted) leads = emptySet()
+                    },
+                )
                 LEAD_CHOICES.forEach { lead ->
                     val selected = lead in leads
                     FilterChip(
                         selected = selected,
                         label = { Text(LeadLabels.text(lead)) },
-                        onClick = { leads = if (selected) leads - lead else leads + lead },
+                        onClick = {
+                            leads = if (selected) leads - lead else leads + lead
+                            muted = false
+                        },
                     )
                 }
             }
@@ -141,6 +155,7 @@ fun DdlEditorSheet(
                                 note = note,
                                 deadlineMillis = z.toInstant().toEpochMilli(),
                                 leadsMinutes = leads.sorted(),
+                                muted = muted,
                             ),
                             editing?.id,
                         )
@@ -163,14 +178,14 @@ fun DdlEditorSheet(
     if (showDate) {
         val pickerState = rememberDatePickerState(
             initialSelectedDateMillis = z.toLocalDate()
-                .atStartOfDay(zone).toInstant().toEpochMilli()
+                .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         )
         DatePickerDialog(
             onDismissRequest = { showDate = false },
             confirmButton = {
                 TextButton(onClick = {
                     pickerState.selectedDateMillis?.let { picked ->
-                        val newDate = Instant.ofEpochMilli(picked).atZone(zone).toLocalDate()
+                        val newDate = Instant.ofEpochMilli(picked).atZone(ZoneOffset.UTC).toLocalDate()
                         z = newDate.atTime(z.hour, z.minute).atZone(zone)
                     }
                     showDate = false

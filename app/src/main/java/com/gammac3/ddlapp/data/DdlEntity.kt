@@ -13,6 +13,7 @@ data class DdlEntity(
     val leadsMinutes: List<Long>,
     val isDone: Boolean = false,
     val createdAt: Long,
+    val muted: Boolean = false,
 )
 
 class LeadsConverter {

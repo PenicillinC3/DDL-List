@@ -50,10 +50,15 @@ fun DdlItemCard(
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Text(
-                    text = Format.remaining(row.deadlineMillis, nowMillis),
+                    text = if (row.isDone) "已完成"
+                    else Format.remaining(row.deadlineMillis, nowMillis),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = if (overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    color = when {
+                        row.isDone -> MaterialTheme.colorScheme.onSurfaceVariant
+                        overdue -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.primary
+                    },
                 )
             }
             if (row.note.isNotBlank()) {
@@ -64,13 +69,16 @@ fun DdlItemCard(
                     maxLines = 1,
                 )
             }
-            if (row.leadsMinutes.isNotEmpty()) {
-                Text(
-                    text = "🔔 提前 " + row.leadsMinutes.sorted().joinToString(" / ") { Format.leadText(it) },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
-            }
+            Text(
+                text = when {
+                    row.muted -> "🔕 不提醒"
+                    row.leadsMinutes.isEmpty() -> "🔔 到期时提醒"
+                    else -> "🔔 提前 " + row.leadsMinutes.sorted()
+                        .joinToString(" / ") { Format.leadText(it) }
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
         }
     }
 }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -22,10 +23,13 @@ class DdlRepositoryTest {
 
         override fun observeAll(): Flow<List<DdlEntity>> = flow.map { it }
         override suspend fun insert(entity: DdlEntity): Long {
-            val id = (store.keys.maxOrNull() ?: 0L) + 1
+            val id = if (entity.id != 0L) entity.id else (store.keys.maxOrNull() ?: 0L) + 1
             store[id] = entity.copy(id = id); refresh(); return id
         }
-        override suspend fun update(entity: DdlEntity) { store[entity.id] = entity; refresh() }
+        override suspend fun update(entity: DdlEntity): Int {
+            if (!store.containsKey(entity.id)) return 0
+            store[entity.id] = entity; refresh(); return 1
+        }
         override suspend fun deleteById(id: Long) { store.remove(id); refresh() }
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }
@@ -92,6 +96,27 @@ class DdlRepositoryTest {
         assertTrue(sch.cancelled.contains(id))
         assertNull(sch.scheduled[id])
         assertNull(dao.byId(id))
+    }
+
+    @Test
+    fun `删除后用原实体恢复时重新插入原行`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        val id = repo.upsert(newEntity(now + 3_600_000L))
+        val deleted = repo.delete(id)!!
+        val restored = repo.upsert(deleted)
+        assertEquals(id, restored)
+        assertNotNull(dao.byId(id))
+        assertNotNull(sch.scheduled[id])
+    }
+
+    @Test
+    fun `静音条目不排任何闹钟`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        val id = repo.upsert(newEntity(now + 3_600_000L).copy(muted = true))
+        assertNull(sch.scheduled[id])
+        assertTrue(sch.cancelled.contains(id))
     }
 
     @Test
