@@ -8,4 +8,7 @@ interface AlarmScheduler {
 
     /** 撤销该 DDL 的全部候选触发点。 */
     fun cancelAll(ddlId: Long)
+
+    /** 当前是否可排精确闹钟（Android 12+ 需要用户授权）；UI 横幅据此提示。 */
+    fun canScheduleExact(): Boolean
 }

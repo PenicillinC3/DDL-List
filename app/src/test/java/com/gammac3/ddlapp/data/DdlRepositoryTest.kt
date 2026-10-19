@@ -38,6 +38,7 @@ class DdlRepositoryTest {
             scheduled[ddlId] = triggers.toMutableList()
         }
         override fun cancelAll(ddlId: Long) { cancelled.add(ddlId); scheduled.remove(ddlId) }
+        override fun canScheduleExact(): Boolean = true
     }
 
     private val now = 200_000_000_000L
