@@ -3,6 +3,7 @@
 - 日期：2026-10-19
 - 状态：已获用户批准（2026-10-19 对话确认：精确提醒方案 + 纯本地存储）
 - 类型：全新项目（架构级）
+- 变更记录：实施裁决采纳 `compileSdk = 37`（钉死的最新 androidx 库要求 minCompileSdk=37，AGP 9.4.1 官方支持上限即 API 37）；`targetSdk` 维持 36。另因仓库路径含非 ASCII 字符与 AGP 9 默认值变更，`gradle.properties` 需三行兼容开关（overridePathCheck / builtInKotlin / newDsl），构建告警与 AGP 10 迁移记为已知债。
 
 ## 1. 目标
 
