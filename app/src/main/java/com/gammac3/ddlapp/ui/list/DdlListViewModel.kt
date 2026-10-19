@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -33,6 +34,7 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
 
     private val filter = MutableStateFlow(DdlFilter.ALL)
     private val lastDeleted = MutableStateFlow<DdlRow?>(null)
+    private val lastDeletedEntity = MutableStateFlow<DdlEntity?>(null)
 
     val uiState: StateFlow<DdlListUiState> =
         combine(repository.observeAll(), filter, lastDeleted) { entities, f, deleted ->
@@ -55,6 +57,15 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
 
     fun save(draft: DdlDraft, editingId: Long?) {
         viewModelScope.launch {
+            var isDone = false
+            var createdAt = System.currentTimeMillis()
+            if (editingId != null) {
+                val current = repository.observeAll().first().firstOrNull { it.id == editingId }
+                if (current != null) {
+                    isDone = current.isDone
+                    createdAt = current.createdAt
+                }
+            }
             repository.upsert(
                 DdlEntity(
                     id = editingId ?: 0L,
@@ -62,8 +73,8 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
                     note = draft.note.trim(),
                     deadlineEpochMillis = draft.deadlineMillis,
                     leadsMinutes = draft.leadsMinutes.distinct(),
-                    isDone = false,
-                    createdAt = System.currentTimeMillis(),
+                    isDone = isDone,
+                    createdAt = createdAt,
                 )
             )
         }
@@ -72,29 +83,24 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
     fun delete(row: DdlRow) {
         viewModelScope.launch {
             val snapshot = repository.delete(row.id) ?: return@launch
+            lastDeletedEntity.value = snapshot
             lastDeleted.value = snapshot.toRow()
         }
     }
 
     fun restoreDeleted() {
-        val d = lastDeleted.value ?: return
+        val entity = lastDeletedEntity.value ?: return
         viewModelScope.launch {
-            repository.upsert(
-                DdlEntity(
-                    id = d.id,
-                    title = d.title,
-                    note = d.note,
-                    deadlineEpochMillis = d.deadlineMillis,
-                    leadsMinutes = d.leadsMinutes,
-                    isDone = d.isDone,
-                    createdAt = d.deadlineMillis,
-                )
-            )
+            repository.upsert(entity)
+            lastDeletedEntity.value = null
             lastDeleted.value = null
         }
     }
 
-    fun clearDeleted() { lastDeleted.value = null }
+    fun clearDeleted() {
+        lastDeletedEntity.value = null
+        lastDeleted.value = null
+    }
 
     fun toggleDone(row: DdlRow) {
         viewModelScope.launch { repository.setDone(row.id, !row.isDone) }

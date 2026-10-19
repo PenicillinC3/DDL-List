@@ -53,11 +53,12 @@ class DdlListViewModelTest {
     }
 
     private lateinit var vm: DdlListViewModel
+    private lateinit var dao: FakeDdlDao
 
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher)
-        val dao = FakeDdlDao()
+        dao = FakeDdlDao()
         vm = DdlListViewModel(DdlRepository(dao, FakeScheduler()) { now })
     }
 
@@ -99,5 +100,41 @@ class DdlListViewModelTest {
         vm.setFilter(DdlFilter.ACTIVE)
         dispatcher.scheduler.advanceUntilIdle()
         assertEquals(0, vm.uiState.value.rows.size)
+    }
+
+    @Test
+    fun `编辑已完成条目保持完成状态`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        val deadline = now + 3_600_000L
+        vm.save(DdlDraft("A", "", deadline, emptyList()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        vm.toggleDone(row)
+        dispatcher.scheduler.advanceUntilIdle()
+        vm.save(DdlDraft("A2", "", deadline, emptyList()), row.id)
+        dispatcher.scheduler.advanceUntilIdle()
+        vm.setFilter(DdlFilter.DONE)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.rows.size)
+        assertEquals("A2", vm.uiState.value.rows.first().title)
+        vm.setFilter(DdlFilter.ACTIVE)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, vm.uiState.value.rows.size)
+    }
+
+    @Test
+    fun `撤销删除还原原始 createdAt`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("A", "", now + 3_600_000L, emptyList()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        val before = dao.byId(row.id)!!
+        vm.delete(row)
+        dispatcher.scheduler.advanceUntilIdle()
+        vm.restoreDeleted()
+        dispatcher.scheduler.advanceUntilIdle()
+        val after = dao.byId(row.id)!!
+        assertEquals(before.createdAt, after.createdAt)
+        assertEquals(before.isDone, after.isDone)
     }
 }
