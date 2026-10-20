@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.gammac3.ddlapp.MainActivity
 import com.gammac3.ddlapp.logic.TriggerPoint
 
 /** UI 里可选择的全部提前量（分钟）；到期时刻（0）不计入编辑选择、但计入候选。 */
@@ -41,12 +42,28 @@ class AndroidAlarmScheduler(private val context: Context) : AlarmScheduler {
             context, requestCode(ddlId, trigger.leadMinutes), intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        if (canScheduleExact()) {
+        if (trigger.leadMinutes == 0L) {
+            // 截止命中：走「闹钟」通道（setAlarmClock）——S+ 无需精确闹钟权限，且即使深睡/极省电
+            // 系统也不允许延迟该通道；代价是排程期间通知栏常驻一枚时钟小图标。
+            alarmManager.setAlarmClock(
+                AlarmManager.AlarmClockInfo(trigger.triggerAtMillis, alarmClockShowIntent()),
+                pi,
+            )
+        } else if (canScheduleExact()) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.triggerAtMillis, pi)
         } else {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.triggerAtMillis, pi)
         }
     }
+
+    /** 「闹钟在排程」图标点击后展示的主界面（PendingIntent 展示面，无特殊要求）。 */
+    private fun alarmClockShowIntent(): PendingIntent = PendingIntent.getActivity(
+        context, SHOW_REQUEST,
+        Intent(context, MainActivity::class.java),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    private companion object { const val SHOW_REQUEST = 77_001 }
 
     /** 取消搜索时不带 extras：PendingIntent 匹配按组件而非 extras，因此能命中同一 requestCode 的旧 alarm。 */
     private fun pendingIntent(ddlId: Long, lead: Long, flags: Int): PendingIntent? {

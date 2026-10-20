@@ -1,9 +1,11 @@
 package com.gammac3.ddlapp.ui.list
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -129,11 +131,16 @@ fun DdlListScreen(
 
     // 精确闹钟（Android 12+，canScheduleExact 内部处理低版本）
     var exactOk by remember { mutableStateOf(true) }
+    // 电池白名单（准点保障）：回前台按系统真源刷新；「先不」仅本次会话收起
+    var batteryWhitelisted by remember { mutableStateOf(true) }
+    var batteryCardDismissed by rememberSaveable { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
         notifGranted = NotificationManagerCompat.from(context).areNotificationsEnabled()
         if (notifGranted) notifDenied = false
         exactOk = (context.applicationContext as DdlApplication)
             .container.scheduler.canScheduleExact()
+        batteryWhitelisted = (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
+            .isIgnoringBatteryOptimizations(context.packageName)
         onPauseOrDispose { }
     }
 
@@ -209,6 +216,30 @@ fun DdlListScreen(
                         }
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                 )
+            }
+            // 电池优化豁免引导（准点保障）：厂商省电策略会压后台闹钟，加白名单显著减小延迟
+            if (!batteryWhitelisted && !batteryCardDismissed) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                    Uri.parse("package:${context.packageName}"),
+                                )
+                            )
+                        },
+                        modifier = Modifier.weight(1f, fill = false),
+                    ) {
+                        Text(
+                            "🔋 后台省电时闹钟可能被延迟，点击加入电池白名单",
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    TextButton(onClick = { batteryCardDismissed = true }) {
+                        Text("先不", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
             // 过滤 chips
             Row(

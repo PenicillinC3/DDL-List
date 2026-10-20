@@ -36,6 +36,7 @@ class NotificationHelper(private val context: Context) {
             .setContentTitle(title)
             .setContentText(text)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(openIntent)
             .setAutoCancel(true)
             .build()
