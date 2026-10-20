@@ -33,8 +33,10 @@ fun DdlItemCard(
     nowMillis: Long,
     overdue: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit,
 ) {
+    // 纯展示卡（R46）：此前 Card(onClick=…) 是高层 clickable，会参与横向手势竞争——
+    // 悬停/划回拖动的「松手结算」若被它截断，卡片就会停在阻尼渐近线（真机截图病例）。
+    // 点击统一收敛到整行的 detectTapGestures（见 SwipeRow）。
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -42,7 +44,6 @@ fun DdlItemCard(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        onClick = onClick,
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Text(

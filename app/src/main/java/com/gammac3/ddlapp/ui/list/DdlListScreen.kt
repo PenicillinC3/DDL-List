@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,7 +93,6 @@ import com.gammac3.ddlapp.ui.theme.HanFont
 import com.gammac3.ddlapp.ui.theme.TitleFont
 import java.time.ZoneId
 import kotlin.math.exp
-import kotlin.math.ln
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
@@ -407,24 +407,28 @@ private fun SwipeRow(
     onToggleDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 手势自绘（R44）：SwipeToDismissBox「一口气划走整卡」手感差，且从悬停态收回时
-    // 会过冲到 StartToEnd 锚点误触「标为已完成」。规则收敛为：
-    // 左划最多拖到恰好露出「删除」即停靠（行程带阻尼）；悬停中右划只收回，永不误触。
+    // 手势自绘（R44 立骨架，R46 重做映射）：左划最多拖到恰好露出「删除」即停靠；悬停中
+    // 右划只收回，永不误触「已完成」。位移映射 = 工作区线性 1:1 跟手，越过 92dp/64dp
+    // 边界才上橡皮筋（渐近 24dp 并硬夹），停靠位在数学上不可能再漂到阻尼渐近线；
+    // 另设 10 秒看门狗：结算若丢失强制归位，杜绝「停在深水区」复现。
     val openPx = with(LocalDensity.current) { 92.dp.toPx() }
     val donePx = with(LocalDensity.current) { 64.dp.toPx() }
-    val capLeft = openPx * 1.45f   // 左向阻尼渐近上限
-    val capRight = donePx * 1.6f   // 右向
+    val rubberPx = with(LocalDensity.current) { 24.dp.toPx() }   // 越界橡皮筋渐近上限
+    val labelBias = with(LocalDensity.current) { 40.dp.toPx() } // 标签内收补偿（padding 24 + 半字宽 16）
 
-    var raw by remember { mutableFloatStateOf(0f) }     // 未阻尼累计行程
+    var raw by remember { mutableFloatStateOf(0f) }     // 线性等价行程（工作区内 = 视觉位移）
     var anchor by remember { mutableFloatStateOf(0f) }  // 松手落点：0 或 -openPx
     var dragging by remember { mutableStateOf(false) }
     var fromOpen by remember { mutableStateOf(false) }
     var dragStartRaw by remember { mutableFloatStateOf(0f) } // 本次手势起点的 raw
 
-    // 阻尼映射：起段线性跟手，越接近上限越像拉橡皮筋
-    fun resist(x: Float): Float =
-        if (x >= 0f) capRight * (1f - exp(-x / capRight)) else -capLeft * (1f - exp(x / capLeft))
-    fun rawFor(a: Float): Float = if (a < 0f) capLeft * ln(1f + a / capLeft) else 0f
+    // 位移映射：工作区（0..-openPx、0..+donePx）线性 1:1；越界才像拉橡皮筋（渐近上限），
+    // 末端再 coerce 硬夹一道保险
+    fun visualFor(r: Float): Float = when {
+        r < -openPx -> -(openPx + rubberPx * (1f - exp((r + openPx) / rubberPx)))
+        r > donePx -> donePx + rubberPx * (1f - exp(-(r - donePx) / rubberPx))
+        else -> r
+    }.coerceIn(-(openPx + rubberPx), donePx + rubberPx)
 
     fun settle() {
         dragging = false
@@ -437,11 +441,11 @@ private fun SwipeRow(
             raw >= donePx && !row.isDone -> { onToggleDone(); anchor = 0f }
             else -> anchor = 0f
         }
-        raw = rawFor(anchor)
+        raw = anchor
     }
 
     val visualState = animateFloatAsState(
-        targetValue = if (dragging) resist(raw) else anchor,
+        targetValue = if (dragging) visualFor(raw) else anchor,
         animationSpec = if (dragging) snap() else spring(),
         label = "swipeOffset",
     )
@@ -455,9 +459,13 @@ private fun SwipeRow(
             raw = 0f
         }
     }
-    // 悬停中点卡片本体 = 先收回（防误进编辑器）
-    val cardClick: () -> Unit = {
-        if (docked) { anchor = 0f; raw = 0f } else onClick()
+    // 看门狗（R46）：任何路径若让 dragging 悬而不决（结算丢失），10 秒强制归位，
+    // 彻底杜绝「停靠位停在深水区」的病例；正常手势远短于此，永不触发
+    LaunchedEffect(dragging) {
+        if (dragging) {
+            delay(10_000)
+            if (dragging) settle()
+        }
     }
 
     val errBg = MaterialTheme.colorScheme.errorContainer
@@ -469,8 +477,18 @@ private fun SwipeRow(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            // 手势挂整行（R45）：从卡片或露出的底衬任意位置起划都能拖（此前只挂卡片本体，
-            // 点在红色底衬上划回无效）；点击仍由卡片/删除钮各自处理
+            // 点击收敛整行（R46）：卡片本体不再自带 clickable（Card(onClick) 参与横向手势
+            // 竞争，是结算丢失的头号嫌疑）。悬停中点本体 = 收拢（读快照态保新鲜），
+            // 未悬停点本体 = 进编辑器；红底点按仍走下方 bg 的 clickable(enabled=docked) 删除
+            .pointerInput(row.id) {
+                detectTapGestures {
+                    if (anchor <= -openPx * 0.95f) {
+                        anchor = 0f
+                        raw = 0f
+                    } else onClick()
+                }
+            }
+            // 手势挂整行（R45）：从卡片或露出的底衬任意位置起划都能拖；松手必经 settle
             .pointerInput(row.id) {
                 detectHorizontalDragGestures(
                     onDragStart = { _ ->
@@ -505,7 +523,9 @@ private fun SwipeRow(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .graphicsLayer { alpha = ((-visualState.value) / (openPx * 0.6f)).coerceIn(0f, 1f) }
-                .offset { IntOffset((visualState.value * 0.5f).roundToInt(), 0) }
+                // 居中补偿（R46）：CenterEnd 锚定右缘，原 offset 只退半程会让字心落在
+                // 揭示区中点外 40dp——首字下半被卡片盖住（真机截图病例）；内收 40dp 后字心恰在中点
+                .offset { IntOffset((visualState.value * 0.5f + labelBias).roundToInt(), 0) }
                 .padding(end = 24.dp),
         )
         Text(
@@ -515,14 +535,15 @@ private fun SwipeRow(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .graphicsLayer { alpha = (visualState.value / donePx).coerceIn(0f, 1f) }
-                .offset { IntOffset((visualState.value * 0.5f).roundToInt(), 0) }
+                // 同上（R46）：右向揭出区 64dp 更窄，半程+40dp 内收让「完成」字心落中点
+                .offset { IntOffset((visualState.value * 0.5f - labelBias).roundToInt(), 0) }
                 .padding(start = 20.dp),
         )
         Box(
             Modifier
                 .offset { IntOffset(visualState.value.roundToInt(), 0) },
         ) {
-            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = cardClick)
+            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue)
         }
     }
 }
