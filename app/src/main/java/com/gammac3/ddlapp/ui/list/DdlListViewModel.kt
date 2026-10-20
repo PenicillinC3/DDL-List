@@ -2,6 +2,7 @@ package com.gammac3.ddlapp.ui.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.data.DdlEntity
 import com.gammac3.ddlapp.data.DdlRepository
 import com.gammac3.ddlapp.model.DdlRow
@@ -119,6 +120,13 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
     fun toggleDone(row: DdlRow) {
         viewModelScope.launch { repository.setDone(row.id, !row.isDone) }
     }
+
+    /** 导出全部条目为备份 JSON v1（含已完成与静音）。 */
+    suspend fun exportJson(): String = repository.exportJson()
+
+    /** 备份导入；文件不合法时 IllegalArgumentException 原样抛出（screen 侧 Toast 提示）。 */
+    suspend fun importJson(text: String, replace: Boolean): DdlBackup.ImportResult =
+        repository.importBackup(text, replace)
 
     companion object {
         const val WINDOW_MILLIS = 5_000L

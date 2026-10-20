@@ -1,5 +1,6 @@
 package com.gammac3.ddlapp.ui
 
+import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.data.DdlDao
 import com.gammac3.ddlapp.data.DdlEntity
 import com.gammac3.ddlapp.data.DdlRepository
@@ -46,6 +47,7 @@ class DdlListViewModelTest {
         override suspend fun deleteById(id: Long) { store.remove(id); refresh() }
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }
+        override suspend fun all(): List<DdlEntity> = store.values.toList()
     }
 
     private class FakeScheduler : AlarmScheduler {
@@ -168,5 +170,62 @@ class DdlListViewModelTest {
         val after = dao.byId(row.id)!!
         assertEquals(before.createdAt, after.createdAt)
         assertEquals(before.isDone, after.isDone)
+    }
+
+    @Test
+    fun `导出生成的备份文本可回读`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("甲", "注", now + 3_600_000L, listOf(5L)), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val restored = DdlBackup.fromJson(vm.exportJson())
+        assertEquals(1, restored.size)
+        assertEquals("甲", restored.first().title)
+        assertEquals("注", restored.first().note)
+    }
+
+    @Test
+    fun `追加导入按软去重跳过同题同限`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("概率论", "", now + 3_600_000L, listOf()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val json = DdlBackup.toJson(
+            listOf(
+                DdlEntity(0, "概率论", "", now + 3_600_000L, emptyList(), false, now),
+                DdlEntity(0, "高数", "", now + 86_400_000L, emptyList(), false, now),
+            ),
+            now,
+        )
+        val r = vm.importJson(json, replace = false)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, r.affected)
+        assertEquals(1, r.skipped)
+        assertEquals(2, vm.uiState.value.rows.size)
+    }
+
+    @Test
+    fun `覆盖导入清空原库写入备份条目`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("旧", "", now + 3_600_000L, listOf()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val json = DdlBackup.toJson(
+            listOf(
+                DdlEntity(0, "新1", "", now + 10_000_000L, emptyList(), false, now),
+                DdlEntity(0, "新2", "", now + 20_000_000L, emptyList(), true, now),
+            ),
+            now,
+        )
+        vm.importJson(json, replace = true)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(setOf("新1", "新2"), vm.uiState.value.rows.map { it.title }.toSet())
+    }
+
+    @Test
+    fun `导入坏文件原样抛出且库不动`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("留守", "", now + 3_600_000L, listOf()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val thrown = runCatching { vm.importJson("not a json", false) }.exceptionOrNull()
+        assertEquals("invalid-json", thrown?.message)
+        assertEquals(1, vm.uiState.value.rows.size)
     }
 }

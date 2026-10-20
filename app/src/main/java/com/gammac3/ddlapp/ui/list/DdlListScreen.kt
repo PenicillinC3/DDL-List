@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -39,10 +40,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -59,6 +64,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -88,6 +94,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gammac3.ddlapp.DdlApplication
+import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.logic.DdlGrouper
 import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.model.DdlGroup
@@ -95,10 +102,14 @@ import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.theme.FigureFont
 import com.gammac3.ddlapp.ui.theme.HanFont
 import com.gammac3.ddlapp.ui.theme.TitleFont
+import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.exp
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private val groupOrder = listOf(
     DdlGroup.OVERDUE, DdlGroup.TODAY, DdlGroup.TOMORROW,
@@ -162,6 +173,97 @@ fun DdlListScreen(
         onPauseOrDispose { }
     }
 
+    // ---- 备份导入导出（⋯ 菜单 → SAF 选文件 → 追加/覆盖二级弹窗）----
+    val scope = rememberCoroutineScope()
+    val toast: (String) -> Unit = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    var pendingImportText by remember { mutableStateOf<String?>(null) }
+    var pendingImportCount by remember { mutableIntStateOf(0) }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    val json = viewModel.exportJson()
+                    val count = DdlBackup.fromJson(json).size
+                    withContext(Dispatchers.IO) {
+                        (context.contentResolver.openOutputStream(uri) ?: error("输出流打开失败"))
+                            .use { it.write(json.toByteArray(Charsets.UTF_8)) }
+                    }
+                    toast("导出完成：$count 条")
+                } catch (t: Throwable) {
+                    toast("导出失败：${t.message}")
+                }
+            }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    val text = withContext(Dispatchers.IO) {
+                        (context.contentResolver.openInputStream(uri) ?: error("无法读取所选文件"))
+                            .bufferedReader().use { it.readText() }
+                    }
+                    // 无效文件在此整体拒绝，弹窗根本不出
+                    pendingImportCount = DdlBackup.fromJson(text).size
+                    pendingImportText = text
+                } catch (t: Throwable) {
+                    toast("无法导入：${t.message}")
+                }
+            }
+        }
+    }
+    if (pendingImportText != null) {
+        val text = pendingImportText // 定格快照：确认回调里用
+        AlertDialog(
+            onDismissRequest = { pendingImportText = null },
+            title = { Text("导入 $pendingImportCount 条") },
+            text = {
+                Text(
+                    "追加：现有条目不动，同标题＋同截止的自动跳过。\n" +
+                        "覆盖恢复：先清空现有全部条目再写入，不可撤销。",
+                )
+            },
+            confirmButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = {
+                        if (text == null) return@TextButton
+                        pendingImportText = null
+                        scope.launch {
+                            try {
+                                val r = viewModel.importJson(text, replace = false)
+                                toast(
+                                    if (r.skipped == 0) "导入完成：新增 ${r.affected} 条"
+                                    else "导入完成：新增 ${r.affected} 条，跳过 ${r.skipped} 条重复",
+                                )
+                            } catch (t: Throwable) {
+                                toast("导入失败：${t.message}")
+                            }
+                        }
+                    }) { Text("追加到现有") }
+                    TextButton(onClick = {
+                        if (text == null) return@TextButton
+                        pendingImportText = null
+                        scope.launch {
+                            try {
+                                val r = viewModel.importJson(text, replace = true)
+                                toast("恢复完成：写入 ${r.affected} 条，原有 ${r.discarded} 条已清除")
+                            } catch (t: Throwable) {
+                                toast("导入失败：${t.message}")
+                            }
+                        }
+                    }) { Text("覆盖恢复", color = MaterialTheme.colorScheme.error) }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingImportText = null }) { Text("取消") }
+            },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -172,6 +274,36 @@ fun DdlListScreen(
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                     )
+                },
+                actions = {
+                    Box {
+                        var menuOpen by remember { mutableStateOf(false) }
+                        IconButton(onClick = { menuOpen = true }) {
+                            Text(
+                                "⋯",
+                                fontSize = 22.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text("导出 JSON") },
+                                onClick = {
+                                    menuOpen = false
+                                    exportLauncher.launch("DDL清单_" + LocalDate.now() + ".json")
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("导入 JSON") },
+                                onClick = {
+                                    menuOpen = false
+                                    importLauncher.launch(
+                                        arrayOf("application/json", "text/plain", "application/octet-stream"),
+                                    )
+                                },
+                            )
+                        }
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,

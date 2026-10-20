@@ -51,4 +51,19 @@ class DdlRepository(
     suspend fun rescheduleAll() {
         dao.allActive().forEach { rescheduleFor(it.id) }
     }
+
+    /** 全量条目（含已完成/静音）打包为备份 JSON v1。 */
+    suspend fun exportJson(): String = DdlBackup.toJson(dao.all(), clock())
+
+    /**
+     * 备份导入：先整体校验（fromJson 抛 IllegalArgumentException → 上层提示，库不动），
+     * 再落库（追加=软去重；覆盖=先插后清），落库后整库重排闹钟并回调 onChanged。
+     */
+    suspend fun importBackup(text: String, replace: Boolean): DdlBackup.ImportResult {
+        val parsed = DdlBackup.fromJson(text)
+        val result = if (replace) DdlBackup.importReplace(dao, parsed) else DdlBackup.importAppend(dao, parsed)
+        if (result.affected > 0) rescheduleAll()
+        onChanged?.invoke()
+        return result
+    }
 }

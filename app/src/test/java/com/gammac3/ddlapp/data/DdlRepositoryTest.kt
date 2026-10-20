@@ -33,6 +33,7 @@ class DdlRepositoryTest {
         override suspend fun deleteById(id: Long) { store.remove(id); refresh() }
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }
+        override suspend fun all(): List<DdlEntity> = store.values.toList()
     }
 
     private class FakeAlarmScheduler : AlarmScheduler {
@@ -129,5 +130,58 @@ class DdlRepositoryTest {
         repo.rescheduleAll()
         assertTrue(sch.scheduled.keys.contains(a))
         assertFalse(sch.scheduled.keys.contains(b))
+    }
+
+    @Test
+    fun `导出回读等于全部条目`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        repo.upsert(newEntity(now + 3_600_000L).copy(title = "甲"))
+        repo.upsert(newEntity(now + 7_200_000L).copy(title = "乙", isDone = true))
+        val back = DdlBackup.fromJson(repo.exportJson())
+        assertEquals(setOf("甲", "乙"), back.map { it.title }.toSet())
+        assertTrue(back.any { it.isDone })
+    }
+
+    @Test
+    fun `追加导入跳过重复并为新条目重建闹钟`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        repo.upsert(newEntity(now + 3_600_000L).copy(title = "概率论"))
+        val json = DdlBackup.toJson(
+            listOf(
+                DdlEntity(0, "概率论", "", now + 3_600_000L, listOf(5L), false, now),
+                DdlEntity(0, "高数", "", now + 86_400_000L, listOf(10L), false, now),
+            ), now,
+        )
+        val r = repo.importBackup(json, replace = false)
+        assertEquals(1, r.affected)
+        assertEquals(1, r.skipped)
+        val gaoshuId = dao.all().first { it.title == "高数" }.id
+        assertTrue(sch.scheduled.containsKey(gaoshuId))
+    }
+
+    @Test
+    fun `覆盖导入恢复全部并只给未完成非静音排闹钟`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        repo.upsert(newEntity(now + 3_600_000L).copy(title = "将被清掉"))
+        val json = DdlBackup.toJson(
+            listOf(
+                DdlEntity(0, "甲", "", now + 3_600_000L, listOf(5L), false, now),
+                DdlEntity(0, "乙", "", now + 3_600_000L, listOf(5L), true, now),
+                DdlEntity(0, "丙", "", now + 3_600_000L, listOf(5L), false, now, true),
+            ), now,
+        )
+        val r = repo.importBackup(json, replace = true)
+        assertEquals(3, r.affected)
+        assertEquals(1, r.discarded)
+        assertEquals(setOf("甲", "乙", "丙"), dao.all().map { it.title }.toSet())
+        val jiadaId = dao.all().first { it.title == "甲" }.id
+        val yidaId = dao.all().first { it.title == "乙" }.id
+        val bingdaId = dao.all().first { it.title == "丙" }.id
+        assertTrue(sch.scheduled.containsKey(jiadaId))
+        assertFalse(sch.scheduled.containsKey(yidaId))
+        assertFalse(sch.scheduled.containsKey(bingdaId))
     }
 }

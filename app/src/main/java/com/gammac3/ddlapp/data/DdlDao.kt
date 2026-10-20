@@ -26,4 +26,8 @@ interface DdlDao {
 
     @Query("SELECT * FROM ddls WHERE isDone = 0")
     suspend fun allActive(): List<DdlEntity>
+
+    /** 全量快照（含已完成）：导出备份用。 */
+    @Query("SELECT * FROM ddls")
+    suspend fun all(): List<DdlEntity>
 }
