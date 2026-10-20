@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 4×2「最近到期」单焦点卡（装饰：右上角台历红签 + 底部周尺）。
-     颜色为占位值，运行时随夜模式由 DdlWidgets 重设；西文×思源混排由代码 TypefaceSpan 完成（API≥28）。 -->
+     颜色为占位值，运行时随夜模式由 DdlWidgets 重设；西文×思源混排由代码 TypefaceSpan 完成（API≥28）。
+     ⚠️ 装饰条全部用 TextView：裸 <View> 不在 RemoteViews 白名单，启动器 apply 即报
+     「Class not allowed to be inflated」并吞成错误视图（1.13 根因，勿回退）。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
@@ -90,7 +92,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -102,7 +104,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -114,7 +116,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -126,7 +128,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -138,7 +140,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -150,7 +152,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -162,7 +164,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <View
+                    <TextView
                         android:layout_width="1dp"
                         android:layout_height="4dp"
                         android:layout_gravity="left|top"
@@ -170,7 +172,7 @@
                 </FrameLayout>
             </LinearLayout>
 
-            <View
+            <TextView
                 android:id="@+id/widget_ruler_track"
                 android:layout_width="match_parent"
                 android:layout_height="1.5dp"

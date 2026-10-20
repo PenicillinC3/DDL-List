@@ -151,7 +151,7 @@
                 android:layout_height="3dp"
                 android:layout_marginTop="2dp">
 
-                <View
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="1.5dp"
                     android:layout_gravity="center_vertical"
@@ -192,12 +192,12 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_red" />
 
-                    <View
+                    <TextView
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:layout_marginStart="3dp"
@@ -258,7 +258,7 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light" />
@@ -318,7 +318,7 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light" />

@@ -2,6 +2,11 @@
 
 本文件记录「DDL 清单」各版本的可见变更。格式参考 Keep a Changelog，版本号遵循语义化直觉（未发布阶段不做 breaking 承诺）。
 
+## [1.13] — 2026-10-20
+
+### 修复
+- **小组件「载入窗口小部件时出现问题」根因终审（真机日志定罪）**：启动器 RemoteViews apply 用带白名单过滤的 LayoutInflater，跑到装饰条标签 `android.view.View` 时报 `Class not allowed to be inflated`，ColorOS 把 InflateException 吞成错误视图不落栈（在 App 进程复刻 apply 才抓到全栈）。四款小组件布局（本体两张＋选择器预览两张）共 35 处裸 `<View>`（周尺轨道／7 根刻度／燃线／分隔线）全部改为白名单内的 `<TextView>`（空文本、同 ID 同背景同尺寸，渲染零差异）。此前 v1.9 / v1.9.1 的上下文与字体修复未中靶心：RemoteViews 构建不 inflate XML，只有启动器 apply 才炸——与「两款同炸、37 测全绿、无任何 E 级日志」全部自洽。诊断钩子（App 内复刻启动器侧 inflate+apply 抓栈）随本版一并拆除。
+
 ## [1.12] — 2026-10-20
 
 ### 新增

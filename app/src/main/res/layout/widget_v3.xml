@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 4×2「最近到期」多行卡（装饰：右上角台历红签 + 每行燃线 + 底部周多点条）。
-     颜色为占位值，运行时由 DdlWidgets 重设；行 3 视数据显隐。 -->
+     颜色为占位值，运行时由 DdlWidgets 重设；行 3 视数据显隐。
+     ⚠️ 装饰条全部用 TextView：裸 <View> 不在 RemoteViews 白名单，启动器 apply 即报
+     「Class not allowed to be inflated」并吞成错误视图（1.13 根因，勿回退）。 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
@@ -205,13 +207,13 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot0_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_red" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot0_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
@@ -248,14 +250,14 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot1_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light"
                         android:visibility="gone" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot1_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
@@ -293,14 +295,14 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot2_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light"
                         android:visibility="gone" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot2_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
@@ -338,14 +340,14 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot3_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light"
                         android:visibility="gone" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot3_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
@@ -383,14 +385,14 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot4_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light"
                         android:visibility="gone" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot4_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
@@ -428,14 +430,14 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot5_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light"
                         android:visibility="gone" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot5_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
@@ -473,14 +475,14 @@
                     android:gravity="center"
                     android:orientation="horizontal">
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot6_a"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
                         android:background="@drawable/dot_ind_light"
                         android:visibility="gone" />
 
-                    <View
+                    <TextView
                         android:id="@+id/widget_week_dot6_b"
                         android:layout_width="5dp"
                         android:layout_height="5dp"
