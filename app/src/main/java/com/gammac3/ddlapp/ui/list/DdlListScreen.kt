@@ -12,12 +12,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +30,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,16 +44,14 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,7 +66,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
@@ -73,6 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
@@ -86,6 +91,9 @@ import com.gammac3.ddlapp.ui.theme.FigureFont
 import com.gammac3.ddlapp.ui.theme.HanFont
 import com.gammac3.ddlapp.ui.theme.TitleFont
 import java.time.ZoneId
+import kotlin.math.exp
+import kotlin.math.ln
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
 private val groupOrder = listOf(
@@ -389,7 +397,6 @@ fun DdlListScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeRow(
     row: DdlRow,
@@ -400,73 +407,113 @@ private fun SwipeRow(
     onToggleDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            // 左划不再直接删——停靠悬停露出「删除」，点按按钮才真的删（R42）
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                true
-            } else if (value == SwipeToDismissBoxValue.StartToEnd) {
-                onToggleDone(); false // 不消失，仅切换完成状态
-            } else false
+    // 手势自绘（R44）：SwipeToDismissBox「一口气划走整卡」手感差，且从悬停态收回时
+    // 会过冲到 StartToEnd 锚点误触「标为已完成」。规则收敛为：
+    // 左划最多拖到恰好露出「删除」即停靠（行程带阻尼）；悬停中右划只收回，永不误触。
+    val openPx = with(LocalDensity.current) { 92.dp.toPx() }
+    val donePx = with(LocalDensity.current) { 64.dp.toPx() }
+    val capLeft = openPx * 1.45f   // 左向阻尼渐近上限
+    val capRight = donePx * 1.6f   // 右向
+
+    var raw by remember { mutableFloatStateOf(0f) }     // 未阻尼累计行程
+    var anchor by remember { mutableFloatStateOf(0f) }  // 松手落点：0 或 -openPx
+    var dragging by remember { mutableStateOf(false) }
+    var fromOpen by remember { mutableStateOf(false) }
+
+    // 阻尼映射：起段线性跟手，越接近上限越像拉橡皮筋
+    fun resist(x: Float): Float =
+        if (x >= 0f) capRight * (1f - exp(-x / capRight)) else -capLeft * (1f - exp(x / capLeft))
+    fun rawFor(a: Float): Float = if (a < 0f) capLeft * ln(1f + a / capLeft) else 0f
+
+    fun settle() {
+        dragging = false
+        if (fromOpen) {
+            // 悬停中右划只收回（回程中点即落锚收回），切换完成只许「完全收拢」状态下右划
+            anchor = if (raw >= rawFor(-openPx * 0.5f)) 0f else -openPx
+        } else when {
+            raw <= -openPx * 0.55f -> anchor = -openPx
+            raw >= donePx && !row.isDone -> { onToggleDone(); anchor = 0f }
+            else -> anchor = 0f
         }
+        raw = rawFor(anchor)
+    }
+
+    val visualState = animateFloatAsState(
+        targetValue = if (dragging) resist(raw) else anchor,
+        animationSpec = if (dragging) snap() else spring(),
+        label = "swipeOffset",
     )
-    val docked = dismissState.currentValue == SwipeToDismissBoxValue.EndToStart
-    // 悬停安全带：数秒内不点删除即自动收回，行不长期停在「待删」态
+
+    val docked = !dragging && anchor <= -openPx * 0.95f
+    // 悬停安全带：3.5 秒不点删除自动收回
     LaunchedEffect(docked) {
         if (docked) {
             delay(3_500)
-            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            anchor = 0f
+            raw = 0f
         }
     }
-    SwipeToDismissBox(
-        state = dismissState,
-        // 悬停中允许右划收回（已完成条目平时禁右滑，但收回应放行）
-        enableDismissFromStartToEnd = !row.isDone || docked,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            // 衬底只在划动中按方向显色（静置全透明），并剪成与卡片一致的 16dp 圆角——
-            // 旧实现是常驻直角红底，从卡片圆角四角漏出（R41 修复）。
-            val target = dismissState.targetValue
-            Box(
-                Modifier.fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        when (target) {
-                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                            SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
-                            else -> Color.Transparent
-                        }
-                    )
-                    .clickable(
-                        enabled = target == SwipeToDismissBoxValue.EndToStart,
-                        onClick = onDelete,
-                    ),
-                contentAlignment = if (target == SwipeToDismissBoxValue.StartToEnd) {
-                    Alignment.CenterStart
-                } else {
-                    Alignment.CenterEnd
-                },
-            ) {
-                when (target) {
-                    SwipeToDismissBoxValue.EndToStart -> Text(
-                        text = "删除",
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(end = 24.dp),
-                    )
-                    SwipeToDismissBoxValue.StartToEnd -> Text(
-                        text = "完成",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 20.dp),
-                    )
-                    else -> {}
+    // 悬停中点卡片本体 = 先收回（防误进编辑器）
+    val cardClick: () -> Unit = {
+        if (docked) { anchor = 0f; raw = 0f } else onClick()
+    }
+
+    val errBg = MaterialTheme.colorScheme.errorContainer
+    val onErr = MaterialTheme.colorScheme.onErrorContainer
+    val doneBg = MaterialTheme.colorScheme.primaryContainer
+    val onDone = MaterialTheme.colorScheme.onPrimaryContainer
+
+    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
+        // 衬底：drawBehind 延迟读位移（拖动中零重组）；静置透明，右显「删除」红底、左显「完成」靛底
+        Box(
+            Modifier
+                .matchParentSize()
+                .drawBehind {
+                    when {
+                        visualState.value <= -8f -> drawRect(errBg)
+                        visualState.value >= donePx * 0.35f -> drawRect(doneBg)
+                    }
                 }
-            }
-        },
-    ) {
-        Box(modifier = modifier.fillMaxWidth()) {
-            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = onClick)
+                .clickable(enabled = docked, onClick = onDelete),
+        )
+        Text(
+            text = "删除",
+            color = onErr,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .graphicsLayer { alpha = ((-visualState.value) / (openPx * 0.6f)).coerceIn(0f, 1f) }
+                .offset { IntOffset((visualState.value * 0.5f).roundToInt(), 0) }
+                .padding(end = 24.dp),
+        )
+        Text(
+            text = "完成",
+            color = onDone,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .graphicsLayer { alpha = (visualState.value / donePx).coerceIn(0f, 1f) }
+                .offset { IntOffset((visualState.value * 0.5f).roundToInt(), 0) }
+                .padding(start = 20.dp),
+        )
+        Box(
+            Modifier
+                .offset { IntOffset(visualState.value.roundToInt(), 0) }
+                .pointerInput(row.id) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { _ ->
+                            dragging = true
+                            fromOpen = anchor <= -openPx * 0.95f
+                        },
+                        onDragEnd = { settle() },
+                        onDragCancel = { settle() },
+                    ) { change, dragAmount ->
+                        change.consume()
+                        raw += dragAmount
+                    }
+                },
+        ) {
+            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = cardClick)
         }
     }
 }
@@ -543,7 +590,7 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
     }
 }
 
-/** 虚线倒计时边框：头端沿框行进（旋转感），可见弧长 = 周长 × progress（消失感），dash 相位同步前滑。
+/** 虚线倒计时边框（擦除式）：缺口从框线起点单向扩张、可见弧逐秒减少，dash 相位恒定。
  *  PathEffect 走 android 原生画笔（Compose drawPath 无 pathEffect 参数），分段由 PathMeasure 截取。 */
 private fun Modifier.dashedCountdownBorder(progress: () -> Float, color: Color): Modifier = drawBehind {
     val p = progress().coerceIn(0f, 1f)
@@ -566,32 +613,13 @@ private fun Modifier.dashedCountdownBorder(progress: () -> Float, color: Color):
         strokeWidth = strokeW
         isAntiAlias = true
         this.color = color.toArgb()
-        pathEffect = android.graphics.DashPathEffect(
-            floatArrayOf(4.dp.toPx(), 3.5.dp.toPx()),
-            (1f - p) * total * 0.9f,
-        )
+        pathEffect = android.graphics.DashPathEffect(floatArrayOf(4.dp.toPx(), 3.5.dp.toPx()), 0f)
     }
-    val canvas = drawContext.canvas.nativeCanvas
-    if (p >= 0.999f) {
-        canvas.drawPath(apath, paint)
-        return@drawBehind
-    }
-    // 头端行进 1.35 圈；可见弧长随 p 收缩——尾端烧到头端追上的那一刻整圈熄灭
-    val start = total * ((1f - p) * 1.35f % 1f)
-    val end = start + total * p
-    if (end <= total) {
-        val seg = android.graphics.Path()
-        measure.getSegment(start, end, seg, true)
-        canvas.drawPath(seg, paint)
-    } else {
-        val s1 = android.graphics.Path()
-        val s2 = android.graphics.Path()
-        measure.getSegment(start, total, s1, true)
-        measure.getSegment(0f, end - total, s2, true)
-        val seg = android.graphics.Path()
-        seg.op(s1, s2, android.graphics.Path.Op.UNION)
-        canvas.drawPath(seg, paint)
-    }
+    // 擦除式倒计时（R44 重做）：缺口从框线起点沿路径单向扩张，可见弧长 = 周长 × p——
+    // 框线一点一点减少（无旋转、无相位滑动），烧尽即无
+    val seg = android.graphics.Path()
+    measure.getSegment(total * (1f - p), total, seg, true)
+    drawContext.canvas.nativeCanvas.drawPath(seg, paint)
 }
 
 /** 逾期组头小印章：朱文阳刻（纸底红框红字），斜盖 3°；首次出现或新增逾期项时「盖章」落下。 */

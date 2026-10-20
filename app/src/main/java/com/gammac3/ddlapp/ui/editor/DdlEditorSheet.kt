@@ -208,7 +208,7 @@ fun DdlEditorSheet(
                 ) { Text("保存") }
                 if (editing != null) {
                     TextButton(onClick = { onToggleDone(editing) }, modifier = Modifier.weight(1f)) {
-                        Text(if (editing.isDone) "标为未完成" else "标为已完成")
+                        Text(if (editing.isDone) "标为未完成" else "已完成")
                     }
                     TextButton(onClick = { onDelete(editing) }, modifier = Modifier.weight(1f)) {
                         Text("删除", color = MaterialTheme.colorScheme.error)

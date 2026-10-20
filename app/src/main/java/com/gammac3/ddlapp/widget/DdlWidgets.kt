@@ -39,14 +39,18 @@ object DdlWidgets {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    /** 幂等、可从任何线程调用；失败只吞掉（下次数据变动再刷）。 */
+    /** 幂等、可从任何线程调用；失败只记账（下次数据变动再刷），Log 可见便于真机诊断。 */
     fun refresh(context: Context) {
         val appContext = context.applicationContext
-        scope.launch { runCatching { updateAll(appContext) } }
+        scope.launch {
+            runCatching { updateAll(appContext) }
+                .onFailure { android.util.Log.w("DdlWidgets", "小组件刷新失败", it) }
+        }
     }
 
     suspend fun updateAll(context: Context) {
-        val app = context as? DdlApplication ?: return
+        // onUpdate 传进来的是受限包装上下文，直接 as? 会转型落空（R44 修复的「小组件用不了」根因）
+        val app = context.applicationContext as? DdlApplication ?: return
         val manager = AppWidgetManager.getInstance(context) ?: return
         val rows = app.container.database.dao().allActive().map { it.toRow() }
         val model = DdlWidgetModel.build(rows, System.currentTimeMillis(), ZoneId.systemDefault())
