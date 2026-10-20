@@ -376,16 +376,26 @@ private fun SwipeRow(
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
+            // 左划不再直接删——停靠悬停露出「删除」，点按按钮才真的删（R42）
             if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete(); true
+                true
             } else if (value == SwipeToDismissBoxValue.StartToEnd) {
                 onToggleDone(); false // 不消失，仅切换完成状态
             } else false
         }
     )
+    val docked = dismissState.currentValue == SwipeToDismissBoxValue.EndToStart
+    // 悬停安全带：数秒内不点删除即自动收回，行不长期停在「待删」态
+    LaunchedEffect(docked) {
+        if (docked) {
+            delay(3_500)
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
     SwipeToDismissBox(
         state = dismissState,
-        enableDismissFromStartToEnd = !row.isDone,
+        // 悬停中允许右划收回（已完成条目平时禁右滑，但收回应放行）
+        enableDismissFromStartToEnd = !row.isDone || docked,
         enableDismissFromEndToStart = true,
         backgroundContent = {
             // 衬底只在划动中按方向显色（静置全透明），并剪成与卡片一致的 16dp 圆角——
@@ -400,6 +410,10 @@ private fun SwipeRow(
                             SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
                             else -> Color.Transparent
                         }
+                    )
+                    .clickable(
+                        enabled = target == SwipeToDismissBoxValue.EndToStart,
+                        onClick = onDelete,
                     ),
                 contentAlignment = if (target == SwipeToDismissBoxValue.StartToEnd) {
                     Alignment.CenterStart
@@ -412,7 +426,7 @@ private fun SwipeRow(
                         text = "删除",
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(end = 20.dp),
+                        modifier = Modifier.padding(end = 24.dp),
                     )
                     SwipeToDismissBoxValue.StartToEnd -> Text(
                         text = "完成",
