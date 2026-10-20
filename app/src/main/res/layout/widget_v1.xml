@@ -25,7 +25,7 @@
             android:textColor="#FF5F6771"
             android:textSize="10sp"
             android:letterSpacing="0.14"
-            android:fontFamily="@font/source_han_cn_600" />
+/>
 
         <TextView
             android:id="@+id/widget_title"
@@ -38,7 +38,7 @@
             android:textSize="15sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:fontFamily="@font/source_han_cn_600" />
+/>
 
         <TextView
             android:id="@+id/widget_countdown"
@@ -51,7 +51,7 @@
             android:textSize="26sp"
             android:maxLines="1"
             android:letterSpacing="0.01"
-            android:fontFamily="@font/maple_mono_bold_data" />
+/>
 
         <TextView
             android:id="@+id/widget_date"
@@ -61,7 +61,7 @@
             android:textColor="#FF5F6771"
             android:textSize="11.5sp"
             android:letterSpacing="0.02"
-            android:fontFamily="@font/timeless_serif_text" />
+/>
 
         <TextView
             android:id="@+id/widget_meta"
@@ -71,7 +71,7 @@
             android:text="--"
             android:textColor="#FF5F6771"
             android:textSize="11sp"
-            android:fontFamily="@font/source_han_cn_400" />
+/>
 
         <!-- S2 周尺：7 段刻度 + 燃线进程 -->
         <FrameLayout
@@ -210,7 +210,7 @@
             android:textColor="#FFFFFFFF"
             android:textSize="7.5sp"
             android:letterSpacing="0.08"
-            android:fontFamily="@font/source_han_cn_600" />
+/>
 
         <TextView
             android:id="@+id/widget_calpg_day"
@@ -219,6 +219,6 @@
             android:text="22"
             android:textColor="#FFFFFFFF"
             android:textSize="15sp"
-            android:fontFamily="@font/timeless_serif_text" />
+/>
     </LinearLayout>
 </FrameLayout>

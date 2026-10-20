@@ -22,7 +22,7 @@
             android:textColor="#FF5F6771"
             android:textSize="10sp"
             android:letterSpacing="0.14"
-            android:fontFamily="@font/source_han_cn_600" />
+/>
 
         <!-- 行 1：今日急迫 -->
         <LinearLayout
@@ -45,7 +45,7 @@
                     android:textSize="13sp"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:fontFamily="@font/source_han_cn_500" />
+/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -55,7 +55,7 @@
                     android:textColor="#FFE5484D"
                     android:textSize="13sp"
                     android:maxLines="1"
-                    android:fontFamily="@font/maple_mono_bold_data" />
+/>
             </LinearLayout>
 
             <ProgressBar
@@ -89,7 +89,7 @@
                     android:textSize="13sp"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:fontFamily="@font/source_han_cn_500" />
+/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -99,7 +99,7 @@
                     android:textColor="#FF101828"
                     android:textSize="13sp"
                     android:maxLines="1"
-                    android:fontFamily="@font/maple_mono_bold_data" />
+/>
             </LinearLayout>
 
             <ProgressBar
@@ -133,7 +133,7 @@
                     android:textSize="13sp"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:fontFamily="@font/source_han_cn_500" />
+/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -143,7 +143,7 @@
                     android:textColor="#FF101828"
                     android:textSize="13sp"
                     android:maxLines="1"
-                    android:fontFamily="@font/maple_mono_bold_data" />
+/>
             </LinearLayout>
 
             <FrameLayout
@@ -399,7 +399,7 @@
             android:textColor="#FFFFFFFF"
             android:textSize="7.5sp"
             android:letterSpacing="0.08"
-            android:fontFamily="@font/source_han_cn_600" />
+/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -407,6 +407,6 @@
             android:text="20"
             android:textColor="#FFFFFFFF"
             android:textSize="15sp"
-            android:fontFamily="@font/timeless_serif_text" />
+/>
     </LinearLayout>
 </FrameLayout>

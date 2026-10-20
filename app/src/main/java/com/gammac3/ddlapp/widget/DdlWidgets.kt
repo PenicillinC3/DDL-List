@@ -129,12 +129,12 @@ object DdlWidgets {
 
     private fun renderV1(context: Context, rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
         val nearest = model.nearest
-        rv.setTextViewText(R.id.widget_header, "最近到期")
+        rv.setTextViewText(R.id.widget_header, mixed(context, "最近到期", R.font.source_han_cn_600, R.font.source_han_cn_600))
         rv.setTextColor(R.id.widget_header, p.gray)
-        applyCalTab(rv, p, nearest)
+        applyCalTab(context, rv, p, nearest)
         applyRuler(rv, p, model)
         if (nearest == null) {
-            rv.setTextViewText(R.id.widget_title, "现在很清净")
+            rv.setTextViewText(R.id.widget_title, mixed(context, "现在很清净", R.font.source_han_cn_600, R.font.source_han_cn_600))
             rv.setTextColor(R.id.widget_title, p.ink)
             rv.setTextViewText(R.id.widget_countdown, mixed(context, "——", R.font.maple_mono_bold_data, R.font.source_han_cn_700))
             rv.setTextColor(R.id.widget_countdown, p.gray)
@@ -146,7 +146,7 @@ object DdlWidgets {
         }
         val now = System.currentTimeMillis()
         val urgent = nearest.deadlineMillis - now < 24 * 3_600_000L
-        rv.setTextViewText(R.id.widget_title, nearest.title)
+        rv.setTextViewText(R.id.widget_title, mixed(context, nearest.title, R.font.source_han_cn_600, R.font.source_han_cn_600))
         rv.setTextColor(R.id.widget_title, p.ink)
         rv.setTextViewText(R.id.widget_countdown, mixed(context, Format.remaining(nearest.deadlineMillis, now), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
         rv.setTextColor(R.id.widget_countdown, if (urgent) p.red else p.ink)
@@ -157,9 +157,9 @@ object DdlWidgets {
     }
 
     private fun renderV3(context: Context, rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
-        rv.setTextViewText(R.id.widget_header, "最近到期")
+        rv.setTextViewText(R.id.widget_header, mixed(context, "最近到期", R.font.source_han_cn_600, R.font.source_han_cn_600))
         rv.setTextColor(R.id.widget_header, p.gray)
-        applyCalTab(rv, p, model.nearest)
+        applyCalTab(context, rv, p, model.nearest)
         val rows = model.upcoming
         rv.setViewVisibility(R.id.widget_row3_container, if (rows.size >= 3) android.view.View.VISIBLE else android.view.View.GONE)
         renderRow(context, rv, p, R.id.widget_row1_title, R.id.widget_row1_cd, R.id.widget_row1_fuse, rows.getOrNull(0), "现在很清净，没有即将到期的条目")
@@ -173,7 +173,9 @@ object DdlWidgets {
         titleId: Int, cdId: Int, fuseId: Int, row: DdlRow?, emptyTitle: String,
     ) {
         if (row == null) {
-            rv.setTextViewText(titleId, emptyTitle)
+            if (emptyTitle.isNotEmpty()) {
+                rv.setTextViewText(titleId, mixed(context, emptyTitle, R.font.source_han_cn_500, R.font.source_han_cn_500))
+            }
             rv.setTextColor(titleId, p.gray)
             rv.setTextViewText(cdId, "——")
             rv.setTextColor(cdId, p.gray)
@@ -181,7 +183,7 @@ object DdlWidgets {
             return
         }
         val urgent = row.deadlineMillis - System.currentTimeMillis() < 24 * 3_600_000L
-        rv.setTextViewText(titleId, row.title)
+        rv.setTextViewText(titleId, mixed(context, row.title, R.font.source_han_cn_500, R.font.source_han_cn_500))
         rv.setTextColor(titleId, p.ink)
         rv.setTextViewText(cdId, mixed(context, Format.remaining(row.deadlineMillis, System.currentTimeMillis()), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
         rv.setTextColor(cdId, if (urgent) p.red else p.ink)
@@ -190,7 +192,7 @@ object DdlWidgets {
 
     // ---------- 装饰：台历红签 ----------
 
-    private fun applyCalTab(rv: RemoteViews, p: Palette, row: DdlRow?) {
+    private fun applyCalTab(context: Context, rv: RemoteViews, p: Palette, row: DdlRow?) {
         if (row == null) {
             rv.setViewVisibility(R.id.widget_calpg, android.view.View.GONE)
             return
@@ -198,9 +200,9 @@ object DdlWidgets {
         rv.setViewVisibility(R.id.widget_calpg, android.view.View.VISIBLE)
         rv.setInt(R.id.widget_calpg, "setBackgroundResource", p.calpgBgRes)
         val z = Instant.ofEpochMilli(row.deadlineMillis).atZone(ZoneId.systemDefault())
-        rv.setTextViewText(R.id.widget_calpg_month, "${z.monthValue}月")
+        rv.setTextViewText(R.id.widget_calpg_month, mixed(context, "${z.monthValue}月", R.font.source_han_cn_600, R.font.source_han_cn_600))
         rv.setTextColor(R.id.widget_calpg_month, p.calpgInk)
-        rv.setTextViewText(R.id.widget_calpg_day, z.dayOfMonth.toString())
+        rv.setTextViewText(R.id.widget_calpg_day, mixed(context, z.dayOfMonth.toString(), R.font.timeless_serif_text, R.font.timeless_serif_text))
         rv.setTextColor(R.id.widget_calpg_day, p.calpgInk)
     }
 
