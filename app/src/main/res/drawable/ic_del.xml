@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- I1 线描垃圾桶（2026-10-20 定款，del-icon-proposals）：24dp 网格、1.6dp 圆头描边。
+     着色走使用处 tint（Compose Icon / 电子删除钮 error 色），不依赖 night resource 分色 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 桶盖横杆 -->
+    <path
+        android:pathData="M4,6.7 L20,6.7"
+        android:strokeColor="#FF202124"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round" />
+    <!-- 盖上提手 -->
+    <path
+        android:pathData="M9.7,6.7 L9.7,5.6 C9.7,4.7 10.4,4 11.3,4 L12.7,4 C13.6,4 14.3,4.7 14.3,5.6 L14.3,6.7"
+        android:strokeColor="#FF202124"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round" />
+    <!-- 筒身（微内收 + 圆底角，上缘接住桶盖线） -->
+    <path
+        android:pathData="M6,6.7 L6.7,18.9 C6.85,20.3 8,21.4 9.4,21.4 L14.6,21.4 C16,21.4 17.15,20.3 17.3,18.9 L18,6.7"
+        android:strokeColor="#FF202124"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <!-- 桶内两条竖肋 -->
+    <path
+        android:pathData="M10.35,10.8 L10.4,17"
+        android:strokeColor="#FF202124"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M13.65,10.8 L13.6,17"
+        android:strokeColor="#FF202124"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round" />
+</vector>

@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -41,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +63,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
@@ -86,6 +89,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gammac3.ddlapp.DdlApplication
 import com.gammac3.ddlapp.logic.DdlGrouper
+import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.model.DdlGroup
 import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.theme.FigureFont
@@ -415,6 +419,7 @@ private fun SwipeRow(
     val donePx = with(LocalDensity.current) { 64.dp.toPx() }
     val rubberPx = with(LocalDensity.current) { 24.dp.toPx() }   // 越界橡皮筋渐近上限
     val labelBias = with(LocalDensity.current) { 40.dp.toPx() } // 标签内收补偿（padding 24 + 半字宽 16）
+    val revealBias = with(LocalDensity.current) { 50.dp.toPx() } // 揭出区补偿（padding 24 + 半内容宽 26：图标15+缝4+删除32）
 
     var raw by remember { mutableFloatStateOf(0f) }     // 线性等价行程（工作区内 = 视觉位移）
     var anchor by remember { mutableFloatStateOf(0f) }  // 松手落点：0 或 -openPx
@@ -516,18 +521,30 @@ private fun SwipeRow(
                 }
                 .clickable(enabled = docked, onClick = onDelete),
         )
-        Text(
-            text = "删除",
-            color = onErr,
-            fontWeight = FontWeight.Bold,
+        // 揭出区「垃圾桶＋删除」（R47，I1 定款）：亮暗随主题 error/onError 自动适配
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .graphicsLayer { alpha = ((-visualState.value) / (openPx * 0.6f)).coerceIn(0f, 1f) }
-                // 居中补偿（R46）：CenterEnd 锚定右缘，原 offset 只退半程会让字心落在
-                // 揭示区中点外 40dp——首字下半被卡片盖住（真机截图病例）；内收 40dp 后字心恰在中点
-                .offset { IntOffset((visualState.value * 0.5f + labelBias).roundToInt(), 0) }
+                // 居中补偿承 R46：CenterEnd 锚定右缘 + 半程位移会让内容心偏出中点，
+                // 内收 revealBias 后恰落揭示区中点
+                .offset { IntOffset((visualState.value * 0.5f + revealBias).roundToInt(), 0) }
                 .padding(end = 24.dp),
-        )
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_del),
+                contentDescription = null,
+                tint = onErr,
+                modifier = Modifier.size(15.dp),
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = "删除",
+                color = onErr,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         Text(
             text = "完成",
             color = onDone,
