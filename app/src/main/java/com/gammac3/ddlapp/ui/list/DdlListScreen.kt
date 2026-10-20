@@ -57,6 +57,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -386,17 +388,40 @@ private fun SwipeRow(
         enableDismissFromStartToEnd = !row.isDone,
         enableDismissFromEndToStart = true,
         backgroundContent = {
+            // 衬底只在划动中按方向显色（静置全透明），并剪成与卡片一致的 16dp 圆角——
+            // 旧实现是常驻直角红底，从卡片圆角四角漏出（R41 修复）。
+            val target = dismissState.targetValue
             Box(
                 Modifier.fillMaxSize()
-                    .background(MaterialTheme.colorScheme.errorContainer),
-                contentAlignment = Alignment.CenterEnd,
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        when (target) {
+                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                            SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                            else -> Color.Transparent
+                        }
+                    ),
+                contentAlignment = if (target == SwipeToDismissBoxValue.StartToEnd) {
+                    Alignment.CenterStart
+                } else {
+                    Alignment.CenterEnd
+                },
             ) {
-                Text(
-                    text = "删除",
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(end = 20.dp),
-                )
+                when (target) {
+                    SwipeToDismissBoxValue.EndToStart -> Text(
+                        text = "删除",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(end = 20.dp),
+                    )
+                    SwipeToDismissBoxValue.StartToEnd -> Text(
+                        text = "完成",
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 20.dp),
+                    )
+                    else -> {}
+                }
             }
         },
     ) {
