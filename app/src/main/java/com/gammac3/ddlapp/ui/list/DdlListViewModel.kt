@@ -23,10 +23,18 @@ data class DdlDraft(
 
 enum class DdlFilter { ALL, ACTIVE, DONE }
 
+/** 墓碑槽：删除后先在原分组原位立一块可撤销的空槽，窗口（5 秒）走完才真正放弃。
+ *  row 用于展示与回插定位，entity 用于以原 id 还原。 */
+data class Tombstone(
+    val row: DdlRow,
+    val entity: DdlEntity,
+    val expiresAtMillis: Long,
+)
+
 data class DdlListUiState(
     val rows: List<DdlRow> = emptyList(),
     val filter: DdlFilter = DdlFilter.ALL,
-    val lastDeleted: DdlRow? = null,
+    val tombstones: List<Tombstone> = emptyList(),
 )
 
 private fun DdlEntity.toRow() = DdlRow(id, title, note, deadlineEpochMillis, leadsMinutes, isDone, muted)
@@ -34,11 +42,10 @@ private fun DdlEntity.toRow() = DdlRow(id, title, note, deadlineEpochMillis, lea
 class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
 
     private val filter = MutableStateFlow(DdlFilter.ALL)
-    private val lastDeleted = MutableStateFlow<DdlRow?>(null)
-    private val lastDeletedEntity = MutableStateFlow<DdlEntity?>(null)
+    private val tombstones = MutableStateFlow<List<Tombstone>>(emptyList())
 
     val uiState: StateFlow<DdlListUiState> =
-        combine(repository.observeAll(), filter, lastDeleted) { entities, f, deleted ->
+        combine(repository.observeAll(), filter, tombstones) { entities, f, tombs ->
             DdlListUiState(
                 rows = entities
                     .filter { e ->
@@ -50,7 +57,7 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
                     }
                     .map { it.toRow() },
                 filter = f,
-                lastDeleted = deleted,
+                tombstones = tombs,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DdlListUiState())
 
@@ -85,26 +92,35 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
     fun delete(row: DdlRow) {
         viewModelScope.launch {
             val snapshot = repository.delete(row.id) ?: return@launch
-            lastDeletedEntity.value = snapshot
-            lastDeleted.value = snapshot.toRow()
+            tombstones.value = tombstones.value + Tombstone(
+                row = row,
+                entity = snapshot,
+                expiresAtMillis = System.currentTimeMillis() + WINDOW_MILLIS,
+            )
         }
     }
 
-    fun restoreDeleted() {
-        val entity = lastDeletedEntity.value ?: return
-        viewModelScope.launch {
-            repository.upsert(entity)
-            lastDeletedEntity.value = null
-            lastDeleted.value = null
-        }
+    /** 点墓碑槽撤销：以原 id 还原（仓库负责重建闹钟）。 */
+    fun undoTombstone(id: Long) {
+        val tomb = tombstones.value.firstOrNull { it.entity.id == id } ?: return
+        // 先从槽列表摘除（防双击双还原），再异步落库
+        tombstones.value = tombstones.value.filter { it.entity.id != id }
+        viewModelScope.launch { repository.upsert(tomb.entity) }
     }
 
-    fun clearDeleted() {
-        lastDeletedEntity.value = null
-        lastDeleted.value = null
+    /** 窗口走完即收摊（真正的删除已在 delete 时落库，这里只丢掉还原副本）；UI 秒心跳驱动。 */
+    fun gcTombstones(nowMillis: Long) {
+        val cur = tombstones.value
+        if (cur.isEmpty()) return
+        val next = cur.filter { it.expiresAtMillis > nowMillis }
+        if (next.size != cur.size) tombstones.value = next
     }
 
     fun toggleDone(row: DdlRow) {
         viewModelScope.launch { repository.setDone(row.id, !row.isDone) }
+    }
+
+    companion object {
+        const val WINDOW_MILLIS = 5_000L
     }
 }

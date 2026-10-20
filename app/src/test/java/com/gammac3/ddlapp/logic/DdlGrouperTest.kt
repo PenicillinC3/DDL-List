@@ -68,4 +68,14 @@ class DdlGrouperTest {
         assertEquals(6, result.size)
         assertTrue(DdlGroup.entries.all { it in result })
     }
+
+    @Test
+    fun `单行组归属 groupOf 与 group 同规则`() {
+        assertEquals(DdlGroup.DONE, DdlGrouper.groupOf(row(1, ms(2026, 10, 20, 9), done = true), now, zone))
+        assertEquals(DdlGroup.OVERDUE, DdlGrouper.groupOf(row(2, ms(2026, 10, 19, 8)), now, zone))
+        assertEquals(DdlGroup.TODAY, DdlGrouper.groupOf(row(3, ms(2026, 10, 19, 23, 59)), now, zone))
+        assertEquals(DdlGroup.TOMORROW, DdlGrouper.groupOf(row(4, ms(2026, 10, 20, 0, 1)), now, zone))
+        assertEquals(DdlGroup.THIS_WEEK, DdlGrouper.groupOf(row(5, ms(2026, 10, 26, 23, 59)), now, zone))
+        assertEquals(DdlGroup.LATER, DdlGrouper.groupOf(row(6, ms(2026, 10, 27, 0, 1)), now, zone))
+    }
 }

@@ -78,7 +78,7 @@ class DdlListViewModelTest {
     }
 
     @Test
-    fun `delete 移除并记录 lastDeleted`() = runTest {
+    fun `delete 移除并立起墓碑槽`() = runTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
         vm.save(DdlDraft("A", "", now + 3_600_000L, emptyList()), null)
         dispatcher.scheduler.advanceUntilIdle()
@@ -86,7 +86,36 @@ class DdlListViewModelTest {
         vm.delete(row)
         dispatcher.scheduler.advanceUntilIdle()
         assertEquals(0, vm.uiState.value.rows.size)
-        assertEquals(row.id, vm.uiState.value.lastDeleted?.id)
+        assertEquals(1, vm.uiState.value.tombstones.size)
+        assertEquals(row.id, vm.uiState.value.tombstones.first().entity.id)
+    }
+
+    @Test
+    fun `墓碑点撤销后消失且条目回列`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("A", "", now + 3_600_000L, emptyList()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        vm.delete(row)
+        dispatcher.scheduler.advanceUntilIdle()
+        vm.undoTombstone(row.id)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.rows.size)
+        assertEquals(0, vm.uiState.value.tombstones.size)
+    }
+
+    @Test
+    fun `墓碑窗口走完即清场`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        vm.save(DdlDraft("A", "", now + 3_600_000L, emptyList()), null)
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        vm.delete(row)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, vm.uiState.value.tombstones.size)
+        vm.gcTombstones(vm.uiState.value.tombstones.first().expiresAtMillis + 1)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, vm.uiState.value.tombstones.size)
     }
 
     @Test
@@ -134,7 +163,7 @@ class DdlListViewModelTest {
         val before = dao.byId(row.id)!!
         vm.delete(row)
         dispatcher.scheduler.advanceUntilIdle()
-        vm.restoreDeleted()
+        vm.undoTombstone(row.id)
         dispatcher.scheduler.advanceUntilIdle()
         val after = dao.byId(row.id)!!
         assertEquals(before.createdAt, after.createdAt)

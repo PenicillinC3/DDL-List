@@ -10,8 +10,10 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -22,9 +24,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -36,9 +40,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -58,8 +59,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -67,6 +71,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,13 +109,12 @@ fun DdlListScreen(
     LaunchedEffect(Unit) {
         while (true) {
             now = System.currentTimeMillis()
+            viewModel.gcTombstones(now) // 墓碑槽窗口走完即从 UI 收场
             delay(1_000)
         }
     }
     val zone = remember { ZoneId.systemDefault() }
     var doneExpanded by rememberSaveable { mutableStateOf(false) }
-
-    val snackbar = remember { SnackbarHostState() }
 
     // 通知权限（Android 13+）：以系统通知开关为真源，每次回前台刷新
     val context = LocalContext.current
@@ -146,15 +150,6 @@ fun DdlListScreen(
         onPauseOrDispose { }
     }
 
-    LaunchedEffect(state.lastDeleted) {
-        val deleted = state.lastDeleted
-        if (deleted != null) {
-            val result = snackbar.showSnackbar("已删除「${deleted.title}」", actionLabel = "撤销")
-            if (result == SnackbarResult.ActionPerformed) viewModel.restoreDeleted()
-            if (result != SnackbarResult.ActionPerformed) viewModel.clearDeleted()
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -172,7 +167,6 @@ fun DdlListScreen(
                 ),
             )
         },
-        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { onEdit(null) },
@@ -281,12 +275,21 @@ fun DdlListScreen(
             val grouped = remember(state.rows, now) {
                 DdlGrouper.group(state.rows, now, zone)
             }
+            // 墓碑槽按组归位（与 DdlGrouper.groupOf 同规则）；筛选与桶位不匹配的槽静默（窗口仍由 gc 清）
+            val tombsByGroup = remember(state.tombstones, state.filter, now) {
+                state.tombstones
+                    .filter {
+                        (state.filter == DdlFilter.ALL) ||
+                            (it.row.isDone == (state.filter == DdlFilter.DONE))
+                    }
+                    .groupBy { DdlGrouper.groupOf(it.row, now, zone) }
+            }
             LazyColumn(
                 Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 88.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (state.rows.isEmpty()) {
+                if (state.rows.isEmpty() && state.tombstones.isEmpty()) {
                     item(key = "empty") {
                         Text(
                             text = if (state.filter == DdlFilter.ALL) {
@@ -305,7 +308,8 @@ fun DdlListScreen(
                     var firstGroup = true
                     groupOrder.forEach { group ->
                         val rows = grouped[group].orEmpty()
-                        if (rows.isEmpty()) return@forEach
+                        val tombs = tombsByGroup[group].orEmpty()
+                        if (rows.isEmpty() && tombs.isEmpty()) return@forEach
                         if (!firstGroup) {
                             item(key = "separator_$group") {
                                 HorizontalDivider(
@@ -347,15 +351,36 @@ fun DdlListScreen(
                             }
                         }
                         if (group == DdlGroup.DONE && !doneExpanded) return@forEach
-                        items(rows, key = { it.id }) { row ->
-                            SwipeRow(
-                                row = row,
-                                nowMillis = now,
-                                overdue = group == DdlGroup.OVERDUE,
-                                onClick = { onEdit(row) },
-                                onDelete = { viewModel.delete(row) },
-                                onToggleDone = { viewModel.toggleDone(row) },
-                            )
+                        // 组内展示序 = 真行 + 墓碑槽（按截止时刻回插原位）
+                        val display = mergeTombs(rows, tombs)
+                        items(display, key = { item ->
+                            when (item) {
+                                is ListItem.RowV -> item.row.id
+                                is ListItem.TombV -> -(item.tomb.row.id + 1L)
+                            }
+                        }, contentType = { item ->
+                            when (item) {
+                                is ListItem.RowV -> "row"
+                                is ListItem.TombV -> "tomb"
+                            }
+                        }) { item ->
+                            when (item) {
+                                is ListItem.RowV -> SwipeRow(
+                                    row = item.row,
+                                    nowMillis = now,
+                                    overdue = group == DdlGroup.OVERDUE,
+                                    onClick = { onEdit(item.row) },
+                                    onDelete = { viewModel.delete(item.row) },
+                                    onToggleDone = { viewModel.toggleDone(item.row) },
+                                    modifier = Modifier.animateItem(),
+                                )
+                                is ListItem.TombV -> TombCard(
+                                    tomb = item.tomb,
+                                    nowMillis = now,
+                                    onUndo = { viewModel.undoTombstone(item.tomb.row.id) },
+                                    modifier = Modifier.animateItem(),
+                                )
+                            }
                         }
                     }
                 }
@@ -373,6 +398,7 @@ private fun SwipeRow(
     onClick: () -> Unit,
     onDelete: () -> Unit,
     onToggleDone: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -439,7 +465,132 @@ private fun SwipeRow(
             }
         },
     ) {
-        DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = onClick)
+        Box(modifier = modifier.fillMaxWidth()) {
+            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = onClick)
+        }
+    }
+}
+
+/** 组内展示序列：真行 + 墓碑槽（按截止时刻回插原位，保证组内列序一致）。 */
+private sealed interface ListItem {
+    data class RowV(val row: DdlRow) : ListItem
+    data class TombV(val tomb: Tombstone) : ListItem
+}
+
+private fun mergeTombs(rows: List<DdlRow>, tombs: List<Tombstone>): List<ListItem> {
+    val out: MutableList<ListItem> = rows.map { ListItem.RowV(it) }.toMutableList()
+    for (t in tombs.sortedBy { it.row.deadlineMillis }) {
+        val idx = out.indexOfFirst {
+            it is ListItem.RowV && it.row.deadlineMillis > t.row.deadlineMillis
+        }
+        out.add(if (idx < 0) out.size else idx, ListItem.TombV(t))
+    }
+    return out
+}
+
+/** 墓碑槽（U2 定款）：虚线框本身就是倒计时——虚线沿圆角矩形游走、可见弧随 5 秒缩短直至烧尽；点槽即以原 id 复活。 */
+@Composable
+private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modifier: Modifier = Modifier) {
+    val initial = ((tomb.expiresAtMillis - nowMillis) / DdlListViewModel.WINDOW_MILLIS.toFloat())
+        .coerceIn(0f, 1f)
+    val progress = remember(tomb.row.id) { Animatable(initial) }
+    LaunchedEffect(tomb.row.id) {
+        if (initial > 0f) {
+            progress.animateTo(
+                0f,
+                tween(
+                    durationMillis = (initial * DdlListViewModel.WINDOW_MILLIS).toInt().coerceAtLeast(1),
+                    easing = LinearEasing,
+                ),
+            )
+        }
+    }
+    val remainSec = (((tomb.expiresAtMillis - nowMillis) + 999) / 1_000).toInt().coerceIn(0, 5)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onUndo)
+            .dashedCountdownBorder({ progress.value }, MaterialTheme.colorScheme.onSurfaceVariant)
+            .padding(horizontal = 15.dp, vertical = 14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "已删除「${tomb.row.title}」",
+                fontSize = 12.sp,
+                fontFamily = HanFont,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "$remainSec″",
+                fontSize = 10.5.sp,
+                fontFamily = FigureFont,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = "点此撤销",
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = HanFont,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+/** 虚线倒计时边框：头端沿框行进（旋转感），可见弧长 = 周长 × progress（消失感），dash 相位同步前滑。
+ *  PathEffect 走 android 原生画笔（Compose drawPath 无 pathEffect 参数），分段由 PathMeasure 截取。 */
+private fun Modifier.dashedCountdownBorder(progress: () -> Float, color: Color): Modifier = drawBehind {
+    val p = progress().coerceIn(0f, 1f)
+    if (p <= 0.01f) return@drawBehind
+    val strokeW = 1.5.dp.toPx()
+    val inset = strokeW / 2f
+    if (size.width <= strokeW + 2f || size.height <= strokeW + 2f) return@drawBehind
+    val apath = android.graphics.Path().apply {
+        addRoundRect(
+            inset, inset, size.width - inset, size.height - inset,
+            16.dp.toPx(), 16.dp.toPx(),
+            android.graphics.Path.Direction.CW,
+        )
+    }
+    val measure = android.graphics.PathMeasure(apath, false)
+    val total = measure.length
+    if (total <= 0f) return@drawBehind
+    val paint = android.graphics.Paint().apply {
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = strokeW
+        isAntiAlias = true
+        this.color = color.toArgb()
+        pathEffect = android.graphics.DashPathEffect(
+            floatArrayOf(4.dp.toPx(), 3.5.dp.toPx()),
+            (1f - p) * total * 0.9f,
+        )
+    }
+    val canvas = drawContext.canvas.nativeCanvas
+    if (p >= 0.999f) {
+        canvas.drawPath(apath, paint)
+        return@drawBehind
+    }
+    // 头端行进 1.35 圈；可见弧长随 p 收缩——尾端烧到头端追上的那一刻整圈熄灭
+    val start = total * ((1f - p) * 1.35f % 1f)
+    val end = start + total * p
+    if (end <= total) {
+        val seg = android.graphics.Path()
+        measure.getSegment(start, end, seg, true)
+        canvas.drawPath(seg, paint)
+    } else {
+        val s1 = android.graphics.Path()
+        val s2 = android.graphics.Path()
+        measure.getSegment(start, total, s1, true)
+        measure.getSegment(0f, end - total, s2, true)
+        val seg = android.graphics.Path()
+        seg.op(s1, s2, android.graphics.Path.Op.UNION)
+        canvas.drawPath(seg, paint)
     }
 }
 
