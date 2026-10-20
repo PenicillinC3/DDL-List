@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 4×2「最近到期」单焦点卡。颜色为占位值，运行时随夜模式由 DdlWidgets 重设；
+     倒计时/日期/计数的「西文×思源」混排由代码 TypefaceSpan 完成（API≥28），XML fontFamily 供 <28 降级。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg_light">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingStart="17dp"
+        android:paddingTop="11dp"
+        android:paddingEnd="17dp"
+        android:paddingBottom="11dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="最近到期"
+                android:textColor="#FF5F6771"
+                android:textSize="10sp"
+                android:letterSpacing="0.14"
+                android:fontFamily="@font/source_han_cn_600" />
+
+            <TextView
+                android:id="@+id/widget_total"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="共 0 条未完成"
+                android:textColor="#FF5F6771"
+                android:textSize="10sp"
+                android:fontFamily="@font/source_han_cn_500" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:text="--"
+            android:textColor="#FF101828"
+            android:textSize="15sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:fontFamily="@font/source_han_cn_600" />
+
+        <TextView
+            android:id="@+id/widget_countdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:layout_marginBottom="3dp"
+            android:text="剩--"
+            android:textColor="#FF101828"
+            android:textSize="26sp"
+            android:maxLines="1"
+            android:letterSpacing="0.01"
+            android:fontFamily="@font/maple_mono_bold_data" />
+
+        <TextView
+            android:id="@+id/widget_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--"
+            android:textColor="#FF5F6771"
+            android:textSize="11.5sp"
+            android:letterSpacing="0.02"
+            android:fontFamily="@font/timeless_serif_text" />
+
+        <TextView
+            android:id="@+id/widget_meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:text="--"
+            android:textColor="#FF5F6771"
+            android:textSize="11sp"
+            android:fontFamily="@font/source_han_cn_400" />
+    </LinearLayout>
+</FrameLayout>

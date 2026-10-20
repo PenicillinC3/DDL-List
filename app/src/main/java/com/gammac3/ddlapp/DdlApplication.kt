@@ -23,5 +23,8 @@ class DdlApplication : Application() {
         super.onCreate()
         container = AppContainer(this)
         container.notifications.ensureChannel()
+        // 数据变更 → 小组件整批刷新；进程冷启动/被系统重建时也对一次表
+        container.repository.onChanged = { com.gammac3.ddlapp.widget.DdlWidgets.refresh(this) }
+        com.gammac3.ddlapp.widget.DdlWidgets.refresh(this)
     }
 }

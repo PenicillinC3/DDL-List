@@ -18,6 +18,12 @@ import com.gammac3.ddlapp.ui.theme.DdlAppTheme
 
 class MainActivity : ComponentActivity() {
 
+    override fun onResume() {
+        super.onResume()
+        // 回前台对表：桌面倒计时为小时/天粒度，重算一次即可保鲜
+        com.gammac3.ddlapp.widget.DdlWidgets.refresh(applicationContext)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

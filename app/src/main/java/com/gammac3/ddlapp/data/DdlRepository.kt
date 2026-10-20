@@ -9,6 +9,9 @@ class DdlRepository(
     private val scheduler: AlarmScheduler,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
+    /** 数据变更后回调（桌面小组件等外部观察者刷新用）；默认 null，不影响既有构造签名。 */
+    var onChanged: (() -> Unit)? = null
+
     fun observeAll(): Flow<List<DdlEntity>> = dao.observeAll()
 
     suspend fun upsert(entity: DdlEntity): Long {
@@ -17,6 +20,7 @@ class DdlRepository(
             if (dao.update(entity) == 0) dao.insert(entity) else entity.id
         }
         rescheduleFor(id)
+        onChanged?.invoke()
         return id
     }
 
@@ -25,6 +29,7 @@ class DdlRepository(
         val entity = dao.byId(id) ?: return null
         scheduler.cancelAll(id)
         dao.deleteById(id)
+        onChanged?.invoke()
         return entity
     }
 
@@ -32,6 +37,7 @@ class DdlRepository(
         val entity = dao.byId(id) ?: return
         dao.update(entity.copy(isDone = done))
         if (done) scheduler.cancelAll(id) else rescheduleFor(id)
+        onChanged?.invoke()
     }
 
     suspend fun rescheduleFor(id: Long) {

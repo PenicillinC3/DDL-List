@@ -10,8 +10,10 @@ class AlarmReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra(EXTRA_TITLE)
         if (id < 0 || title.isNullOrBlank()) return
         val lead = intent.getLongExtra(EXTRA_LEAD, 0L)
-        (context.applicationContext as com.gammac3.ddlapp.DdlApplication)
-            .container.notifications.show(id, title, lead)
+        val app = context.applicationContext as com.gammac3.ddlapp.DdlApplication
+        app.container.notifications.show(id, title, lead)
+        // 截止时刻刚过：桌面倒计时需切到下一条 upcoming
+        com.gammac3.ddlapp.widget.DdlWidgets.refresh(context)
     }
 
     companion object {

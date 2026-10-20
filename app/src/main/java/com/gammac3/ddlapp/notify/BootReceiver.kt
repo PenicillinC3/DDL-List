@@ -18,6 +18,7 @@ class BootReceiver : BroadcastReceiver() {
         CoroutineScope(Dispatchers.Default).launch {
             try {
                 app.container.repository.rescheduleAll()
+                com.gammac3.ddlapp.widget.DdlWidgets.refresh(context)
             } catch (e: Exception) {
                 Log.e(TAG, "开机重排失败", e)
             } finally {
