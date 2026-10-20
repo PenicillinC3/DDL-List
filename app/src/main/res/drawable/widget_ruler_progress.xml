@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 周尺/燃线进程条：仅 progress 段（红色 62%），轨道由独立 View 提供（可按夜模式换色）。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="2dp" />
+                <solid android:color="#9EE5484D" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

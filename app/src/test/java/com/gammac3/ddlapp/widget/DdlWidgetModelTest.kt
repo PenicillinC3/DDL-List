@@ -84,4 +84,31 @@ class DdlWidgetModelTest {
         assertTrue(model.upcoming.isEmpty())
         assertEquals(1, model.overdueCount)
     }
+
+    @Test
+    fun `周尺进度与可见性`() {
+        val m1 = DdlWidgetModel.build(listOf(row(1, ms(2026, 10, 20, 23))), now, zone)
+        assertTrue(m1.rulerVisible)
+        assertEquals(23, m1.weekProgressHours)
+        val m2 = DdlWidgetModel.build(listOf(row(1, ms(2026, 10, 21, 9))), now, zone)
+        assertTrue(m2.rulerVisible)
+        assertEquals(33, m2.weekProgressHours)
+        val m3 = DdlWidgetModel.build(listOf(row(1, ms(2026, 12, 1, 9))), now, zone)
+        assertTrue(!m3.rulerVisible)
+        assertEquals(0, m3.weekProgressHours)
+    }
+
+    @Test
+    fun `周多点按日分布且每日至多两点`() {
+        val model = DdlWidgetModel.build(
+            listOf(
+                row(1, ms(2026, 10, 20, 22)),
+                row(2, ms(2026, 10, 20, 23)),
+                row(3, ms(2026, 10, 22, 9)),
+                row(4, ms(2026, 10, 27, 9)), // 下周一 → 7 日窗外，不进条
+            ),
+            now, zone,
+        )
+        assertEquals(listOf(2, 0, 1, 0, 0, 0, 0), model.weekDots)
+    }
 }

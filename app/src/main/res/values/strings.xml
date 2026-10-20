@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DDL 清单</string>
+    <string name="widget_v1_desc">单焦点 · 最近一条的大号倒计时</string>
+    <string name="widget_v3_desc">多 DDL · 最近三条 + 本周周历</string>
 </resources>

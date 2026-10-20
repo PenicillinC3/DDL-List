@@ -5,8 +5,9 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 
 /**
- * 小组件接收器：三款（V1 单焦点卡 / V2 迷你章 / V3 二连行）共用同一条数据管线，
- * 各自只在自己的 appwidget-provider xml 上挂壳；任何一次更新调用都整批重算三款。
+ * 小组件接收器：两款（V1 单焦点卡 / V3 多行卡）共用同一条数据管线，
+ * 各自只在自己的 appwidget-provider xml 上挂壳；任何一次更新调用都整批重算。
+ * （V2 迷你章已在 1.5 移除。）
  */
 open class DdlWidgetReceiver : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
@@ -15,5 +16,4 @@ open class DdlWidgetReceiver : AppWidgetProvider() {
 }
 
 class DdlWidgetV1Receiver : DdlWidgetReceiver()
-class DdlWidgetV2Receiver : DdlWidgetReceiver()
 class DdlWidgetV3Receiver : DdlWidgetReceiver()
