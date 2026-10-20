@@ -419,6 +419,7 @@ private fun SwipeRow(
     var anchor by remember { mutableFloatStateOf(0f) }  // 松手落点：0 或 -openPx
     var dragging by remember { mutableStateOf(false) }
     var fromOpen by remember { mutableStateOf(false) }
+    var dragStartRaw by remember { mutableFloatStateOf(0f) } // 本次手势起点的 raw
 
     // 阻尼映射：起段线性跟手，越接近上限越像拉橡皮筋
     fun resist(x: Float): Float =
@@ -428,10 +429,11 @@ private fun SwipeRow(
     fun settle() {
         dragging = false
         if (fromOpen) {
-            // 悬停中右划只收回（回程中点即落锚收回），切换完成只许「完全收拢」状态下右划
-            anchor = if (raw >= rawFor(-openPx * 0.5f)) 0f else -openPx
+            // 划回来（R45）：从悬停向右累计行进 0.75×露出位即收拢——代价与划出对称，
+            // 不再被阻尼曲线的深水区吞掉行程；收回途中永不触发「标为已完成」
+            anchor = if (raw - dragStartRaw >= openPx * 0.75f) 0f else -openPx
         } else when {
-            raw <= -openPx * 0.55f -> anchor = -openPx
+            raw <= -openPx * 0.75f -> anchor = -openPx
             raw >= donePx && !row.isDone -> { onToggleDone(); anchor = 0f }
             else -> anchor = 0f
         }
@@ -463,7 +465,27 @@ private fun SwipeRow(
     val doneBg = MaterialTheme.colorScheme.primaryContainer
     val onDone = MaterialTheme.colorScheme.onPrimaryContainer
 
-    Box(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            // 手势挂整行（R45）：从卡片或露出的底衬任意位置起划都能拖（此前只挂卡片本体，
+            // 点在红色底衬上划回无效）；点击仍由卡片/删除钮各自处理
+            .pointerInput(row.id) {
+                detectHorizontalDragGestures(
+                    onDragStart = { _ ->
+                        dragStartRaw = raw
+                        dragging = true
+                        fromOpen = anchor <= -openPx * 0.95f
+                    },
+                    onDragEnd = { settle() },
+                    onDragCancel = { settle() },
+                ) { change, dragAmount ->
+                    change.consume()
+                    raw += dragAmount
+                }
+            },
+    ) {
         // 衬底：drawBehind 延迟读位移（拖动中零重组）；静置透明，右显「删除」红底、左显「完成」靛底
         Box(
             Modifier
@@ -498,20 +520,7 @@ private fun SwipeRow(
         )
         Box(
             Modifier
-                .offset { IntOffset(visualState.value.roundToInt(), 0) }
-                .pointerInput(row.id) {
-                    detectHorizontalDragGestures(
-                        onDragStart = { _ ->
-                            dragging = true
-                            fromOpen = anchor <= -openPx * 0.95f
-                        },
-                        onDragEnd = { settle() },
-                        onDragCancel = { settle() },
-                    ) { change, dragAmount ->
-                        change.consume()
-                        raw += dragAmount
-                    }
-                },
+                .offset { IntOffset(visualState.value.roundToInt(), 0) },
         ) {
             DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onClick = cardClick)
         }
