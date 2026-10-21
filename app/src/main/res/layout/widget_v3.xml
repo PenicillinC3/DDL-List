@@ -39,7 +39,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -55,6 +55,7 @@
                     android:text="--"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
+                    android:includeFontPadding="false"
                     android:maxLines="1"
                     android:ellipsize="end"
 />
@@ -104,7 +105,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="4dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -120,6 +121,7 @@
                     android:text="--"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
+                    android:includeFontPadding="false"
                     android:maxLines="1"
                     android:ellipsize="end"
 />
@@ -170,7 +172,7 @@
             android:id="@+id/widget_row3_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="4dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -186,6 +188,7 @@
                     android:text="--"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
+                    android:includeFontPadding="false"
                     android:maxLines="1"
                     android:ellipsize="end"
 />
@@ -235,7 +238,7 @@
             android:id="@+id/widget_week_strip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="7dp"
+            android:layout_marginTop="6dp"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -248,8 +251,8 @@
                 android:background="@drawable/widget_cell_today_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day0"
@@ -291,8 +294,8 @@
                 android:background="@drawable/widget_cell_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day1"
@@ -336,8 +339,8 @@
                 android:background="@drawable/widget_cell_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day2"
@@ -381,8 +384,8 @@
                 android:background="@drawable/widget_cell_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day3"
@@ -426,8 +429,8 @@
                 android:background="@drawable/widget_cell_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day4"
@@ -471,8 +474,8 @@
                 android:background="@drawable/widget_cell_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day5"
@@ -516,8 +519,8 @@
                 android:background="@drawable/widget_cell_light"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp">
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
 
                 <TextView
                     android:id="@+id/widget_week_day6"
