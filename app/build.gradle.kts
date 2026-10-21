@@ -13,8 +13,8 @@ android {
         applicationId = "com.gammac3.ddlapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "1.14.6"
+        versionCode = 23
+        versionName = "1.14.7"
     }
 
     buildTypes {
