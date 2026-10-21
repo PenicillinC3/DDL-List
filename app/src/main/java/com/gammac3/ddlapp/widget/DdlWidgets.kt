@@ -57,7 +57,13 @@ object DdlWidgets {
         for (spec in SPECS) {
             val ids = manager.getAppWidgetIds(ComponentName(context, spec.receiver))
             if (ids.isEmpty()) continue
-            manager.updateAppWidget(ids, render(context, spec, model))
+            // 多行卡只在剩一条 upcoming 时整体变单焦点卡样貌（直接复用 V1 渲染管线）
+            val layout = if (spec.layout == R.layout.widget_v3 && model.upcoming.size == 1) {
+                R.layout.widget_v1
+            } else {
+                spec.layout
+            }
+            manager.updateAppWidget(ids, render(context, spec.copy(layout = layout), model))
         }
     }
 
