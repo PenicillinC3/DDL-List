@@ -162,15 +162,15 @@ object DdlWidgets {
         applyCalTab(context, rv, p, model.nearest)
         val rows = model.upcoming
         rv.setViewVisibility(R.id.widget_row3_container, if (rows.size >= 3) android.view.View.VISIBLE else android.view.View.GONE)
-        renderRow(context, rv, p, R.id.widget_row1_title, R.id.widget_row1_cd, R.id.widget_row1_fuse, rows.getOrNull(0), "现在很清净，没有即将到期的条目")
-        renderRow(context, rv, p, R.id.widget_row2_title, R.id.widget_row2_cd, R.id.widget_row2_fuse, rows.getOrNull(1), "")
-        renderRow(context, rv, p, R.id.widget_row3_title, R.id.widget_row3_cd, R.id.widget_row3_fuse, rows.getOrNull(2), "")
+        renderRow(context, rv, p, R.id.widget_row1_title, R.id.widget_row1_cd, R.id.widget_row1_fuse, R.id.widget_row1_track, rows.getOrNull(0), "现在很清净，没有即将到期的条目")
+        renderRow(context, rv, p, R.id.widget_row2_title, R.id.widget_row2_cd, R.id.widget_row2_fuse, R.id.widget_row2_track, rows.getOrNull(1), "")
+        renderRow(context, rv, p, R.id.widget_row3_title, R.id.widget_row3_cd, R.id.widget_row3_fuse, R.id.widget_row3_track, rows.getOrNull(2), "")
         applyWeekStrip(rv, p, model)
     }
 
     private fun renderRow(
         context: Context, rv: RemoteViews, p: Palette,
-        titleId: Int, cdId: Int, fuseId: Int, row: DdlRow?, emptyTitle: String,
+        titleId: Int, cdId: Int, fuseId: Int, trackId: Int, row: DdlRow?, emptyTitle: String,
     ) {
         if (row == null) {
             if (emptyTitle.isNotEmpty()) {
@@ -180,6 +180,7 @@ object DdlWidgets {
             rv.setTextViewText(cdId, "——")
             rv.setTextColor(cdId, p.gray)
             rv.setViewVisibility(fuseId, android.view.View.GONE)
+            rv.setViewVisibility(trackId, android.view.View.GONE)
             return
         }
         val urgent = row.deadlineMillis - System.currentTimeMillis() < 24 * 3_600_000L
@@ -187,6 +188,7 @@ object DdlWidgets {
         rv.setTextColor(titleId, p.ink)
         rv.setTextViewText(cdId, mixed(context, Format.remaining(row.deadlineMillis, System.currentTimeMillis()), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
         rv.setTextColor(cdId, if (urgent) p.red else p.ink)
+        rv.setInt(trackId, "setBackgroundResource", p.trackRes)
         applyFuse(rv, fuseId, row.deadlineMillis)
     }
 
@@ -220,7 +222,8 @@ object DdlWidgets {
 
     // ---------- 装饰：多行卡行内燃线 ----------
 
-    /** 燃线 = 今日 0 点烧到该条截止；截止在 7 日窗外（稍后）只留空轨。 */
+    /** 燃线 = 今日 0 点烧到该条截止；截止在 7 日窗外（稍后）整条隐藏。
+     *  窗内条目保底 2% 红丝（约 4–6dp）：低进度也保证一小截可视，配合淡轨不「无信号」。 */
     private fun applyFuse(rv: RemoteViews, fuseId: Int, deadlineMillis: Long) {
         val startToday = startOfToday()
         val weekEnd = startToday + 7 * 86_400_000L
@@ -231,7 +234,7 @@ object DdlWidgets {
         rv.setViewVisibility(fuseId, android.view.View.VISIBLE)
         val span = deadlineMillis - startToday
         val pct = if (span <= 0) 100
-        else (((System.currentTimeMillis() - startToday).toDouble() / span) * 100).toInt().coerceIn(0, 100)
+        else (((System.currentTimeMillis() - startToday).toDouble() / span) * 100).toInt().coerceIn(2, 100)
         rv.setProgressBar(fuseId, 100, pct, false)
     }
 

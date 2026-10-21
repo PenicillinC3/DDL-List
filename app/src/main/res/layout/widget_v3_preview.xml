@@ -58,14 +58,24 @@
 />
             </LinearLayout>
 
-            <ProgressBar
-                style="@android:style/Widget.ProgressBar.Horizontal"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="2dp"
-                android:max="100"
-                android:progress="92"
-                android:progressDrawable="@drawable/widget_ruler_progress" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:background="@drawable/widget_ruler_track_light" />
+
+                <ProgressBar
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:max="100"
+                    android:progress="92"
+                    android:progressDrawable="@drawable/widget_ruler_progress" />
+            </FrameLayout>
         </LinearLayout>
 
         <!-- 行 2：周内 -->
@@ -102,14 +112,24 @@
 />
             </LinearLayout>
 
-            <ProgressBar
-                style="@android:style/Widget.ProgressBar.Horizontal"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="2dp"
-                android:max="100"
-                android:progress="42"
-                android:progressDrawable="@drawable/widget_ruler_progress" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:background="@drawable/widget_ruler_track_light" />
+
+                <ProgressBar
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:max="100"
+                    android:progress="42"
+                    android:progressDrawable="@drawable/widget_ruler_progress" />
+            </FrameLayout>
         </LinearLayout>
 
         <!-- 行 3：稍后（窗外，无燃线） -->

@@ -65,15 +65,27 @@
 />
             </LinearLayout>
 
-            <ProgressBar
-                android:id="@+id/widget_row1_fuse"
-                style="@android:style/Widget.ProgressBar.Horizontal"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="2dp"
-                android:max="100"
-                android:progress="10"
-                android:progressDrawable="@drawable/widget_ruler_progress" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp">
+
+                <!-- 行内燃线淡轨（低进度才有「这里有个刻度」的锚点）；日夜分色运行时由 DdlWidgets 重设 -->
+                <TextView
+                    android:id="@+id/widget_row1_track"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:background="@drawable/widget_ruler_track_light" />
+
+                <ProgressBar
+                    android:id="@+id/widget_row1_fuse"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:max="100"
+                    android:progress="10"
+                    android:progressDrawable="@drawable/widget_ruler_progress" />
+            </FrameLayout>
         </LinearLayout>
 
         <!-- 行 2 -->
@@ -112,15 +124,26 @@
 />
             </LinearLayout>
 
-            <ProgressBar
-                android:id="@+id/widget_row2_fuse"
-                style="@android:style/Widget.ProgressBar.Horizontal"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="2dp"
-                android:max="100"
-                android:progress="10"
-                android:progressDrawable="@drawable/widget_ruler_progress" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/widget_row2_track"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:background="@drawable/widget_ruler_track_light" />
+
+                <ProgressBar
+                    android:id="@+id/widget_row2_fuse"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:max="100"
+                    android:progress="10"
+                    android:progressDrawable="@drawable/widget_ruler_progress" />
+            </FrameLayout>
         </LinearLayout>
 
         <!-- 行 3（不足三条时整行隐藏） -->
@@ -160,15 +183,26 @@
 />
             </LinearLayout>
 
-            <ProgressBar
-                android:id="@+id/widget_row3_fuse"
-                style="@android:style/Widget.ProgressBar.Horizontal"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="2dp"
-                android:max="100"
-                android:progress="10"
-                android:progressDrawable="@drawable/widget_ruler_progress" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/widget_row3_track"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:background="@drawable/widget_ruler_track_light" />
+
+                <ProgressBar
+                    android:id="@+id/widget_row3_fuse"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:max="100"
+                    android:progress="10"
+                    android:progressDrawable="@drawable/widget_ruler_progress" />
+            </FrameLayout>
         </LinearLayout>
 
         <!-- M5 周多点条：7 格，每格「星期字 + 至多 2 点」 -->
