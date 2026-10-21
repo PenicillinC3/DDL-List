@@ -551,6 +551,12 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
+
+        <!-- 弹性隙 5：周多点条 ↔ 底边（拉高时与其他隙均分，周条不再钉底） -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
     </LinearLayout>
 
     <!-- S1 台历红签（收短版：总高≈31dp，header 保底隙 8dp 即可让出行 1） -->
