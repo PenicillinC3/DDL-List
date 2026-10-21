@@ -22,11 +22,18 @@
             android:id="@+id/widget_header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
             android:text="最近到期"
             android:textColor="#FF5F6771"
             android:textSize="10sp"
             android:letterSpacing="0.14"
 />
+
+        <!-- 弹性隙 1：header ↔ 行 1（拉高时与其他隙均分多余高度；18dp 保底 = 台历红签领地，勿减） -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <!-- 行 1 -->
         <LinearLayout
@@ -87,6 +94,12 @@
             </FrameLayout>
         </LinearLayout>
 
+        <!-- 弹性隙 2：行 1 ↔ 行 2（均分呼吸） -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
         <!-- 行 2 -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -144,6 +157,13 @@
                     android:progressDrawable="@drawable/widget_ruler_progress" />
             </FrameLayout>
         </LinearLayout>
+
+        <!-- 弹性隙 3：行 2 ↔ 行 3（随行 3 一起显隐，行 3 不在场时不占隙） -->
+        <TextView
+            android:id="@+id/widget_gap_row3"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <!-- 行 3（不足三条时整行隐藏） -->
         <LinearLayout
@@ -204,7 +224,7 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- 弹性空隙：格子被拉高时多余高度走这里（行区与周条之间），上下不再堆白边 -->
+        <!-- 弹性隙 4：末行 ↔ 周多点条（拉高时与其他隙均分多余高度，不再单点成洞） -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="0dp"

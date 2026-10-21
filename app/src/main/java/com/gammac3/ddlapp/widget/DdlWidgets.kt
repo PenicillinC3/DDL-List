@@ -168,6 +168,7 @@ object DdlWidgets {
         applyCalTab(context, rv, p, model.nearest)
         val rows = model.upcoming
         rv.setViewVisibility(R.id.widget_row3_container, if (rows.size >= 3) android.view.View.VISIBLE else android.view.View.GONE)
+        rv.setViewVisibility(R.id.widget_gap_row3, if (rows.size >= 3) android.view.View.VISIBLE else android.view.View.GONE)
         renderRow(context, rv, p, R.id.widget_row1_title, R.id.widget_row1_cd, R.id.widget_row1_fuse, R.id.widget_row1_track, rows.getOrNull(0), "现在很清净，没有即将到期的条目")
         renderRow(context, rv, p, R.id.widget_row2_title, R.id.widget_row2_cd, R.id.widget_row2_fuse, R.id.widget_row2_track, rows.getOrNull(1), "")
         renderRow(context, rv, p, R.id.widget_row3_title, R.id.widget_row3_cd, R.id.widget_row3_fuse, R.id.widget_row3_track, rows.getOrNull(2), "")

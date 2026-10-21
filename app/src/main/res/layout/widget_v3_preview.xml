@@ -18,6 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
             android:text="最近到期"
             android:textColor="#FF5F6771"
             android:textSize="10sp"
