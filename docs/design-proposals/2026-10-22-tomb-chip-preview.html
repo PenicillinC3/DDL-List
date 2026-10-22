@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>墓碑槽预览 · R48 实底呼叫条定款</title>
+<style>
+  :root { --ease: cubic-bezier(.23, 1, .32, 1); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    display: flex; flex-wrap: wrap;
+    font-family: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  section { flex: 1 1 400px; min-width: 340px; padding: 36px 22px 46px; }
+  section.light { background: #F6F7F9; --chip: #E4E7EC; --card: #FFFFFF; --on-surface: #101828; --variant: #5F6771; --primary: #3A5AF0; --error: #E5484D; --fill: rgba(95, 103, 113, .10); }
+  section.dark  { background: #0E1116; --chip: #22262E; --card: #151A21; --on-surface: #E8ECF1; --variant: #8B949E; --primary: #8FA3FF; --error: #FF7A7F; --fill: rgba(139, 148, 158, .10); }
+  section.dark .card { box-shadow: 0 0 0 1px rgba(255, 255, 255, .045); }
+
+  .wrap { max-width: 400px; margin: 0 auto; }
+  .head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+  h2 { font-size: 14px; font-weight: 700; color: var(--on-surface); }
+  .legend { font-size: 11px; color: var(--variant); margin-top: 2px; }
+  .reset {
+    flex: none; font-size: 11.5px; color: var(--variant); background: transparent;
+    border: 1px solid var(--chip); border-radius: 8px; padding: 4px 10px; cursor: pointer;
+  }
+  .reset:hover { color: var(--on-surface); border-color: var(--variant); }
+
+  .group { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; color: var(--variant); margin: 0 0 8px; }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .slot { position: relative; overflow: hidden; transition: height .22s var(--ease), opacity .22s ease; }
+  .slot.gone { height: 0 !important; opacity: 0; }
+
+  .card {
+    background: var(--card); border-radius: 16px; padding: 14px 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 0 0 1px rgba(16, 24, 40, .03);
+  }
+  .row1 { display: flex; align-items: center; gap: 8px; }
+  .row1 .t { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-note { font-size: 12px; color: var(--variant); margin-top: 3px; }
+  .card-note:empty { display: none; }
+  .card-rem { font-size: 23px; font-weight: 800; color: var(--on-surface); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .card-rem.over { color: var(--error); }
+  .del {
+    flex: none; font-size: 12px; color: var(--error); opacity: .55; background: transparent;
+    border: 0; cursor: pointer; padding: 2px 8px; border-radius: 8px; transition: opacity .15s;
+  }
+  .del:hover { opacity: 1; }
+
+  /* 墓碑槽（R48 实底呼叫条定款） */
+  .chip {
+    position: relative; height: 44px; border-radius: 16px; background: var(--chip);
+    overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none;
+    transition: transform .16s var(--ease), opacity .2s ease;
+  }
+  .chip:active { transform: scale(.97); }
+  .chip.dying { opacity: 0; }
+  .fill { position: absolute; inset: 0; background: var(--fill); transform: scaleX(1); transform-origin: 0 50%; pointer-events: none; }
+  .chip-row { position: relative; display: flex; align-items: center; gap: 8px; height: 100%; padding: 0 15px; }
+  .slot-i { flex: none; width: 15px; height: 15px; color: var(--variant); }
+  .slot-i svg { display: block; }
+  .chip-name { flex: 1; min-width: 0; font-size: 12px; color: var(--variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip-sec { flex: none; font-size: 10.5px; color: var(--variant); opacity: .85; font-variant-numeric: tabular-nums; }
+  .chip-undo { flex: none; font-size: 12.5px; font-weight: 700; color: var(--primary); }
+  .roll { animation: rollIn .24s var(--ease) both; }
+  .fadeIn { animation: fadeIn .18s ease both; }
+  @keyframes rollIn { from { opacity: 0; transform: translateY(10.5px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .note-foot { margin-top: 20px; font-size: 10.5px; line-height: 1.8; color: var(--variant); opacity: .8; }
+</style>
+</head>
+<body>
+<section class="light">
+  <div class="wrap">
+    <div class="head-row">
+      <div>
+        <h2>浅色主题</h2>
+        <div class="legend">chip = surfaceContainerHighest #E4E7EC · fill 10%</div>
+      </div>
+      <button class="reset" type="button">重置演示</button>
+    </div>
+    <div class="group">今天（<span class="count">3</span>）</div>
+    <div class="list"></div>
+    <div class="note-foot">
+      操作：点卡片右侧「删除」→ 墓碑槽原位立起（垃圾桶和「点此撤销」自下滚入）；一条 10% 洗色自左向右线性读满，读满即窗口关闭、整槽收起；「N″」秒表逐秒递减。任意时刻点槽 = 撤销还原（卡片淡入复原）。<br>
+      参数对照：读条 5000ms 线性（GPU 补间 60fps）· 滚入 240ms · 按压微缩 0.97 @160ms · 缓出 cubic-bezier(.23, 1, .32, 1)。<br>
+      这页只是演示：列表里的卡片是静态假数据道具，App 的卡片/滑动（DdlItemCard、SwipeRow）一行未改——这次动过的只有删除后的 TombCard 一个函数。
+    </div>
+  </div>
+</section>
+<section class="dark">
+  <div class="wrap">
+    <div class="head-row">
+      <div>
+        <h2>暗色主题</h2>
+        <div class="legend">chip = surfaceContainerHighest #22262E · fill 10%</div>
+      </div>
+      <button class="reset" type="button">重置演示</button>
+    </div>
+    <div class="group">今天（<span class="count">3</span>）</div>
+    <div class="list"></div>
+    <div class="note-foot">
+      与 TombCard（R48）一致：实底圆角 + onSurfaceVariant 10% 半透明读条（自左向右读满），替代原 U2 虚线擦除框；整槽点击撤销，读满即被 GC 摘除。
+    </div>
+  </div>
+</section>
+
+<script>
+  const WINDOW = 5000;
+  const SEEDS = [
+    { id: 1, title: '毕业论文终稿提交', note: '导师：查重 ≤ 15%', rem: '还有 3 小时', overdue: false },
+    { id: 2, title: '数据结构实验报告', note: '', rem: '还有 2 天', overdue: false },
+    { id: 3, title: '图书馆还书', note: '可续借一次', rem: '已逾期 6 小时', overdue: true },
+  ];
+  const TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M4 6.7 H 20" />' +
+    '<path d="M9.7 6.7 V5.6 C9.7 4.7 10.4 4 11.3 4 H12.7 C13.6 4 14.3 4.7 14.3 5.6 V6.7" />' +
+    '<path d="M6 6.7 L6.7 18.9 C6.85 20.3 8 21.4 9.4 21.4 H14.6 C16 21.4 17.15 20.3 17.3 18.9 L18 6.7" />' +
+    '<path d="M10.35 10.8 L10.4 17" /><path d="M13.65 10.8 L13.6 17" /></svg>';
+
+  function initPanel(section) {
+    const listEl = section.querySelector('.list');
+    const countEl = section.querySelector('.count');
+    const items = SEEDS.map(r => ({ kind: 'row', row: r }));
+    const rowCount = () => items.filter(i => i.kind === 'row').length;
+    const syncCount = () => { countEl.textContent = String(rowCount()); };
+
+    function ensureSlot(item) {
+      if (!item.slotEl) { item.slotEl = document.createElement('div'); item.slotEl.className = 'slot'; listEl.appendChild(item.slotEl); }
+      return item.slotEl;
+    }
+    function swap(item, next) {
+      const slot = ensureSlot(item);
+      if (item.el) item.el.replaceWith(next); else slot.appendChild(next);
+      item.el = next;
+      syncCount();
+    }
+    function cardFor(item) {
+      const r = item.row;
+      const el = document.createElement('div');
+      el.className = 'card fadeIn';
+      el.innerHTML =
+        '<div class="row1"><div class="t"></div><button class="del" type="button">删除</button></div>' +
+        '<div class="card-note"></div>' +
+        '<div class="card-rem' + (r.overdue ? ' over' : '') + '"></div>';
+      el.querySelector('.t').textContent = r.title;
+      el.querySelector('.card-note').textContent = r.note || '';
+      el.querySelector('.card-rem').textContent = r.rem;
+      el.querySelector('.del').addEventListener('click', e => { e.stopPropagation(); toTomb(item); });
+      return el;
+    }
+    function chipFor(item) {
+      const chip = document.createElement('div');
+      chip.className = 'chip fadeIn';
+      chip.setAttribute('role', 'button');
+      chip.setAttribute('aria-label', '已删除「' + item.row.title + '」，点按撤销');
+      chip.innerHTML =
+        '<div class="fill"></div>' +
+        '<div class="chip-row">' +
+        '<span class="slot-i roll">' + TRASH_SVG + '</span>' +
+        '<span class="chip-name"></span>' +
+        '<span class="chip-sec">5″</span>' +
+        '<span class="chip-undo roll">点此撤销</span>' +
+        '</div>';
+      chip.querySelector('.chip-name').textContent = '已删除「' + item.row.title + '」';
+      // 读条交给 GPU：建槽时按剩余窗长一次性设定 linear 直达终点，渲染线程零逐帧抖动
+      const fill = chip.querySelector('.fill');
+      fill.style.transition = 'none';
+      fill.style.transform = 'scaleX(0)';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fill.style.transition = 'transform ' + Math.max(1, item.expiresAt - Date.now()) + 'ms linear';
+        fill.style.transform = 'scaleX(1)';
+      }));
+      chip.addEventListener('click', () => {
+        if (item.kind !== 'tomb') return;
+        item.kind = 'row';
+        swap(item, cardFor(item));
+      });
+      return chip;
+    }
+    function toTomb(item) {
+      if (item.kind !== 'row') return;
+      item.kind = 'tomb';
+      item.expiresAt = Date.now() + WINDOW;
+      swap(item, chipFor(item));
+    }
+    function collapse(item) {
+      const slot = item.slotEl;
+      if (!slot || !slot.parentElement) return;
+      item.kind = 'expired';
+      slot.style.height = slot.offsetHeight + 'px';
+      requestAnimationFrame(() => {
+        if (item.el) item.el.classList.add('dying');
+        slot.classList.add('gone');
+        setTimeout(() => slot.remove(), 230);
+      });
+    }
+    function tick(now) {
+      for (const item of items) {
+        if (item.kind !== 'tomb') continue;
+        const left = item.expiresAt - now;
+        if (left <= 0) { collapse(item); continue; }
+        const sec = Math.max(0, Math.min(5, Math.ceil(left / 1000)));
+        item.el.querySelector('.chip-sec').textContent = sec + '″';
+      }
+    }
+    items.forEach(i => { ensureSlot(i); swap(i, cardFor(i)); });
+    return { tick };
+  }
+
+  const panels = Array.from(document.querySelectorAll('section')).map(initPanel);
+  document.querySelectorAll('.reset').forEach(b => b.addEventListener('click', () => location.reload()));
+  setInterval(() => {
+    const now = Date.now();
+    panels.forEach(p => p.tick(now));
+  }, 250);
+</script>
+</body>
+</html>

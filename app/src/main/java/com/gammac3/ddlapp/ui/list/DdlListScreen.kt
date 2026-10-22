@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -23,6 +24,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -69,13 +72,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -714,16 +715,25 @@ private fun mergeTombs(rows: List<DdlRow>, tombs: List<Tombstone>): List<ListIte
     return out
 }
 
-/** 墓碑槽（U2 定款）：虚线框本身就是倒计时——虚线沿圆角矩形游走、可见弧随 5 秒缩短直至烧尽；点槽即以原 id 复活。 */
+/** CallChip ease-out（0.23, 1, 0.32, 1）：墓碑槽内滚入、按压等小动效统一用这条缓出曲线。 */
+private val EaseOutChip = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
+
+/** 墓碑槽（R48 重做成「实底呼叫条」定款，U2 虚线擦除框退役）：实底圆角小框 =
+ *  「垃圾桶图标槽 + 已删名 + 秒表 + 撤销符」，倒计时本体改成进度读条——一条
+ *  onSurfaceVariant 半透明洗色自左向右读满（等价 transform: scaleX、origin left），
+ *  读满即窗口关闭、整槽被 GC 摘除（列表 animateItem 出场淡出）；点槽即以原 id 复活。
+ *  滚入/按压走 240ms/160ms 缓出（blur 滚依赖 API 31+，位移+淡入已足型）。 */
 @Composable
 private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modifier: Modifier = Modifier) {
     val initial = ((tomb.expiresAtMillis - nowMillis) / DdlListViewModel.WINDOW_MILLIS.toFloat())
         .coerceIn(0f, 1f)
-    val progress = remember(tomb.row.id) { Animatable(initial) }
+    // 读条进度 = 已度过占比：首帧从当前钟面折算的百分位起步（0 → 1 自左向右线性读满），
+    // 读满的瞬间 GC 恰好摘除，两相衔接；中途重组/滚回视口不重放（起点随时钟校正）
+    val progress = remember(tomb.row.id) { Animatable((1f - initial).coerceIn(0f, 1f)) }
     LaunchedEffect(tomb.row.id) {
         if (initial > 0f) {
             progress.animateTo(
-                0f,
+                1f,
                 tween(
                     durationMillis = (initial * DdlListViewModel.WINDOW_MILLIS).toInt().coerceAtLeast(1),
                     easing = LinearEasing,
@@ -731,21 +741,71 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
             )
         }
     }
+    // 图标与撤销符滚入（glyph 'in' 定款）：自下 70% 归位 + 淡入，240ms 缓出
+    val glyphIn = remember(tomb.row.id) { Animatable(if (initial > 0f) 0f else 1f) }
+    LaunchedEffect(tomb.row.id) {
+        if (initial > 0f) glyphIn.animateTo(1f, tween(240, easing = EaseOutChip))
+    }
+    // 按压微缩（data-pressed 定款）：0.97，160ms——全槽点击写在这层，微缩就是唯一的按压反馈
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val pressScale by animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = tween(160, easing = EaseOutChip),
+        label = "tombPress",
+    )
     val remainSec = (((tomb.expiresAtMillis - nowMillis) + 999) / 1_000).toInt().coerceIn(0, 5)
+    val ink = MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = pressScale
+                scaleY = pressScale
+            }
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onUndo)
-            .dashedCountdownBorder({ progress.value }, MaterialTheme.colorScheme.onSurfaceVariant)
-            .padding(horizontal = 15.dp, vertical = 14.dp),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .clickable(interactionSource = interaction, indication = null, onClick = onUndo),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // 进度读条（__fill 定款）：matchParentSize 自绘矩形，宽 = 满宽 × 已读占比，左锚不动
+        Box(
+            Modifier
+                .matchParentSize()
+                .drawBehind {
+                    val f = progress.value.coerceIn(0f, 1f)
+                    if (f > 0.002f) {
+                        drawRect(
+                            ink.copy(alpha = 0.10f),
+                            size = Size(size.width * f, size.height),
+                        )
+                    }
+                },
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 15.dp, vertical = 14.dp),
+        ) {
+            Box(
+                Modifier
+                    .size(15.dp)
+                    .graphicsLayer {
+                        alpha = glyphIn.value
+                        translationY = (1f - glyphIn.value) * size.height * 0.7f
+                    },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_del),
+                    contentDescription = null,
+                    tint = ink,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
+            Spacer(Modifier.width(8.dp))
             Text(
                 text = "已删除「${tomb.row.title}」",
                 fontSize = 12.sp,
                 fontFamily = HanFont,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -753,9 +813,12 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
             Spacer(Modifier.width(8.dp))
             Text(
                 text = "$remainSec″",
-                fontSize = 10.5.sp,
-                fontFamily = FigureFont,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontFamily = FigureFont,
+                    fontSize = 10.5.sp,
+                    fontFeatureSettings = "tnum",
+                ),
+                color = ink.copy(alpha = 0.85f),
             )
             Spacer(Modifier.width(10.dp))
             Text(
@@ -764,41 +827,13 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
                 fontWeight = FontWeight.Bold,
                 fontFamily = HanFont,
                 color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.graphicsLayer {
+                    alpha = glyphIn.value
+                    translationY = (1f - glyphIn.value) * size.height * 0.7f
+                },
             )
         }
     }
-}
-
-/** 虚线倒计时边框（擦除式）：缺口从框线起点单向扩张、可见弧逐秒减少，dash 相位恒定。
- *  PathEffect 走 android 原生画笔（Compose drawPath 无 pathEffect 参数），分段由 PathMeasure 截取。 */
-private fun Modifier.dashedCountdownBorder(progress: () -> Float, color: Color): Modifier = drawBehind {
-    val p = progress().coerceIn(0f, 1f)
-    if (p <= 0.01f) return@drawBehind
-    val strokeW = 1.5.dp.toPx()
-    val inset = strokeW / 2f
-    if (size.width <= strokeW + 2f || size.height <= strokeW + 2f) return@drawBehind
-    val apath = android.graphics.Path().apply {
-        addRoundRect(
-            inset, inset, size.width - inset, size.height - inset,
-            16.dp.toPx(), 16.dp.toPx(),
-            android.graphics.Path.Direction.CW,
-        )
-    }
-    val measure = android.graphics.PathMeasure(apath, false)
-    val total = measure.length
-    if (total <= 0f) return@drawBehind
-    val paint = android.graphics.Paint().apply {
-        style = android.graphics.Paint.Style.STROKE
-        strokeWidth = strokeW
-        isAntiAlias = true
-        this.color = color.toArgb()
-        pathEffect = android.graphics.DashPathEffect(floatArrayOf(4.dp.toPx(), 3.5.dp.toPx()), 0f)
-    }
-    // 擦除式倒计时（R44 重做）：缺口从框线起点沿路径单向扩张，可见弧长 = 周长 × p——
-    // 框线一点一点减少（无旋转、无相位滑动），烧尽即无
-    val seg = android.graphics.Path()
-    measure.getSegment(total * (1f - p), total, seg, true)
-    drawContext.canvas.nativeCanvas.drawPath(seg, paint)
 }
 
 /** 逾期组头小印章：朱文阳刻（纸底红框红字），斜盖 3°；首次出现或新增逾期项时「盖章」落下。 */
