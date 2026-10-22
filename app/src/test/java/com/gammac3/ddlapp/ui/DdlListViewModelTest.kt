@@ -59,12 +59,14 @@ class DdlListViewModelTest {
 
     private lateinit var vm: DdlListViewModel
     private lateinit var dao: FakeDdlDao
+    private lateinit var scheduler: FakeScheduler
 
     @Before
     fun setup() {
         Dispatchers.setMain(dispatcher)
         dao = FakeDdlDao()
-        vm = DdlListViewModel(DdlRepository(dao, FakeScheduler()) { now })
+        scheduler = FakeScheduler()
+        vm = DdlListViewModel(DdlRepository(dao, scheduler) { now })
     }
 
     @After
@@ -227,5 +229,100 @@ class DdlListViewModelTest {
         val thrown = runCatching { vm.importJson("not a json", false) }.exceptionOrNull()
         assertEquals("invalid-json", thrown?.message)
         assertEquals(1, vm.uiState.value.rows.size)
+    }
+
+    // ---------- 逾期一键顺延（v1.15.0）----------
+
+    @Test
+    fun `postpone 改截止脱离逾期并重拍提醒`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        dao.insert(DdlEntity(0, "概率论", "", now - 13 * 3_600_000L, listOf(30L), false, now))
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        val target = now + 86_400_000L
+
+        vm.postpone(row.id, target)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val after = vm.uiState.value.rows.first()
+        assertEquals(target, after.deadlineMillis)
+        // 组归属：顺延后不再是已过期（固定时区判定，不依赖新组落哪）
+        val group = com.gammac3.ddlapp.logic.DdlGrouper
+            .groupOf(after, now, java.time.ZoneId.of("UTC"))
+        org.junit.Assert.assertNotEquals(com.gammac3.ddlapp.model.DdlGroup.OVERDUE, group)
+        // 闹钟重排：提前量 30 分钟 → 「-30min」＋「到期时刻」两枚未来触发点
+        assertEquals(2, scheduler.scheduled[row.id]!!.size)
+    }
+
+    @Test
+    fun `postpone 可撤销回写原截止`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        dao.insert(DdlEntity(0, "概率论", "", now - 3_600_000L, emptyList(), false, now))
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        val target = now + 86_400_000L
+
+        vm.postpone(row.id, target)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, vm.postponements.value.size)
+
+        vm.undoPostpone(row.id)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(now - 3_600_000L, vm.uiState.value.rows.first().deadlineMillis)
+        assertEquals(0, vm.postponements.value.size)
+    }
+
+    @Test
+    fun `顺延撤销窗口走完撤销失效`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        dao.insert(DdlEntity(0, "概率论", "", now - 3_600_000L, emptyList(), false, now))
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        val target = now + 86_400_000L
+
+        vm.postpone(row.id, target)
+        dispatcher.scheduler.advanceUntilIdle()
+        val expiresAt = vm.postponements.value.values.first().expiresAtMillis
+
+        vm.gcPostponements(expiresAt + 1)
+        dispatcher.scheduler.advanceUntilIdle()
+        vm.undoPostpone(row.id)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(target, vm.uiState.value.rows.first().deadlineMillis) // 仍停在顺延值
+        assertEquals(0, vm.postponements.value.size)                       // 槽已被清走
+    }
+
+    @Test
+    fun `postpone 对已完成条目不生效`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        dao.insert(DdlEntity(0, "已完", "", now - 3_600_000L, emptyList(), true, now))
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        val old = row.deadlineMillis
+
+        vm.postpone(row.id, now + 86_400_000L)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(old, vm.uiState.value.rows.first().deadlineMillis)
+        org.junit.Assert.assertTrue(vm.postponements.value.isEmpty())
+    }
+
+    @Test
+    fun `postpone 发出撤销事件含旧值新值`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect { } }
+        dao.insert(DdlEntity(0, "概率论", "", now - 3_600_000L, emptyList(), false, now))
+        dispatcher.scheduler.advanceUntilIdle()
+        val row = vm.uiState.value.rows.first()
+        val target = now + 86_400_000L
+
+        val events = mutableListOf<com.gammac3.ddlapp.ui.list.Postponement>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.postponeEvents.collect { events.add(it) }
+        }
+
+        vm.postpone(row.id, target)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, events.size)
+        assertEquals(now - 3_600_000L, events.first().oldDeadlineMillis)
+        assertEquals(target, events.first().newDeadlineMillis)
     }
 }

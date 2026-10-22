@@ -55,6 +55,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -100,6 +104,7 @@ import com.gammac3.ddlapp.logic.DdlGrouper
 import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.model.DdlGroup
 import com.gammac3.ddlapp.model.DdlRow
+import com.gammac3.ddlapp.ui.Format
 import com.gammac3.ddlapp.ui.theme.FigureFont
 import com.gammac3.ddlapp.ui.theme.HanFont
 import com.gammac3.ddlapp.ui.theme.TitleFont
@@ -134,6 +139,7 @@ fun DdlListScreen(
         while (true) {
             now = System.currentTimeMillis()
             viewModel.gcTombstones(now) // 墓碑槽窗口走完即从 UI 收场
+            viewModel.gcPostponements(now) // 顺延撤销槽与墓碑同拍收场
             delay(1_000)
         }
     }
@@ -176,6 +182,19 @@ fun DdlListScreen(
 
     // ---- 备份导入导出（⋯ 菜单 → SAF 选文件 → 追加/覆盖二级弹窗）----
     val scope = rememberCoroutineScope()
+
+    // 顺延完成 → Snackbar「已顺延到 … · 撤销」（v1.15.0）；动作回写原截止走同一管线
+    val postponeSnacks = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.postponeEvents.collect { p ->
+            val result = postponeSnacks.showSnackbar(
+                message = "已顺延到 " + Format.absolute(p.newDeadlineMillis),
+                actionLabel = "撤销",
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed) viewModel.undoPostpone(p.rowId)
+        }
+    }
     val toast: (String) -> Unit = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     var pendingImportText by remember { mutableStateOf<String?>(null) }
     var pendingImportCount by remember { mutableIntStateOf(0) }
@@ -266,6 +285,7 @@ fun DdlListScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(postponeSnacks) },
         topBar = {
             TopAppBar(
                 title = {
@@ -517,6 +537,10 @@ fun DdlListScreen(
                                     onClick = { onEdit(item.row) },
                                     onDelete = { viewModel.delete(item.row) },
                                     onToggleDone = { viewModel.toggleDone(item.row) },
+                                    onPostpone = { target ->
+                                        if (target == null) onEdit(item.row)
+                                        else viewModel.postpone(item.row.id, target)
+                                    },
                                     modifier = Modifier.animateItem(),
                                 )
                                 is ListItem.TombV -> TombCard(
@@ -542,6 +566,7 @@ private fun SwipeRow(
     onClick: () -> Unit,
     onDelete: () -> Unit,
     onToggleDone: () -> Unit,
+    onPostpone: (Long?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // 手势自绘（R44 立骨架，R46 重做映射）：左划最多拖到恰好露出「删除」即停靠；悬停中
@@ -693,7 +718,7 @@ private fun SwipeRow(
             Modifier
                 .offset { IntOffset(visualState.value.roundToInt(), 0) },
         ) {
-            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue)
+            DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onPostpone = onPostpone)
         }
     }
 }

@@ -6,6 +6,7 @@ import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.data.DdlEntity
 import com.gammac3.ddlapp.data.DdlRepository
 import com.gammac3.ddlapp.model.DdlRow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,14 @@ enum class DdlFilter { ALL, ACTIVE, DONE }
 data class Tombstone(
     val row: DdlRow,
     val entity: DdlEntity,
+    val expiresAtMillis: Long,
+)
+
+/** 顺延撤销槽：一次「逾期顺延」的原值/新值快照，窗口（5 秒）内可撤销。 */
+data class Postponement(
+    val rowId: Long,
+    val oldDeadlineMillis: Long,
+    val newDeadlineMillis: Long,
     val expiresAtMillis: Long,
 )
 
@@ -119,6 +128,62 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
 
     fun toggleDone(row: DdlRow) {
         viewModelScope.launch { repository.setDone(row.id, !row.isDone) }
+    }
+
+    // ---------- 逾期一键顺延（v1.15.0）----------
+    // 改截止走既有 upsert 管线：闹钟自动重排、onChanged 带动小组件刷新、分组即时重算。
+
+    private val postponementsFlow = MutableStateFlow<Map<Long, Postponement>>(emptyMap())
+
+    /** 顺延撤销槽（按条目 id 键，一次一条的最新值）。 */
+    val postponements: StateFlow<Map<Long, Postponement>> = postponementsFlow
+
+    /** 顺延完成事件（Snackbar「撤销」的源头；upsert 成功后才发）。 */
+    private val _postponeEvents = MutableSharedFlow<Postponement>(extraBufferCapacity = 8)
+    val postponeEvents: MutableSharedFlow<Postponement> = _postponeEvents
+
+    /** 逾期一键顺延：条目未完成时把截止改为 newDeadlineMillis，并留撤销槽。 */
+    fun postpone(rowId: Long, newDeadlineMillis: Long) {
+        viewModelScope.launch {
+            val current = repository.observeAll().first().firstOrNull { it.id == rowId } ?: return@launch
+            if (current.isDone) return@launch
+            postponementsFlow.value = postponementsFlow.value + (
+                rowId to Postponement(
+                    rowId = rowId,
+                    oldDeadlineMillis = current.deadlineEpochMillis,
+                    newDeadlineMillis = newDeadlineMillis,
+                    expiresAtMillis = System.currentTimeMillis() + WINDOW_MILLIS,
+                )
+                )
+            repository.upsert(current.copy(deadlineEpochMillis = newDeadlineMillis))
+            _postponeEvents.tryEmit(
+                Postponement(
+                    rowId = rowId,
+                    oldDeadlineMillis = current.deadlineEpochMillis,
+                    newDeadlineMillis = newDeadlineMillis,
+                    expiresAtMillis = 0L, // 事件载体不需要窗口；窗口以撤销槽为准
+                )
+            )
+        }
+    }
+
+    /** 撤销顺延：以撤销槽记录的原截止写回（先摘槽防双击双还原）。 */
+    fun undoPostpone(rowId: Long) {
+        val record = postponementsFlow.value[rowId] ?: return
+        postponementsFlow.value = postponementsFlow.value - rowId
+        viewModelScope.launch {
+            val current = repository.observeAll().first().firstOrNull { it.id == rowId } ?: return@launch
+            if (current.isDone) return@launch
+            repository.upsert(current.copy(deadlineEpochMillis = record.oldDeadlineMillis))
+        }
+    }
+
+    /** 顺延撤销槽窗口走完即失效（UI 秒心跳驱动，与墓碑同一拍）。 */
+    fun gcPostponements(nowMillis: Long) {
+        val cur = postponementsFlow.value
+        if (cur.isEmpty()) return
+        val next = cur.filterValues { it.expiresAtMillis > nowMillis }
+        if (next.size != cur.size) postponementsFlow.value = next
     }
 
     /** 导出全部条目为备份 JSON v1（含已完成与静音）。 */
