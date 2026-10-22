@@ -29,11 +29,12 @@
             android:letterSpacing="0.14"
 />
 
-        <!-- 弹性隙 1：header ↔ 行 1（0.66 权重＝头隙让量，主体重心上提；8dp 保底 = 台历红签领地，勿减） -->
+        <!-- 弹性隙 1：header ↔ 行 1（0.30 权重＝v1.15.1 头隙再让量，两刀经验法 0.66→0.40→0.30，
+             行块重心微升；8dp 保底 = 台历红签领地，勿减） -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.66" />
+            android:layout_weight="0.30" />
 
         <!-- 行 1 -->
         <LinearLayout
@@ -227,18 +228,19 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- 弹性隙 4：末行 ↔ 周多点条（1.34 权重＝承接隙 1 让出的量；周条绝对位置不变） -->
+        <!-- 弹性隙 4：末行 ↔ 周多点条（1.70 权重＝v1.15.1 承接隙 1 让出的量；配合周条
+             marginTop 8dp，上让下收，行块重心升约 3-4dp；五隙总重恒 5.0，隙 2/3/5 份额不变） -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1.34" />
+            android:layout_weight="1.70" />
 
         <!-- M5 周多点条：7 格，每格「星期字 + 至多 2 点」 -->
         <LinearLayout
             android:id="@+id/widget_week_strip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
             <LinearLayout
