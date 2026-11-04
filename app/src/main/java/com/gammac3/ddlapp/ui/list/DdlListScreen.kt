@@ -84,6 +84,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
@@ -122,9 +123,15 @@ private val groupOrder = listOf(
     DdlGroup.THIS_WEEK, DdlGroup.LATER, DdlGroup.DONE,
 )
 
+/** 组名（资源化：系统切英文后自动映射 Overdue/Today/…）。 */
+@Composable
 private fun groupName(g: DdlGroup): String = when (g) {
-    DdlGroup.OVERDUE -> "已过期"; DdlGroup.TODAY -> "今天"; DdlGroup.TOMORROW -> "明天"
-    DdlGroup.THIS_WEEK -> "未来 7 天"; DdlGroup.LATER -> "更晚"; DdlGroup.DONE -> "已完成"
+    DdlGroup.OVERDUE -> stringResource(R.string.group_overdue)
+    DdlGroup.TODAY -> stringResource(R.string.group_today)
+    DdlGroup.TOMORROW -> stringResource(R.string.group_tomorrow)
+    DdlGroup.THIS_WEEK -> stringResource(R.string.group_next_week)
+    DdlGroup.LATER -> stringResource(R.string.group_later)
+    DdlGroup.DONE -> stringResource(R.string.group_done)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,14 +195,19 @@ fun DdlListScreen(
     LaunchedEffect(Unit) {
         viewModel.postponeEvents.collect { p ->
             val result = postponeSnacks.showSnackbar(
-                message = "已顺延到 " + Format.absolute(p.newDeadlineMillis),
-                actionLabel = "撤销",
+                message = context.getString(
+                    R.string.snack_postponed,
+                    Format.absolute(context, p.newDeadlineMillis),
+                ),
+                actionLabel = context.getString(R.string.btn_undo),
                 duration = SnackbarDuration.Short,
             )
             if (result == SnackbarResult.ActionPerformed) viewModel.undoPostpone(p.rowId)
         }
     }
     val toast: (String) -> Unit = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+    // 复数计数（「N 条」/"N items"）：资源按系统语言出正确单复数
+    val qty: (Int) -> String = { n -> context.resources.getQuantityString(R.plurals.items_plain, n, n) }
     var pendingImportText by remember { mutableStateOf<String?>(null) }
     var pendingImportCount by remember { mutableIntStateOf(0) }
     val exportLauncher = rememberLauncherForActivityResult(
@@ -207,12 +219,13 @@ fun DdlListScreen(
                     val json = viewModel.exportJson()
                     val count = DdlBackup.fromJson(json).size
                     withContext(Dispatchers.IO) {
-                        (context.contentResolver.openOutputStream(uri) ?: error("输出流打开失败"))
+                        (context.contentResolver.openOutputStream(uri)
+                            ?: error(context.getString(R.string.stream_open_failed)))
                             .use { it.write(json.toByteArray(Charsets.UTF_8)) }
                     }
-                    toast("导出完成：$count 条")
+                    toast(context.getString(R.string.toast_export_done, qty(count)))
                 } catch (t: Throwable) {
-                    toast("导出失败：${t.message}")
+                    toast(context.getString(R.string.toast_export_failed, t.message))
                 }
             }
         }
@@ -224,14 +237,15 @@ fun DdlListScreen(
             scope.launch {
                 try {
                     val text = withContext(Dispatchers.IO) {
-                        (context.contentResolver.openInputStream(uri) ?: error("无法读取所选文件"))
+                        (context.contentResolver.openInputStream(uri)
+                            ?: error(context.getString(R.string.stream_read_failed)))
                             .bufferedReader().use { it.readText() }
                     }
                     // 无效文件在此整体拒绝，弹窗根本不出
                     pendingImportCount = DdlBackup.fromJson(text).size
                     pendingImportText = text
                 } catch (t: Throwable) {
-                    toast("无法导入：${t.message}")
+                    toast(context.getString(R.string.toast_import_failed, t.message))
                 }
             }
         }
@@ -240,12 +254,9 @@ fun DdlListScreen(
         val text = pendingImportText // 定格快照：确认回调里用
         AlertDialog(
             onDismissRequest = { pendingImportText = null },
-            title = { Text("导入 $pendingImportCount 条") },
+            title = { Text(stringResource(R.string.dialog_import_title, qty(pendingImportCount))) },
             text = {
-                Text(
-                    "追加：现有条目不动，同标题＋同截止的自动跳过。\n" +
-                        "覆盖恢复：先清空现有全部条目再写入，不可撤销。",
-                )
+                Text(stringResource(R.string.dialog_import_body))
             },
             confirmButton = {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -256,30 +267,41 @@ fun DdlListScreen(
                             try {
                                 val r = viewModel.importJson(text, replace = false)
                                 toast(
-                                    if (r.skipped == 0) "导入完成：新增 ${r.affected} 条"
-                                    else "导入完成：新增 ${r.affected} 条，跳过 ${r.skipped} 条重复",
+                                    if (r.skipped == 0) {
+                                        context.getString(R.string.toast_import_done, qty(r.affected))
+                                    } else {
+                                        context.getString(
+                                            R.string.toast_import_done_dupes,
+                                            qty(r.affected), qty(r.skipped),
+                                        )
+                                    },
                                 )
                             } catch (t: Throwable) {
-                                toast("导入失败：${t.message}")
+                                toast(context.getString(R.string.toast_import_failed, t.message))
                             }
                         }
-                    }) { Text("追加到现有") }
+                    }) { Text(stringResource(R.string.btn_append)) }
                     TextButton(onClick = {
                         if (text == null) return@TextButton
                         pendingImportText = null
                         scope.launch {
                             try {
                                 val r = viewModel.importJson(text, replace = true)
-                                toast("恢复完成：写入 ${r.affected} 条，原有 ${r.discarded} 条已清除")
+                                toast(
+                                    context.getString(
+                                        R.string.toast_restore_done,
+                                        qty(r.affected), qty(r.discarded),
+                                    )
+                                )
                             } catch (t: Throwable) {
-                                toast("导入失败：${t.message}")
+                                toast(context.getString(R.string.toast_import_failed, t.message))
                             }
                         }
-                    }) { Text("覆盖恢复", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(stringResource(R.string.btn_restore), color = MaterialTheme.colorScheme.error) }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { pendingImportText = null }) { Text("取消") }
+                TextButton(onClick = { pendingImportText = null }) { Text(stringResource(R.string.btn_cancel)) }
             },
         )
     }
@@ -290,7 +312,7 @@ fun DdlListScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "DDL 清单",
+                        stringResource(R.string.app_name),
                         fontFamily = TitleFont,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
@@ -308,14 +330,17 @@ fun DdlListScreen(
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                             DropdownMenuItem(
-                                text = { Text("导出 JSON") },
+                                text = { Text(stringResource(R.string.menu_export_json)) },
                                 onClick = {
                                     menuOpen = false
-                                    exportLauncher.launch("DDL清单_" + LocalDate.now() + ".json")
+                                    exportLauncher.launch(
+                                        context.getString(R.string.export_file_prefix) +
+                                            LocalDate.now() + ".json",
+                                    )
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("导入 JSON") },
+                                text = { Text(stringResource(R.string.menu_import_json)) },
                                 onClick = {
                                     menuOpen = false
                                     importLauncher.launch(
@@ -333,9 +358,10 @@ fun DdlListScreen(
             )
         },
         floatingActionButton = {
+            val fabDesc = stringResource(R.string.add_ddl)
             FloatingActionButton(
                 onClick = { onEdit(null) },
-                modifier = Modifier.semantics { contentDescription = "添加 DDL" },
+                modifier = Modifier.semantics { contentDescription = fabDesc },
                 shape = RoundedCornerShape(18.dp),
                 containerColor = MaterialTheme.colorScheme.inverseSurface,
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
@@ -356,7 +382,7 @@ fun DdlListScreen(
                     },
                 ) {
                     Text(
-                        "⚠ 精确提醒未开启，点击去设置（关闭后提醒可能略晚）",
+                        stringResource(R.string.banner_exact_alarm),
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
@@ -364,7 +390,7 @@ fun DdlListScreen(
             // 通知权限被拒绝提示（Android 13+）
             if (notifDenied) {
                 Text(
-                    "🔔 通知权限未开启，将收不到提醒，点击去系统设置",
+                    stringResource(R.string.banner_notifications),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
@@ -393,12 +419,12 @@ fun DdlListScreen(
                         modifier = Modifier.weight(1f, fill = false),
                     ) {
                         Text(
-                            "🔋 后台省电时闹钟可能被延迟，点击加入电池白名单",
+                            stringResource(R.string.banner_battery),
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
                     TextButton(onClick = { batteryCardDismissed = true }) {
-                        Text("先不", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.banner_not_now), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -415,9 +441,9 @@ fun DdlListScreen(
                         label = {
                             Text(
                                 when (f) {
-                                    DdlFilter.ALL -> "全部"
-                                    DdlFilter.ACTIVE -> "未完成"
-                                    DdlFilter.DONE -> "已完成"
+                                    DdlFilter.ALL -> stringResource(R.string.chip_all)
+                                    DdlFilter.ACTIVE -> stringResource(R.string.chip_active)
+                                    DdlFilter.DONE -> stringResource(R.string.chip_done)
                                 }
                             )
                         },
@@ -458,9 +484,9 @@ fun DdlListScreen(
                     item(key = "empty") {
                         Text(
                             text = if (state.filter == DdlFilter.ALL) {
-                                "还没有 DDL，点右下角 ＋ 添加"
+                                stringResource(R.string.empty_all)
                             } else {
-                                "该筛选下暂无条目，试试切换筛选"
+                                stringResource(R.string.empty_filtered)
                             },
                             style = MaterialTheme.typography.bodyMedium,
                             fontSize = 14.sp,
@@ -496,14 +522,18 @@ fun DdlListScreen(
                                 if (group == DdlGroup.OVERDUE) {
                                     OverdueSeal(count = rows.size)
                                 } else {
+                                    // buildAnnotatedString 的 builder 非 Composable 空间，标签/括号先在此取
+                                    val label = groupName(group)
+                                    val parenOpen = stringResource(R.string.group_count_open)
+                                    val parenClose = stringResource(R.string.group_count_close)
                                     Text(
                                         text = buildAnnotatedString {
-                                            append(groupName(group))
-                                            append("（")
+                                            append(label)
+                                            append(parenOpen)
                                             withStyle(SpanStyle(fontFamily = FigureFont)) {
                                                 append("${rows.size}")
                                             }
-                                            append("）")
+                                            append(parenClose)
                                             if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
                                         },
                                         fontFamily = HanFont,
@@ -680,6 +710,8 @@ private fun SwipeRow(
                 .clickable(enabled = docked, onClick = onDelete),
         )
         // 揭出区「垃圾桶＋删除」（R47，I1 定款）：亮暗随主题 error/onError 自动适配
+        val deleteLabel = stringResource(R.string.btn_delete)
+        val doneLabel = stringResource(R.string.swipe_done)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -698,13 +730,13 @@ private fun SwipeRow(
             )
             Spacer(Modifier.width(4.dp))
             Text(
-                text = "删除",
+                text = deleteLabel,
                 color = onErr,
                 fontWeight = FontWeight.Bold,
             )
         }
         Text(
-            text = "完成",
+            text = doneLabel,
             color = onDone,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
@@ -827,7 +859,7 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
             }
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "已删除「${tomb.row.title}」",
+                text = stringResource(R.string.tomb_deleted, tomb.row.title),
                 fontSize = 12.sp,
                 fontFamily = HanFont,
                 color = ink,
@@ -847,7 +879,7 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
             )
             Spacer(Modifier.width(10.dp))
             Text(
-                text = "点此撤销",
+                text = stringResource(R.string.tomb_tap_undo),
                 fontSize = 12.5.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = HanFont,
@@ -881,9 +913,12 @@ private fun OverdueSeal(count: Int) {
             )
         }
     }
+    val sealText = stringResource(R.string.seal_overdue)
+    val parenOpen = stringResource(R.string.group_count_open)
+    val parenClose = stringResource(R.string.group_count_close)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = "逾期",
+            text = sealText,
             fontSize = 10.5.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.5.sp,
@@ -904,9 +939,9 @@ private fun OverdueSeal(count: Int) {
         )
         Text(
             text = buildAnnotatedString {
-                append("（")
+                append(parenOpen)
                 withStyle(SpanStyle(fontFamily = FigureFont)) { append("$count") }
-                append("）")
+                append(parenClose)
             },
             fontFamily = HanFont,
             fontSize = 11.5.sp,

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DDL List</string>
+    <string name="widget_v1_desc">Single focus — a big countdown for the nearest DDL</string>
+    <string name="widget_v3_desc">Multi DDL — next three + week calendar strip</string>
+
+    <!-- ===== Common ===== -->
+    <string name="add_ddl">Add DDL</string>
+    <string name="edit_ddl">Edit DDL</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_undo">Undo</string>
+    <string name="menu_export_json">Export JSON</string>
+    <string name="menu_import_json">Import JSON</string>
+    <string name="export_file_prefix">DDL_List_</string>
+
+    <!-- ===== List group headers ===== -->
+    <string name="group_overdue">Overdue</string>
+    <string name="group_today">Today</string>
+    <string name="group_tomorrow">Tomorrow</string>
+    <string name="group_next_week">Next 7 days</string>
+    <string name="group_later">Later</string>
+    <string name="group_done">Done</string>
+    <string name="group_count_open">" ("</string>
+    <string name="group_count_close">")"</string>
+    <string name="seal_overdue">OVERDUE</string>
+
+    <!-- ===== Filters & swipe ===== -->
+    <string name="chip_all">All</string>
+    <string name="chip_active">Active</string>
+    <string name="chip_done">Done</string>
+    <string name="swipe_done">Done</string>
+
+    <!-- ===== Banners ===== -->
+    <string name="banner_exact_alarm">⚠ Exact reminders are off — tap to open Settings (reminders may arrive late)</string>
+    <string name="banner_notifications">🔔 Notifications are off — you won\'t get reminders. Tap to open system settings</string>
+    <string name="banner_battery">🔋 Battery optimization may delay alarms — tap to whitelist this app</string>
+    <string name="banner_not_now">Not now</string>
+
+    <!-- ===== Empty states ===== -->
+    <string name="empty_all">No DDLs yet — tap + in the bottom right to add one</string>
+    <string name="empty_filtered">Nothing under this filter — try switching filters</string>
+
+    <!-- ===== Postpone snackbar ===== -->
+    <string name="snack_postponed">Postponed to %1$s</string>
+
+    <!-- ===== Tombstone ===== -->
+    <string name="tomb_deleted">Deleted \"%1$s\"</string>
+    <string name="tomb_tap_undo">Tap to undo</string>
+
+    <!-- ===== Card ===== -->
+    <string name="card_done_tag">Completed</string>
+    <string name="card_due">Due %1$s</string>
+    <string name="pill_muted">No reminder</string>
+    <string name="pill_at_deadline">At deadline</string>
+    <string name="pill_early">%1$s before</string>
+    <string name="chip_postpone">Delay</string>
+    <string name="postpone_tonight">Tonight 23:59</string>
+    <string name="postpone_tomorrow">Tomorrow 23:59</string>
+    <string name="postpone_same_time">Tomorrow, same time</string>
+    <string name="postpone_custom">Custom…</string>
+
+    <!-- ===== Editor ===== -->
+    <string name="editor_title_required">Title (required)</string>
+    <string name="editor_date">Date</string>
+    <string name="editor_time">Time</string>
+    <string name="editor_date_value">📅 %1$s</string>
+    <string name="editor_time_value">⏰ %1$s</string>
+    <string name="editor_click_change_date">Change date</string>
+    <string name="editor_click_change_time">Change time</string>
+    <string name="editor_note_optional">Note (optional)</string>
+    <string name="editor_leads_title">Early reminders (multi-select)</string>
+    <string name="editor_past_error">The deadline must be later than right now</string>
+    <string name="editor_mark_not_done">Mark as not done</string>
+    <string name="editor_mark_done">Mark as done</string>
+    <string name="editor_pick_time">Pick a time</string>
+
+    <!-- ===== Import / export ===== -->
+    <string name="stream_open_failed">Could not open the output stream</string>
+    <string name="stream_read_failed">Could not read the chosen file</string>
+    <string name="toast_export_done">Exported: %1$s</string>
+    <string name="toast_export_failed">Export failed: %1$s</string>
+    <string name="toast_import_failed">Import failed: %1$s</string>
+    <string name="dialog_import_title">Import %1$s</string>
+    <string name="dialog_import_body">Merge: existing items are kept; exact duplicates (same title + deadline) are skipped.\nFull restore: existing items are ALL cleared before writing — cannot be undone.</string>
+    <string name="btn_append">Merge into existing</string>
+    <string name="btn_restore">Full restore</string>
+    <string name="toast_import_done">Imported: %1$s added</string>
+    <string name="toast_import_done_dupes">Imported: %1$s added, %2$s skipped</string>
+    <string name="toast_restore_done">Restore complete: %1$s written, %2$s replaced</string>
+
+    <!-- ===== Notifications ===== -->
+    <string name="notif_channel_name">DDL deadline reminders</string>
+    <string name="notif_channel_desc">On-time reminders at each deadline and your custom lead times</string>
+    <string name="notif_due_at_deadline">⏰ The deadline is now!</string>
+    <string name="notif_due_in">⏰ Due in %1$s</string>
+
+    <!-- ===== Lead labels ===== -->
+    <string name="lead_5">5 min</string>
+    <string name="lead_15">15 min</string>
+    <string name="lead_30">30 min</string>
+    <string name="lead_60">1 hour</string>
+    <string name="lead_180">3 hours</string>
+    <string name="lead_1440">1 day</string>
+    <string name="lead_4320">3 days</string>
+    <string name="lead_10080">7 days</string>
+    <string name="lead_other">%1$d min</string>
+
+    <!-- ===== Time & date patterns ===== -->
+    <string name="fmt_abs_date_time">MMM d HH:mm</string>
+    <string name="fmt_widget_abs">EEE, MMM d HH:mm</string>
+    <string name="fmt_calpg_month">MMM</string>
+    <string name="fmt_editor_date">MMM d, yyyy</string>
+    <string name="fmt_cd_future">%1$s left</string>
+    <string name="fmt_cd_past">%1$s overdue</string>
+    <string name="fmt_cd_body_d">%1$dd %2$s</string>
+    <string name="fmt_cd_body_h">%1$dh %2$dm</string>
+    <string name="fmt_cd_body_m">%1$dm</string>
+    <string name="fmt_cd_body_soon">&lt;1m</string>
+
+    <!-- ===== Widget ===== -->
+    <string name="wgt_header_recent">UPCOMING</string>
+    <string name="wgt_empty_short">All clear</string>
+    <string name="wgt_empty_row">All clear — nothing due soon</string>
+    <string name="wgt_dash">--</string>
+    <string name="wgt_meta_open">%1$d open · %2$d today · %3$d this week</string>
+    <string name="wgt_meta_overdue">%1$d open · %2$d overdue</string>
+    <string name="wgt_meta_add_hint">%1$d open · tap to add an item</string>
+    <string name="wgt_more_overdue">%1$d more overdue</string>
+    <string name="ph_cd">--</string>
+    <string name="weekday_narrow_0">M</string>
+    <string name="weekday_narrow_1">T</string>
+    <string name="weekday_narrow_2">W</string>
+    <string name="weekday_narrow_3">T</string>
+    <string name="weekday_narrow_4">F</string>
+    <string name="weekday_narrow_5">S</string>
+    <string name="weekday_narrow_6">S</string>
+
+    <!-- ===== Widget picker previews (demo data) ===== -->
+    <string name="pv_title_rehearsal">Group project rehearsal</string>
+    <string name="pv_title_thesis">Thesis draft submission</string>
+    <string name="pv_title_english_corner">English corner prep</string>
+    <string name="pv_cd_hours">14:22 left</string>
+    <string name="pv_cd_days">2d 13:05 left</string>
+    <string name="pv_cd_week">8d 10:35 left</string>
+    <string name="pv_abs_line">Wed, Oct 22 23:00</string>
+    <string name="pv_meta">4 open · 1 today · 3 this week</string>
+    <string name="ph_calpg_month">Oct</string>
+
+    <!-- ===== Plurals ===== -->
+    <plurals name="items_plain">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+</resources>

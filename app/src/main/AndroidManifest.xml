@@ -39,12 +39,16 @@
         <receiver android:name=".widget.DdlWidgetV1Receiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- 系统语言切换 → 小组件文案随 system locale 重渲 -->
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_v1_info" />
         </receiver>
         <receiver android:name=".widget.DdlWidgetV3Receiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- 系统语言切换 → 小组件文案随 system locale 重渲 -->
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_v3_info" />
         </receiver>

@@ -22,8 +22,8 @@ import com.gammac3.ddlapp.ui.Format
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -126,27 +126,38 @@ object DdlWidgets {
     )
 
     /** 头部統計（红签占了右上角，统计移到底部行）。 */
-    private fun metaFilled(model: DdlWidgetModel): String =
-        "共 ${model.activeCount} 条未完成 · 今日 ${model.todayCount} 条 · 本周 ${model.weekCount} 条"
+    private fun metaFilled(context: Context, model: DdlWidgetModel): String =
+        context.getString(
+            R.string.wgt_meta_open, model.activeCount, model.todayCount, model.weekCount,
+        )
 
-    private fun metaEmpty(model: DdlWidgetModel): String =
-        if (model.overdueCount > 0) "共 ${model.activeCount} 条未完成 · 其中 ${model.overdueCount} 条已逾期"
-        else "共 ${model.activeCount} 条未完成 · 点按添加条目"
+    private fun metaEmpty(context: Context, model: DdlWidgetModel): String =
+        if (model.overdueCount > 0) {
+            context.getString(R.string.wgt_meta_overdue, model.activeCount, model.overdueCount)
+        } else {
+            context.getString(R.string.wgt_meta_add_hint, model.activeCount)
+        }
 
     private fun renderV1(context: Context, rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
         val nearest = model.nearest
-        rv.setTextViewText(R.id.widget_header, mixed(context, "最近到期", R.font.source_han_cn_600, R.font.source_han_cn_600))
+        rv.setTextViewText(
+            R.id.widget_header,
+            mixed(context, context.getString(R.string.wgt_header_recent), R.font.source_han_cn_600, R.font.source_han_cn_600),
+        )
         rv.setTextColor(R.id.widget_header, p.gray)
         applyCalTab(context, rv, p, nearest)
         applyRuler(rv, p, model)
         if (nearest == null) {
-            rv.setTextViewText(R.id.widget_title, mixed(context, "现在很清净", R.font.source_han_cn_600, R.font.source_han_cn_600))
+            rv.setTextViewText(R.id.widget_title, mixed(context, context.getString(R.string.wgt_empty_short), R.font.source_han_cn_600, R.font.source_han_cn_600))
             rv.setTextColor(R.id.widget_title, p.ink)
-            rv.setTextViewText(R.id.widget_countdown, mixed(context, "——", R.font.maple_mono_bold_data, R.font.source_han_cn_700))
+            rv.setTextViewText(R.id.widget_countdown, mixed(context, context.getString(R.string.wgt_dash), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
             rv.setTextColor(R.id.widget_countdown, p.gray)
-            rv.setTextViewText(R.id.widget_date, if (model.overdueCount > 0) "另有 ${model.overdueCount} 条已逾期" else "")
+            rv.setTextViewText(
+                R.id.widget_date,
+                if (model.overdueCount > 0) mixed(context, context.getString(R.string.wgt_more_overdue, model.overdueCount), R.font.timeless_serif_text, R.font.source_han_cn_400) else "",
+            )
             rv.setTextColor(R.id.widget_date, p.gray)
-            rv.setTextViewText(R.id.widget_meta, mixed(context, metaEmpty(model), R.font.timeless_serif_text, R.font.source_han_cn_400))
+            rv.setTextViewText(R.id.widget_meta, mixed(context, metaEmpty(context, model), R.font.timeless_serif_text, R.font.source_han_cn_400))
             rv.setTextColor(R.id.widget_meta, p.gray)
             return
         }
@@ -154,25 +165,28 @@ object DdlWidgets {
         val urgent = nearest.deadlineMillis - now < 24 * 3_600_000L
         rv.setTextViewText(R.id.widget_title, mixed(context, nearest.title, R.font.source_han_cn_600, R.font.source_han_cn_600))
         rv.setTextColor(R.id.widget_title, p.ink)
-        rv.setTextViewText(R.id.widget_countdown, mixed(context, Format.remaining(nearest.deadlineMillis, now), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
+        rv.setTextViewText(R.id.widget_countdown, mixed(context, Format.remaining(context, nearest.deadlineMillis, now), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
         rv.setTextColor(R.id.widget_countdown, if (urgent) p.red else p.ink)
-        rv.setTextViewText(R.id.widget_date, mixed(context, absoluteLine(nearest.deadlineMillis), R.font.timeless_serif_text, R.font.source_han_cn_400))
+        rv.setTextViewText(R.id.widget_date, mixed(context, absoluteLine(context, nearest.deadlineMillis), R.font.timeless_serif_text, R.font.source_han_cn_400))
         rv.setTextColor(R.id.widget_date, p.gray)
-        rv.setTextViewText(R.id.widget_meta, mixed(context, metaFilled(model), R.font.timeless_serif_text, R.font.source_han_cn_400))
+        rv.setTextViewText(R.id.widget_meta, mixed(context, metaFilled(context, model), R.font.timeless_serif_text, R.font.source_han_cn_400))
         rv.setTextColor(R.id.widget_meta, p.gray)
     }
 
     private fun renderV3(context: Context, rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
-        rv.setTextViewText(R.id.widget_header, mixed(context, "最近到期", R.font.source_han_cn_600, R.font.source_han_cn_600))
+        rv.setTextViewText(
+            R.id.widget_header,
+            mixed(context, context.getString(R.string.wgt_header_recent), R.font.source_han_cn_600, R.font.source_han_cn_600),
+        )
         rv.setTextColor(R.id.widget_header, p.gray)
         applyCalTab(context, rv, p, model.nearest)
         val rows = model.upcoming
         rv.setViewVisibility(R.id.widget_row3_container, if (rows.size >= 3) android.view.View.VISIBLE else android.view.View.GONE)
         rv.setViewVisibility(R.id.widget_gap_row3, if (rows.size >= 3) android.view.View.VISIBLE else android.view.View.GONE)
-        renderRow(context, rv, p, R.id.widget_row1_title, R.id.widget_row1_cd, R.id.widget_row1_fuse, R.id.widget_row1_track, rows.getOrNull(0), "现在很清净，没有即将到期的条目")
+        renderRow(context, rv, p, R.id.widget_row1_title, R.id.widget_row1_cd, R.id.widget_row1_fuse, R.id.widget_row1_track, rows.getOrNull(0), context.getString(R.string.wgt_empty_row))
         renderRow(context, rv, p, R.id.widget_row2_title, R.id.widget_row2_cd, R.id.widget_row2_fuse, R.id.widget_row2_track, rows.getOrNull(1), "")
         renderRow(context, rv, p, R.id.widget_row3_title, R.id.widget_row3_cd, R.id.widget_row3_fuse, R.id.widget_row3_track, rows.getOrNull(2), "")
-        applyWeekStrip(rv, p, model)
+        applyWeekStrip(context, rv, p, model)
     }
 
     private fun renderRow(
@@ -184,7 +198,7 @@ object DdlWidgets {
                 rv.setTextViewText(titleId, mixed(context, emptyTitle, R.font.source_han_cn_500, R.font.source_han_cn_500))
             }
             rv.setTextColor(titleId, p.gray)
-            rv.setTextViewText(cdId, "——")
+            rv.setTextViewText(cdId, context.getString(R.string.wgt_dash))
             rv.setTextColor(cdId, p.gray)
             rv.setViewVisibility(fuseId, android.view.View.GONE)
             rv.setViewVisibility(trackId, android.view.View.GONE)
@@ -193,7 +207,14 @@ object DdlWidgets {
         val urgent = row.deadlineMillis - System.currentTimeMillis() < 24 * 3_600_000L
         rv.setTextViewText(titleId, mixed(context, row.title, R.font.source_han_cn_500, R.font.source_han_cn_500))
         rv.setTextColor(titleId, p.ink)
-        rv.setTextViewText(cdId, mixed(context, Format.remaining(row.deadlineMillis, System.currentTimeMillis()), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
+        rv.setTextViewText(
+            cdId,
+            mixed(
+                context,
+                Format.remaining(context, row.deadlineMillis, System.currentTimeMillis()),
+                R.font.maple_mono_bold_data, R.font.source_han_cn_700,
+            ),
+        )
         rv.setTextColor(cdId, if (urgent) p.red else p.ink)
         rv.setInt(trackId, "setBackgroundResource", p.trackRes)
         applyFuse(rv, fuseId, row.deadlineMillis)
@@ -209,7 +230,10 @@ object DdlWidgets {
         rv.setViewVisibility(R.id.widget_calpg, android.view.View.VISIBLE)
         rv.setInt(R.id.widget_calpg, "setBackgroundResource", p.calpgBgRes)
         val z = Instant.ofEpochMilli(row.deadlineMillis).atZone(ZoneId.systemDefault())
-        rv.setTextViewText(R.id.widget_calpg_month, mixed(context, "${z.monthValue}月", R.font.source_han_cn_600, R.font.source_han_cn_600))
+        val month = z.format(DateTimeFormatter.ofPattern(
+            context.getString(R.string.fmt_calpg_month), localeOf(context),
+        ))
+        rv.setTextViewText(R.id.widget_calpg_month, mixed(context, month, R.font.source_han_cn_600, R.font.source_han_cn_600))
         rv.setTextColor(R.id.widget_calpg_month, p.calpgInk)
         rv.setTextViewText(R.id.widget_calpg_day, mixed(context, z.dayOfMonth.toString(), R.font.timeless_serif_text, R.font.timeless_serif_text))
         rv.setTextColor(R.id.widget_calpg_day, p.calpgInk)
@@ -265,7 +289,7 @@ object DdlWidgets {
         R.id.widget_week_dot6_a, R.id.widget_week_dot6_b,
     )
 
-    private fun applyWeekStrip(rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
+    private fun applyWeekStrip(context: Context, rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
         if (model.upcoming.isEmpty() || model.weekDots.all { it == 0 }) {
             rv.setViewVisibility(R.id.widget_week_strip, android.view.View.GONE)
             return
@@ -274,7 +298,11 @@ object DdlWidgets {
         val today = LocalDate.now(ZoneId.systemDefault())
         for (n in 0..6) {
             val date = today.plusDays(n.toLong())
-            rv.setTextViewText(STRIP_LABELS[n], date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.CHINA))
+            // 星期字跟随系统 locale（中文「一…日」/ 英文窄式「M T W T F S S」）
+            rv.setTextViewText(
+                STRIP_LABELS[n],
+                date.dayOfWeek.getDisplayName(TextStyle.NARROW, localeOf(context)),
+            )
             rv.setTextColor(STRIP_LABELS[n], p.gray)
             rv.setInt(STRIP_CELLS[n], "setBackgroundResource", if (n == 0) p.cellTodayRes else p.cellRes)
             val count = model.weekDots[n]
@@ -290,18 +318,15 @@ object DdlWidgets {
     private fun startOfToday(): Long =
         LocalDate.now(ZoneId.systemDefault()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-    private fun absoluteLine(deadlineMillis: Long): String {
-        val z = Instant.ofEpochMilli(deadlineMillis).atZone(ZoneId.systemDefault())
-        return "${z.monthValue}月${z.dayOfMonth}日 ${weekday(deadlineMillis)} ${hhmm(deadlineMillis)}"
-    }
+    /** 系统首语言（小组件渲染用 app 上下文，跟随系统切换）。 */
+    private fun localeOf(context: Context): java.util.Locale =
+        context.resources.configuration.locales[0]
 
-    private fun weekday(deadlineMillis: Long): String =
-        Instant.ofEpochMilli(deadlineMillis).atZone(ZoneId.systemDefault())
-            .dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.CHINA)
-
-    private fun hhmm(deadlineMillis: Long): String {
+    /** 「10月22日 周三 23:00」/「Wed, Oct 22 23:00」：模式出自资源，locale 跟随系统。 */
+    private fun absoluteLine(context: Context, deadlineMillis: Long): String {
         val z = Instant.ofEpochMilli(deadlineMillis).atZone(ZoneId.systemDefault())
-        return "${z.hour.toString().padStart(2, '0')}:${z.minute.toString().padStart(2, '0')}"
+        val pattern = context.getString(R.string.fmt_widget_abs)
+        return z.format(DateTimeFormatter.ofPattern(pattern, localeOf(context)))
     }
 
     // ---------- 西文×思源 混排（桌面版的 DataFont/FigureFont 链） ----------

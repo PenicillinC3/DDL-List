@@ -19,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="最近到期"
+            android:text="@string/wgt_header_recent"
             android:textColor="#FF5F6771"
             android:textSize="10sp"
             android:letterSpacing="0.14"
@@ -41,7 +41,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="小组作业答辩彩排"
+                    android:text="@string/pv_title_rehearsal"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
                     android:includeFontPadding="false"
@@ -53,7 +53,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="剩14:22"
+                    android:text="@string/pv_cd_hours"
                     android:textColor="#FFE5484D"
                     android:textSize="12sp"
                     android:maxLines="1"
@@ -96,7 +96,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="毕业论文初稿提交"
+                    android:text="@string/pv_title_thesis"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
                     android:includeFontPadding="false"
@@ -108,7 +108,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="剩2天13:05"
+                    android:text="@string/pv_cd_days"
                     android:textColor="#FF101828"
                     android:textSize="12sp"
                     android:maxLines="1"
@@ -151,7 +151,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="英语角准备材料"
+                    android:text="@string/pv_title_english_corner"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
                     android:includeFontPadding="false"
@@ -163,7 +163,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="剩8天10:35"
+                    android:text="@string/pv_cd_week"
                     android:textColor="#FF101828"
                     android:textSize="12sp"
                     android:maxLines="1"
@@ -205,7 +205,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="一"
+                    android:text="@string/weekday_narrow_0"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -244,7 +244,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="二"
+                    android:text="@string/weekday_narrow_1"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -271,7 +271,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="三"
+                    android:text="@string/weekday_narrow_2"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -304,7 +304,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="四"
+                    android:text="@string/weekday_narrow_3"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -331,7 +331,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="五"
+                    android:text="@string/weekday_narrow_4"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -364,7 +364,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="六"
+                    android:text="@string/weekday_narrow_5"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -391,7 +391,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="日"
+                    android:text="@string/weekday_narrow_6"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -419,7 +419,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="10月"
+            android:text="@string/ph_calpg_month"
             android:textColor="#FFFFFFFF"
             android:textSize="7sp"
             android:letterSpacing="0.08"

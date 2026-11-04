@@ -41,7 +41,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +56,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 private val LEAD_CHOICES: List<Long> = CandidateLeads.ALL.filter { it > 0 }
 
@@ -70,6 +73,7 @@ fun DdlEditorSheet(
     if (!open) return
     val zone = remember { ZoneId.systemDefault() }
     val stateKey = editing?.id
+    val context = LocalContext.current
 
     var title by remember(stateKey) { mutableStateOf(editing?.title.orEmpty()) }
     var note by remember(stateKey) { mutableStateOf(editing?.note.orEmpty()) }
@@ -112,53 +116,73 @@ fun DdlEditorSheet(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                if (editing == null) "添加 DDL" else "编辑 DDL",
+                stringResource(if (editing == null) R.string.add_ddl else R.string.edit_ddl),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             OutlinedTextField(
-                value = title, onValueChange = { title = it }, label = { Text("标题（必填）") },
+                value = title, onValueChange = { title = it },
+                label = { Text(stringResource(R.string.editor_title_required)) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
             )
+            // 日期/时间展示值：模式出自资源，系统英文下出「Nov 4, 2026」
+            val editorLocale = remember(context) { context.resources.configuration.locales[0] }
+            val datePattern = remember(context) { context.getString(R.string.fmt_editor_date) }
+            val dateText = remember(z, editorLocale, datePattern) {
+                z.toLocalDate().format(DateTimeFormatter.ofPattern(datePattern, editorLocale))
+            }
+            val timeText = remember(z) {
+                z.hour.toString().padStart(2, '0') + ":" + z.minute.toString().padStart(2, '0')
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.weight(3f)) {
                     OutlinedTextField(
-                        value = "📅 ${z.year}年${z.monthValue}月${z.dayOfMonth}日",
-                        onValueChange = {}, readOnly = true, label = { Text("日期") },
+                        value = stringResource(R.string.editor_date_value, dateText),
+                        onValueChange = {}, readOnly = true,
+                        label = { Text(stringResource(R.string.editor_date)) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true,
                     )
                     Box(
                         Modifier
                             .matchParentSize()
-                            .clickable(onClickLabel = "更改日期") { showDate = true },
+                            .clickable(
+                                onClickLabel = stringResource(R.string.editor_click_change_date),
+                            ) { showDate = true },
                     )
                 }
                 Box(Modifier.weight(2f)) {
                     OutlinedTextField(
-                        value = "⏰ ${z.hour.toString().padStart(2, '0')}:${z.minute.toString().padStart(2, '0')}",
-                        onValueChange = {}, readOnly = true, label = { Text("时间") },
+                        value = stringResource(R.string.editor_time_value, timeText),
+                        onValueChange = {}, readOnly = true,
+                        label = { Text(stringResource(R.string.editor_time)) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true,
                     )
                     Box(
                         Modifier
                             .matchParentSize()
-                            .clickable(onClickLabel = "更改时间") { showTime = true },
+                            .clickable(
+                                onClickLabel = stringResource(R.string.editor_click_change_time),
+                            ) { showTime = true },
                     )
                 }
             }
             OutlinedTextField(
-                value = note, onValueChange = { note = it }, label = { Text("备注（可选）") },
+                value = note, onValueChange = { note = it },
+                label = { Text(stringResource(R.string.editor_note_optional)) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
             )
-            Text("提前提醒（可多选）", style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.editor_leads_title),
+                style = MaterialTheme.typography.titleSmall,
+            )
             FlowRow(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(
                     selected = muted,
-                    label = { Text("不提醒") },
+                    label = { Text(stringResource(R.string.pill_muted)) },
                     onClick = {
                         muted = !muted
                         if (muted) leads = emptySet()
@@ -174,7 +198,7 @@ fun DdlEditorSheet(
                     val selected = lead in leads
                     FilterChip(
                         selected = selected,
-                        label = { Text(LeadLabels.text(lead)) },
+                        label = { Text(LeadLabels.text(context, lead)) },
                         onClick = {
                             leads = if (selected) leads - lead else leads + lead
                             muted = false
@@ -190,7 +214,7 @@ fun DdlEditorSheet(
             }
             if (editing == null && inPast) {
                 Text(
-                    "截止时间必须晚于现在",
+                    stringResource(R.string.editor_past_error),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.labelMedium,
                 )
@@ -211,10 +235,15 @@ fun DdlEditorSheet(
                         )
                     },
                     modifier = Modifier.weight(2f),
-                ) { Text("保存") }
+                ) { Text(stringResource(R.string.btn_save)) }
                 if (editing != null) {
                     TextButton(onClick = { onToggleDone(editing) }, modifier = Modifier.weight(1f)) {
-                        Text(if (editing.isDone) "标为未完成" else "已完成")
+                        Text(
+                            stringResource(
+                                if (editing.isDone) R.string.editor_mark_not_done
+                                else R.string.editor_mark_done,
+                            )
+                        )
                     }
                     TextButton(onClick = { onDelete(editing) }, modifier = Modifier.weight(1f)) {
                         // I1 线描垃圾桶（R47 定款）：图标+删除红字横排，tint 走主题 error 色
@@ -226,7 +255,7 @@ fun DdlEditorSheet(
                                 modifier = Modifier.size(15.dp),
                             )
                             Spacer(Modifier.width(4.dp))
-                            Text("删除", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.btn_delete), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -249,9 +278,9 @@ fun DdlEditorSheet(
                         z = newDate.atTime(z.hour, z.minute).atZone(zone)
                     }
                     showDate = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_ok)) }
             },
-            dismissButton = { TextButton(onClick = { showDate = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showDate = false }) { Text(stringResource(R.string.btn_cancel)) } },
         ) {
             DatePicker(state = pickerState)
         }
@@ -262,15 +291,15 @@ fun DdlEditorSheet(
         )
         AlertDialog(
             onDismissRequest = { showTime = false },
-            title = { Text("选择时间") },
+            title = { Text(stringResource(R.string.editor_pick_time)) },
             text = { TimePicker(state = timeState) },
             confirmButton = {
                 TextButton(onClick = {
                     z = z.withHour(timeState.hour).withMinute(timeState.minute)
                     showTime = false
-                }) { Text("确定") }
+                }) { Text(stringResource(R.string.btn_ok)) }
             },
-            dismissButton = { TextButton(onClick = { showTime = false }) { Text("取消") } },
+            dismissButton = { TextButton(onClick = { showTime = false }) { Text(stringResource(R.string.btn_cancel)) } },
         )
     }
 }

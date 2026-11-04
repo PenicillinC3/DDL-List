@@ -33,9 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.Format
 import com.gammac3.ddlapp.ui.theme.BellMuted
@@ -58,6 +61,7 @@ fun DdlItemCard(
     // 悬停/划回拖动的「松手结算」若被它截断，卡片就会停在阻尼渐近线（真机截图病例）。
     // 点击统一收敛到整行的 detectTapGestures（见 SwipeRow）。
     // 例外（v1.15.0 顺延 chip）：卡内唯一可点区，hit 区小而独立，拖动不入此层。
+    val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -86,14 +90,14 @@ fun DdlItemCard(
             }
             if (row.isDone) {
                 Text(
-                    text = "已完成",
+                    text = stringResource(R.string.card_done_tag),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp),
                 )
             } else {
                 Text(
-                    text = Format.remaining(row.deadlineMillis, nowMillis),
+                    text = Format.remaining(context, row.deadlineMillis, nowMillis),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontFamily = DataFont,
                         fontSize = 24.sp,
@@ -106,7 +110,10 @@ fun DdlItemCard(
                 )
             }
             Text(
-                text = "期限 " + Format.absolute(row.deadlineMillis),
+                text = stringResource(
+                    R.string.card_due,
+                    Format.absolute(context, row.deadlineMillis),
+                ),
                 fontFamily = FigureFont,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -121,10 +128,13 @@ fun DdlItemCard(
                 ReminderPill(
                     muted = row.muted,
                     text = when {
-                        row.muted -> "不提醒"
-                        row.leadsMinutes.isEmpty() -> "到期时提醒"
-                        else -> "提前 " + row.leadsMinutes.sorted()
-                            .joinToString(" · ") { Format.leadText(it) }
+                        row.muted -> stringResource(R.string.pill_muted)
+                        row.leadsMinutes.isEmpty() -> stringResource(R.string.pill_at_deadline)
+                        else -> stringResource(
+                            R.string.pill_early,
+                            row.leadsMinutes.sorted()
+                                .joinToString(" · ") { Format.leadText(context, it) },
+                        )
                     },
                 )
                 if (overdue && !row.isDone) {
@@ -165,6 +175,11 @@ private fun PostponeChip(
     val deadlineTime = remember(deadlineMillis, zone) {
         Instant.ofEpochMilli(deadlineMillis).atZone(zone).toLocalTime()
     }
+    val postponeText = stringResource(R.string.chip_postpone)
+    val tonightLabel = stringResource(R.string.postpone_tonight)
+    val tomorrowLabel = stringResource(R.string.postpone_tomorrow)
+    val sameTimeLabel = stringResource(R.string.postpone_same_time)
+    val customLabel = stringResource(R.string.postpone_custom)
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier.size(width = 52.dp, height = 44.dp),
@@ -182,7 +197,7 @@ private fun PostponeChip(
                 .padding(horizontal = 12.dp, vertical = 5.dp),
         ) {
             Text(
-                text = "顺延",
+                text = postponeText,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -195,21 +210,21 @@ private fun PostponeChip(
             )
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            PostponeMenuItem("今晚 23:59") {
+            PostponeMenuItem(tonightLabel) {
                 menuOpen = false
                 onPostpone(today.atTime(23, 59).atZone(zone).toInstant().toEpochMilli())
             }
-            PostponeMenuItem("明天 23:59") {
+            PostponeMenuItem(tomorrowLabel) {
                 menuOpen = false
                 onPostpone(today.plusDays(1).atTime(23, 59).atZone(zone).toInstant().toEpochMilli())
             }
-            PostponeMenuItem("明天同一时刻") {
+            PostponeMenuItem(sameTimeLabel) {
                 menuOpen = false
                 onPostpone(
                     today.plusDays(1).atTime(deadlineTime).atZone(zone).toInstant().toEpochMilli()
                 )
             }
-            PostponeMenuItem("自定义…") {
+            PostponeMenuItem(customLabel) {
                 menuOpen = false
                 onPostpone(null)
             }

@@ -1,6 +1,158 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DDL 清单</string>
     <string name="widget_v1_desc">单焦点 · 最近一条的大号倒计时</string>
     <string name="widget_v3_desc">多 DDL · 最近三条 + 本周周历</string>
+
+    <!-- ===== 通用 ===== -->
+    <string name="add_ddl">添加 DDL</string>
+    <string name="edit_ddl">编辑 DDL</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_ok">确定</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_undo">撤销</string>
+    <string name="menu_export_json">导出 JSON</string>
+    <string name="menu_import_json">导入 JSON</string>
+    <string name="export_file_prefix">DDL清单_</string>
+
+    <!-- ===== 列表分组头 ===== -->
+    <string name="group_overdue">已过期</string>
+    <string name="group_today">今天</string>
+    <string name="group_tomorrow">明天</string>
+    <string name="group_next_week">未来 7 天</string>
+    <string name="group_later">更晚</string>
+    <string name="group_done">已完成</string>
+    <string name="group_count_open">（</string>
+    <string name="group_count_close">）</string>
+    <string name="seal_overdue">逾期</string>
+
+    <!-- ===== 筛选与滑删 ===== -->
+    <string name="chip_all">全部</string>
+    <string name="chip_active">未完成</string>
+    <string name="chip_done">已完成</string>
+    <string name="swipe_done">完成</string>
+
+    <!-- ===== 顶部引导横幅 ===== -->
+    <string name="banner_exact_alarm">⚠ 精确提醒未开启，点击去设置（关闭后提醒可能略晚）</string>
+    <string name="banner_notifications">🔔 通知权限未开启，将收不到提醒，点击去系统设置</string>
+    <string name="banner_battery">🔋 后台省电时闹钟可能被延迟，点击加入电池白名单</string>
+    <string name="banner_not_now">先不</string>
+
+    <!-- ===== 空态 ===== -->
+    <string name="empty_all">还没有 DDL，点右下角 ＋ 添加</string>
+    <string name="empty_filtered">该筛选下暂无条目，试试切换筛选</string>
+
+    <!-- ===== 顺延 Snackbar ===== -->
+    <string name="snack_postponed">已顺延到 %1$s</string>
+
+    <!-- ===== 墓碑槽 ===== -->
+    <string name="tomb_deleted">已删除「%1$s」</string>
+    <string name="tomb_tap_undo">点此撤销</string>
+
+    <!-- ===== 卡片 ===== -->
+    <string name="card_done_tag">已完成</string>
+    <string name="card_due">期限 %1$s</string>
+    <string name="pill_muted">不提醒</string>
+    <string name="pill_at_deadline">到期时提醒</string>
+    <string name="pill_early">提前 %1$s</string>
+    <string name="chip_postpone">顺延</string>
+    <string name="postpone_tonight">今晚 23:59</string>
+    <string name="postpone_tomorrow">明天 23:59</string>
+    <string name="postpone_same_time">明天同一时刻</string>
+    <string name="postpone_custom">自定义…</string>
+
+    <!-- ===== 编辑器 ===== -->
+    <string name="editor_title_required">标题（必填）</string>
+    <string name="editor_date">日期</string>
+    <string name="editor_time">时间</string>
+    <string name="editor_date_value">📅 %1$s</string>
+    <string name="editor_time_value">⏰ %1$s</string>
+    <string name="editor_click_change_date">更改日期</string>
+    <string name="editor_click_change_time">更改时间</string>
+    <string name="editor_note_optional">备注（可选）</string>
+    <string name="editor_leads_title">提前提醒（可多选）</string>
+    <string name="editor_past_error">截止时间必须晚于现在</string>
+    <string name="editor_mark_not_done">标为未完成</string>
+    <string name="editor_mark_done">已完成</string>
+    <string name="editor_pick_time">选择时间</string>
+
+    <!-- ===== 导入 / 导出 ===== -->
+    <string name="stream_open_failed">输出流打开失败</string>
+    <string name="stream_read_failed">无法读取所选文件</string>
+    <string name="toast_export_done">导出完成：%1$s</string>
+    <string name="toast_export_failed">导出失败：%1$s</string>
+    <string name="toast_import_failed">无法导入：%1$s</string>
+    <string name="dialog_import_title">导入 %1$s</string>
+    <string name="dialog_import_body">追加：现有条目不动，同标题＋同截止的自动跳过。\n覆盖恢复：先清空现有全部条目再写入，不可撤销。</string>
+    <string name="btn_append">追加到现有</string>
+    <string name="btn_restore">覆盖恢复</string>
+    <string name="toast_import_done">导入完成：新增 %1$s</string>
+    <string name="toast_import_done_dupes">导入完成：新增 %1$s，跳过 %2$s重复</string>
+    <string name="toast_restore_done">恢复完成：写入 %1$s，原有 %2$s已清除</string>
+
+    <!-- ===== 通知 ===== -->
+    <string name="notif_channel_name">DDL 截止提醒</string>
+    <string name="notif_channel_desc">在截止时刻和自定义提前量准点提醒</string>
+    <string name="notif_due_at_deadline">⏰ 已经到 deadline 了！</string>
+    <string name="notif_due_in">⏰ 还有 %1$s 到期</string>
+
+    <!-- ===== 提前量标签 ===== -->
+    <string name="lead_5">5 分钟</string>
+    <string name="lead_15">15 分钟</string>
+    <string name="lead_30">30 分钟</string>
+    <string name="lead_60">1 小时</string>
+    <string name="lead_180">3 小时</string>
+    <string name="lead_1440">1 天</string>
+    <string name="lead_4320">3 天</string>
+    <string name="lead_10080">7 天</string>
+    <string name="lead_other">%1$d 分钟</string>
+
+    <!-- ===== 时间格式（DateTimeFormatter 模式） ===== -->
+    <string name="fmt_abs_date_time">M月d日 HH:mm</string>
+    <string name="fmt_widget_abs">M月d日 EEE HH:mm</string>
+    <string name="fmt_calpg_month">M月</string>
+    <string name="fmt_editor_date">yyyy年M月d日</string>
+    <string name="fmt_cd_future">剩%1$s</string>
+    <string name="fmt_cd_past">已过期%1$s</string>
+    <string name="fmt_cd_body_d">%1$d天%2$s</string>
+    <string name="fmt_cd_body_h">%1$d小时%2$d分</string>
+    <string name="fmt_cd_body_m">%1$d分钟</string>
+    <string name="fmt_cd_body_soon">1分钟内</string>
+
+    <!-- ===== 小组件 ===== -->
+    <string name="wgt_header_recent">最近到期</string>
+    <string name="wgt_empty_short">现在很清净</string>
+    <string name="wgt_empty_row">现在很清净，没有即将到期的条目</string>
+    <string name="wgt_dash">——</string>
+    <string name="wgt_meta_open">共 %1$d 条未完成 · 今日 %2$d 条 · 本周 %3$d 条</string>
+    <string name="wgt_meta_overdue">共 %1$d 条未完成 · 其中 %2$d 条已逾期</string>
+    <string name="wgt_meta_add_hint">共 %1$d 条未完成 · 点按添加条目</string>
+    <string name="wgt_more_overdue">另有 %1$d 条已逾期</string>
+    <string name="ph_dash" translatable="false">--</string>
+    <string name="ph_cd">剩--</string>
+    <string name="weekday_narrow_0">一</string>
+    <string name="weekday_narrow_1">二</string>
+    <string name="weekday_narrow_2">三</string>
+    <string name="weekday_narrow_3">四</string>
+    <string name="weekday_narrow_4">五</string>
+    <string name="weekday_narrow_5">六</string>
+    <string name="weekday_narrow_6">日</string>
+
+    <!-- ===== 小组件选择器预览（演示数据） ===== -->
+    <string name="pv_title_rehearsal">小组作业答辩彩排</string>
+    <string name="pv_title_thesis">毕业论文初稿提交</string>
+    <string name="pv_title_english_corner">英语角准备材料</string>
+    <string name="pv_cd_hours">剩14:22</string>
+    <string name="pv_cd_days">剩2天13:05</string>
+    <string name="pv_cd_week">剩8天10:35</string>
+    <string name="pv_abs_line">10月22日 周三 23:00</string>
+    <string name="pv_meta">共 4 条未完成 · 今日 1 条 · 本周 3 条</string>
+    <string name="ph_calpg_month">10月</string>
+
+    <!-- 复数：条目计数（中文不分单复数） -->
+    <plurals name="items_plain">
+        <item quantity="one">%1$d 条</item>
+        <item quantity="other">%1$d 条</item>
+    </plurals>
 </resources>

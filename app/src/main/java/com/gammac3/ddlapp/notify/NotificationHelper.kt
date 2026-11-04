@@ -16,13 +16,15 @@ class NotificationHelper(private val context: Context) {
     fun ensureChannel() {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel = NotificationChannel(
-            CHANNEL_ID, "DDL 截止提醒", NotificationManager.IMPORTANCE_HIGH
-        ).apply { description = "在截止时刻和自定义提前量准点提醒" }
+            CHANNEL_ID, context.getString(R.string.notif_channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply { description = context.getString(R.string.notif_channel_desc) }
         manager.createNotificationChannel(channel)
     }
 
     fun show(ddlId: Long, title: String, leadMinutes: Long) {
-        val text = if (leadMinutes == 0L) "⏰ 已经到 deadline 了！" else "⏰ 还有 ${LeadLabels.text(leadMinutes)} 到期"
+        val text = if (leadMinutes == 0L) context.getString(R.string.notif_due_at_deadline)
+        else context.getString(R.string.notif_due_in, LeadLabels.text(context, leadMinutes))
         val openIntent = PendingIntent.getActivity(
             context, 0,
             Intent(context, MainActivity::class.java)

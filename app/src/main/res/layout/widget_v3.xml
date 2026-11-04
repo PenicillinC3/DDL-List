@@ -23,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="最近到期"
+            android:text="@string/wgt_header_recent"
             android:textColor="#FF5F6771"
             android:textSize="10sp"
             android:letterSpacing="0.14"
@@ -53,7 +53,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="--"
+                    android:text="@string/ph_dash"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
                     android:includeFontPadding="false"
@@ -66,7 +66,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="剩--"
+                    android:text="@string/ph_cd"
                     android:textColor="#FF101828"
                     android:textSize="12sp"
                     android:maxLines="1"
@@ -119,7 +119,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="--"
+                    android:text="@string/ph_dash"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
                     android:includeFontPadding="false"
@@ -132,7 +132,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="剩--"
+                    android:text="@string/ph_cd"
                     android:textColor="#FF101828"
                     android:textSize="12sp"
                     android:maxLines="1"
@@ -186,7 +186,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="--"
+                    android:text="@string/ph_dash"
                     android:textColor="#FF101828"
                     android:textSize="15sp"
                     android:includeFontPadding="false"
@@ -199,7 +199,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:text="剩--"
+                    android:text="@string/ph_cd"
                     android:textColor="#FF101828"
                     android:textSize="12sp"
                     android:maxLines="1"
@@ -260,7 +260,7 @@
                     android:id="@+id/widget_week_day0"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="一"
+                    android:text="@string/weekday_narrow_0"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -303,7 +303,7 @@
                     android:id="@+id/widget_week_day1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="二"
+                    android:text="@string/weekday_narrow_1"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -348,7 +348,7 @@
                     android:id="@+id/widget_week_day2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="三"
+                    android:text="@string/weekday_narrow_2"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -393,7 +393,7 @@
                     android:id="@+id/widget_week_day3"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="四"
+                    android:text="@string/weekday_narrow_3"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -438,7 +438,7 @@
                     android:id="@+id/widget_week_day4"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="五"
+                    android:text="@string/weekday_narrow_4"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -483,7 +483,7 @@
                     android:id="@+id/widget_week_day5"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="六"
+                    android:text="@string/weekday_narrow_5"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -528,7 +528,7 @@
                     android:id="@+id/widget_week_day6"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="日"
+                    android:text="@string/weekday_narrow_6"
                     android:textColor="#FF5F6771"
                     android:textSize="8.5sp" />
 
@@ -581,7 +581,7 @@
             android:id="@+id/widget_calpg_month"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="10月"
+            android:text="@string/ph_calpg_month"
             android:textColor="#FFFFFFFF"
             android:textSize="7sp"
             android:letterSpacing="0.08"

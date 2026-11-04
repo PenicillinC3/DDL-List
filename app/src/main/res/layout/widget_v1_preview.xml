@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="最近到期"
+            android:text="@string/wgt_header_recent"
             android:textColor="#FF5F6771"
             android:textSize="10sp"
             android:letterSpacing="0.14"
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="48dp"
-            android:text="毕业论文初稿提交"
+            android:text="@string/pv_title_thesis"
             android:textColor="#FF101828"
             android:textSize="15sp"
             android:maxLines="1"
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
             android:layout_marginBottom="1dp"
-            android:text="剩2天13:05"
+            android:text="@string/pv_cd_days"
             android:textColor="#FF101828"
             android:textSize="26sp"
             android:maxLines="1"
@@ -51,7 +51,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="10月22日 周三 23:00"
+            android:text="@string/pv_abs_line"
             android:textColor="#FF5F6771"
             android:textSize="11.5sp"
             android:letterSpacing="0.02"
@@ -61,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
-            android:text="共 4 条未完成 · 今日 1 条 · 本周 3 条"
+            android:text="@string/pv_meta"
             android:textColor="#FF5F6771"
             android:textSize="11sp"
 />
@@ -192,7 +192,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="10月"
+            android:text="@string/ph_calpg_month"
             android:textColor="#FFFFFFFF"
             android:textSize="7.5sp"
             android:letterSpacing="0.08"
