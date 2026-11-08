@@ -150,6 +150,41 @@
     <string name="pv_meta">共 4 条未完成 · 今日 1 条 · 本周 3 条</string>
     <string name="ph_calpg_month">10月</string>
 
+    <!-- ===== 自动记 DDL ===== -->
+    <string name="capture_entry">自动识别</string>
+    <string name="capture_service_label">自动识别</string>
+    <string name="capture_settings_title">自动记 DDL</string>
+    <string name="capture_settings_subtitle">点悬浮球读取当前页，确认后入库</string>
+    <string name="capture_state_running">运行中</string>
+    <string name="capture_state_off">未开启</string>
+    <string name="capture_floating_ball">悬浮球</string>
+    <string name="capture_floating_ball_desc">在别的 App 上方显示一个「＋」，点一下识别当前页</string>
+    <string name="capture_accessibility">无障碍服务</string>
+    <string name="capture_accessibility_on">已开启 · 只在点悬浮球时读取当前页文字</string>
+    <string name="capture_accessibility_off">未开启 · 需要手动授权一次</string>
+    <string name="capture_open_settings">系统设置 ›</string>
+    <string name="capture_app_info">应用信息 ›</string>
+    <string name="capture_scope">识别范围</string>
+    <string name="capture_scope_value">文字页面 · 图片/海报暂不支持</string>
+    <string name="capture_privacy">隐私：原文不保存、不上传；密码框会跳过。应用本身没有联网权限。</string>
+    <string name="capture_restricted_hint">Android 13+ 侧载应用需在「应用信息 → ⋮ → 允许受限设置」后才能开启无障碍</string>
+    <string name="capture_coloros_hint">ColorOS：还需允许自启动/后台运行，悬浮球才不会被系统回收</string>
+    <string name="capture_card_title">自动识别</string>
+    <string name="capture_card_subtitle">来自当前页面</string>
+    <string name="capture_no_deadline">未识别到截止时间，已默认 1 小时后</string>
+    <string name="capture_no_text">当前页面没有读到文字，手动补一下</string>
+    <string name="capture_duplicate">已存在相似的 DDL</string>
+    <string name="capture_add_anyway">仍然添加</string>
+    <string name="capture_added">已添加</string>
+    <string name="capture_undo">撤销</string>
+    <string name="capture_btn_add">添加</string>
+    <string name="capture_save_failed">保存失败，请重试</string>
+    <string name="capture_launch_failed">无法打开浮卡，请检查系统是否允许后台弹出界面</string>
+    <string name="capture_ball_desc">自动识别悬浮球</string>
+    <string name="capture_first_hint">点我识别当前页</string>
+    <string name="capture_accessibility_description">用于在你点悬浮球时读取当前页文字，识别 DDL。原文不保存、不上传。</string>
+    <string name="fmt_capture_chip">M月d日 HH:mm</string>
+
     <!-- 复数：条目计数（中文不分单复数） -->
     <plurals name="items_plain">
         <item quantity="one">%1$d 条</item>

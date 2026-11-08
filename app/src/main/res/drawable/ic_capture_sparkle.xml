@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自动识别：四角星芒 + 裸加号，无外圈。开启/关闭只换 tint。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M9,2.2C9.8,6.2 11.8,8.2 15.8,9C11.8,9.8 9.8,11.8 9,15.8C8.2,11.8 6.2,9.8 2.2,9C6.2,8.2 8.2,6.2 9,2.2Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M17,13h2v3h3v2h-3v3h-2v-3h-3v-2h3z" />
+</vector>

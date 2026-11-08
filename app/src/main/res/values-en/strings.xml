@@ -149,6 +149,41 @@
     <string name="pv_meta">4 open · 1 today · 3 this week</string>
     <string name="ph_calpg_month">Oct</string>
 
+    <!-- ===== Auto capture ===== -->
+    <string name="capture_entry">Auto capture</string>
+    <string name="capture_service_label">Auto capture</string>
+    <string name="capture_settings_title">Auto-capture DDL</string>
+    <string name="capture_settings_subtitle">Tap the ball to read this page, then confirm to add</string>
+    <string name="capture_state_running">Running</string>
+    <string name="capture_state_off">Off</string>
+    <string name="capture_floating_ball">Floating ball</string>
+    <string name="capture_floating_ball_desc">Shows a + over other apps; tap it to read the current page</string>
+    <string name="capture_accessibility">Accessibility service</string>
+    <string name="capture_accessibility_on">On · reads page text only when you tap the ball</string>
+    <string name="capture_accessibility_off">Off · needs one-time permission</string>
+    <string name="capture_open_settings">System settings ›</string>
+    <string name="capture_app_info">App info ›</string>
+    <string name="capture_scope">Scope</string>
+    <string name="capture_scope_value">Text pages · images/posters not supported yet</string>
+    <string name="capture_privacy">Privacy: page text is never saved or uploaded; password fields are skipped. The app has no internet permission.</string>
+    <string name="capture_restricted_hint">On Android 13+, sideloaded apps must allow restricted settings in App info → ⋮ before accessibility can be enabled</string>
+    <string name="capture_coloros_hint">ColorOS: also allow auto-start and background running, or the system may kill the floating ball</string>
+    <string name="capture_card_title">Auto capture</string>
+    <string name="capture_card_subtitle">From the current page</string>
+    <string name="capture_no_deadline">No deadline found — defaulted to 1 hour from now</string>
+    <string name="capture_no_text">No text found on this page — fill it in manually</string>
+    <string name="capture_duplicate">A similar DDL already exists</string>
+    <string name="capture_add_anyway">Add anyway</string>
+    <string name="capture_added">Added</string>
+    <string name="capture_undo">Undo</string>
+    <string name="capture_btn_add">Add</string>
+    <string name="capture_save_failed">Couldn\'t save — try again</string>
+    <string name="capture_launch_failed">Couldn\'t open the capture card — check whether background pop-ups are allowed</string>
+    <string name="capture_ball_desc">Auto-capture floating ball</string>
+    <string name="capture_first_hint">Tap to read this page</string>
+    <string name="capture_accessibility_description">Reads the current page text when you tap the floating ball to find a DDL. Text is never saved or uploaded.</string>
+    <string name="fmt_capture_chip">MMM d, HH:mm</string>
+
     <!-- ===== Plurals ===== -->
     <plurals name="items_plain">
         <item quantity="one">%1$d item</item>

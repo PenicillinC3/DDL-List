@@ -100,6 +100,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gammac3.ddlapp.DdlApplication
+import com.gammac3.ddlapp.capture.CaptureEntryCapsule
+import com.gammac3.ddlapp.capture.CaptureSettingsSheet
 import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.logic.DdlGrouper
 import com.gammac3.ddlapp.R
@@ -152,6 +154,7 @@ fun DdlListScreen(
     }
     val zone = remember { ZoneId.systemDefault() }
     var doneExpanded by rememberSaveable { mutableStateOf(false) }
+    var captureSettingsOpen by rememberSaveable { mutableStateOf(false) }
 
     // 通知权限（Android 13+）：以系统通知开关为真源，每次回前台刷新
     val context = LocalContext.current
@@ -316,9 +319,12 @@ fun DdlListScreen(
                         fontFamily = TitleFont,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 actions = {
+                    CaptureEntryCapsule(onClick = { captureSettingsOpen = true })
                     Box {
                         var menuOpen by remember { mutableStateOf(false) }
                         IconButton(onClick = { menuOpen = true }) {
@@ -586,6 +592,11 @@ fun DdlListScreen(
             }
         }
     }
+
+    CaptureSettingsSheet(
+        open = captureSettingsOpen,
+        onDismiss = { captureSettingsOpen = false },
+    )
 }
 
 @Composable
