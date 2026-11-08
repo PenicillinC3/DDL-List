@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -120,33 +122,55 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 无障碍已开启后，这一项只是重复状态与入口；收起来让设置卡更干净
+            // 无障碍未开启：红框 + 「需要授权」角标；连接成功后整项隐藏
             if (!connected) {
-                Row(
+                Box(
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { openAccessibilitySettings() }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .padding(top = 8.dp),
                 ) {
-                    Column(Modifier.weight(1f)) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.error,
+                                shape = RoundedCornerShape(12.dp),
+                            )
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { openAccessibilitySettings() }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(R.string.capture_accessibility),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                stringResource(R.string.capture_accessibility_off),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         Text(
-                            stringResource(R.string.capture_accessibility),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            stringResource(R.string.capture_accessibility_off),
+                            stringResource(R.string.capture_open_settings),
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.error,
                         )
                     }
                     Text(
-                        stringResource(R.string.capture_open_settings),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
+                        stringResource(R.string.capture_need_permission),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .offset(x = 12.dp, y = (-8).dp)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(horizontal = 6.dp),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error,
                     )
                 }
             }
