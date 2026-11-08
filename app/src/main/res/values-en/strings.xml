@@ -157,7 +157,7 @@
     <string name="capture_state_running">Running</string>
     <string name="capture_state_off">Off</string>
     <string name="capture_floating_ball">Floating ball</string>
-    <string name="capture_floating_ball_desc">Shows a + over other apps; tap it to read the current page</string>
+    <string name="capture_floating_ball_desc">Shows a + over any screen; tap it to read the current page</string>
     <string name="capture_accessibility">Accessibility service</string>
     <string name="capture_accessibility_on">On · reads page text only when you tap the ball</string>
     <string name="capture_accessibility_off">Off · needs one-time permission</string>

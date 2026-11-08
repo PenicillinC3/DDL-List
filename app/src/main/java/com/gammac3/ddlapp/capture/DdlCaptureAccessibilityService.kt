@@ -2,7 +2,6 @@ package com.gammac3.ddlapp.capture
 
 import android.accessibilityservice.AccessibilityService
 import android.animation.ValueAnimator
-import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -66,7 +65,6 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
     private var undoRunnable: Runnable? = null
     private var undoShowRunnable: Runnable? = null
 
-    private var homePackages: Set<String> = emptySet()
     private var downRawX = 0f
     private var downRawY = 0f
     private var startX = 0
@@ -84,7 +82,6 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
         scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
         prefs = CapturePrefs.get(this)
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        homePackages = resolveHomePackages()
         CaptureServiceState.setConnected(true)
         // 服务重启时若没有待确认的浮卡，清掉可能残留的打开标记
         if (CaptureSession.pending == null) CaptureSession.cardOpen = false
@@ -102,11 +99,7 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
         refreshBallVisibility()
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        if (!this::prefs.isInitialized) return
-        refreshBallVisibility(event.packageName?.toString())
-    }
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
 
     override fun onInterrupt() = Unit
 
@@ -148,21 +141,12 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
 
     // ------------------------------------------------------------ ball
 
-    fun refreshBallVisibility(packageName: String? = null) {
+    fun refreshBallVisibility() {
         if (!this::prefs.isInitialized) return
-        val pkg = packageName ?: currentPackage()
-        val locked = (getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
-        val show = prefs.floatingBallEnabled.value &&
-            !CaptureSession.cardOpen &&
-            pkg != null &&
-            pkg != this.packageName &&
-            pkg !in homePackages &&
-            !locked
+        // 任何界面都显示：不按前台应用/桌面/锁屏过滤，只受开关与浮卡状态控制
+        val show = prefs.floatingBallEnabled.value && !CaptureSession.cardOpen
         if (show) ensureBall() else removeBall()
     }
-
-    private fun currentPackage(): String? =
-        rootInActiveWindow?.packageName?.toString()
 
     private fun ensureBall() {
         if (ballView != null) return
@@ -490,13 +474,6 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
             val metrics = resources.displayMetrics
             Point(metrics.widthPixels, metrics.heightPixels)
         }
-    }
-
-    private fun resolveHomePackages(): Set<String> {
-        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        return packageManager.queryIntentActivities(intent, 0)
-            .mapNotNull { it.activityInfo?.packageName }
-            .toSet()
     }
 
     private fun isNight(): Boolean =
