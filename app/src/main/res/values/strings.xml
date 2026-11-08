@@ -160,7 +160,6 @@
     <string name="capture_floating_ball">悬浮球</string>
     <string name="capture_floating_ball_desc">在所有界面显示一个「＋」，点一下识别当前页</string>
     <string name="capture_accessibility">无障碍服务</string>
-    <string name="capture_accessibility_on">已开启 · 只在点悬浮球时读取当前页文字</string>
     <string name="capture_accessibility_off">未开启 · 需要手动授权一次</string>
     <string name="capture_open_settings">系统设置 ›</string>
     <string name="capture_app_info">应用信息 ›</string>

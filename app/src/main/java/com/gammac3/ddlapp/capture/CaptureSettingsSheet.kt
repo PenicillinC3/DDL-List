@@ -120,35 +120,35 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { openAccessibilitySettings() }
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
+            // 无障碍已开启后，这一项只是重复状态与入口；收起来让设置卡更干净
+            if (!connected) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { openAccessibilitySettings() }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            stringResource(R.string.capture_accessibility),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            stringResource(R.string.capture_accessibility_off),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Text(
-                        stringResource(R.string.capture_accessibility),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        stringResource(
-                            if (connected) R.string.capture_accessibility_on
-                            else R.string.capture_accessibility_off,
-                        ),
+                        stringResource(R.string.capture_open_settings),
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
-                Text(
-                    stringResource(R.string.capture_open_settings),
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                )
             }
 
             Row(

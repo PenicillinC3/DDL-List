@@ -159,7 +159,6 @@
     <string name="capture_floating_ball">Floating ball</string>
     <string name="capture_floating_ball_desc">Shows a + over any screen; tap it to read the current page</string>
     <string name="capture_accessibility">Accessibility service</string>
-    <string name="capture_accessibility_on">On · reads page text only when you tap the ball</string>
     <string name="capture_accessibility_off">Off · needs one-time permission</string>
     <string name="capture_open_settings">System settings ›</string>
     <string name="capture_app_info">App info ›</string>
