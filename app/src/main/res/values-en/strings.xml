@@ -157,17 +157,14 @@
     <string name="capture_state_running">Running</string>
     <string name="capture_state_off">Off</string>
     <string name="capture_floating_ball">Floating ball</string>
-    <string name="capture_floating_ball_desc">Shows a + over any screen; tap it to read the current page</string>
     <string name="capture_accessibility">Accessibility service</string>
     <string name="capture_accessibility_off">Off · needs one-time permission</string>
     <string name="capture_need_permission">Permission needed</string>
     <string name="capture_open_settings">System settings ›</string>
-    <string name="capture_app_info">App info ›</string>
     <string name="capture_scope">Scope</string>
     <string name="capture_scope_value">Text pages · images/posters supported on Android 11+</string>
     <string name="capture_privacy">Privacy: page text is never saved or uploaded; password fields are skipped. Image OCR also runs on-device; screenshots are never saved or uploaded. The app has no internet permission.</string>
     <string name="capture_restricted_hint">On Android 13+, sideloaded apps must allow restricted settings in App info → ⋮ before accessibility can be enabled</string>
-    <string name="capture_coloros_hint">ColorOS: also allow auto-start and background running, or the system may kill the floating ball</string>
     <string name="capture_card_title">Auto capture</string>
     <string name="capture_card_subtitle">From the current page</string>
     <string name="capture_no_deadline">No deadline found — defaulted to 1 hour from now</string>
