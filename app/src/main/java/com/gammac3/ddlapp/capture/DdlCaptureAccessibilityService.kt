@@ -2,35 +2,45 @@ package com.gammac3.ddlapp.capture
 
 import android.accessibilityservice.AccessibilityService
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Point
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.view.Display
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.gammac3.ddlapp.DdlApplication
 import com.gammac3.ddlapp.R
+import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.ZonedDateTime
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -44,6 +54,8 @@ import kotlin.math.roundToInt
 class DdlCaptureAccessibilityService : AccessibilityService() {
 
     companion object {
+        private const val OCR_TIMEOUT_MILLIS = 8_000L
+
         @Volatile
         var instance: DdlCaptureAccessibilityService? = null
             private set
@@ -62,6 +74,8 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
     private var ballParams: WindowManager.LayoutParams? = null
     private var hintView: View? = null
     private var undoView: View? = null
+    private var progressView: View? = null
+    private var ocrClient: CaptureOcr? = null
     private var undoRunnable: Runnable? = null
     private var undoShowRunnable: Runnable? = null
 
@@ -135,6 +149,9 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
         removeBall()
         removeHint()
         removeUndo()
+        removeProgress()
+        ocrClient?.close()
+        ocrClient = null
         handler.removeCallbacksAndMessages(null)
         scope.cancel()
     }
@@ -338,8 +355,13 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
 
     private fun captureCurrentPage() {
         if (CaptureSession.cardOpen) return
-        val root = rootInActiveWindow ?: windows.firstOrNull { it.isActive }?.root
+        val activeWindow = windows.firstOrNull { it.isActive }
+        val root = rootInActiveWindow ?: activeWindow?.root
+        val foregroundPackage = activeWindow?.root?.packageName?.toString()
+            ?: root?.packageName?.toString()
+        val ownWindow = foregroundPackage == packageName
         val text = ScreenTextExtractor.extract(root, packageName)
+        val passwordVisible = !ownWindow && ScreenTextExtractor.containsVisiblePassword(root)
         removeBall()
         removeHint()
         removeUndo()
@@ -348,36 +370,179 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
 
         scope.launch {
             val now = ZonedDateTime.now()
-            val candidates = withContext(Dispatchers.Default) {
-                DdlParser.parse(text, now).ifEmpty {
-                    listOf(DdlCandidate(title = "", deadline = null, confidence = 0f, sourceLine = ""))
-                }
+            val nodeCandidates = withContext(Dispatchers.Default) {
+                DdlParser.parse(text, now)
+            }
+            val ocrCandidates = if (
+                !ownWindow &&
+                !passwordVisible &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                CaptureText.needsOcr(nodeCandidates)
+            ) {
+                captureWithOcr(now)
+            } else {
+                emptyList()
+            }
+            val candidates = CaptureText.merge(nodeCandidates, ocrCandidates).ifEmpty {
+                listOf(DdlCandidate(title = "", deadline = null, confidence = 0f, sourceLine = ""))
             }
             CaptureSession.pending = CapturePayload(
                 candidates = candidates,
                 capturedAtMillis = System.currentTimeMillis(),
             )
-            val intent = Intent(this@DdlCaptureAccessibilityService, DdlCaptureActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            runCatching { startActivity(intent) }.onFailure {
-                CaptureSession.pending = null
-                CaptureSession.cardOpen = false
-                refreshBallVisibility()
-            }
-            // 部分 OEM 会静默拦截后台启动 Activity：3 秒内没露卡就恢复悬浮球
-            handler.postDelayed({
-                if (CaptureSession.cardOpen && !CaptureSession.cardShown) {
-                    CaptureSession.cardOpen = false
-                    CaptureSession.pending = null
-                    refreshBallVisibility()
-                    Toast.makeText(
-                        this@DdlCaptureAccessibilityService,
-                        R.string.capture_launch_failed,
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-            }, 3_000)
+            launchCard()
         }
+    }
+
+    /** 截图 → 裁剪 → 进度胶囊 → 本机 OCR → 解析；任何失败都返回空列表。 */
+    @SuppressLint("NewApi")
+    private suspend fun captureWithOcr(now: ZonedDateTime): List<DdlCandidate> {
+        // 让悬浮球窗口先真正从屏幕上消失，避免球入镜
+        delay(120)
+        val shot = takeScreenshotBitmap() ?: return emptyList()
+        val bounds = activeWindowBounds()
+        val screen = screenSize()
+        val cropped = withContext(Dispatchers.Default) {
+            runCatching { cropToActiveWindow(shot, bounds, screen) }.getOrElse { shot }
+        }
+        showProgress()
+        return try {
+            val ocrText = withTimeoutOrNull(OCR_TIMEOUT_MILLIS) {
+                ocr().recognize(cropped)
+            }
+            if (ocrText.isNullOrBlank()) {
+                emptyList()
+            } else {
+                withContext(Dispatchers.Default) { DdlParser.parse(ocrText, now) }
+            }
+        } catch (c: kotlinx.coroutines.CancellationException) {
+            throw c
+        } catch (t: Throwable) {
+            emptyList()
+        } finally {
+            removeProgress()
+        }
+    }
+
+    @SuppressLint("NewApi")
+    private suspend fun takeScreenshotBitmap(): Bitmap? = suspendCancellableCoroutine { cont ->
+        try {
+            takeScreenshot(
+                Display.DEFAULT_DISPLAY,
+                ContextCompat.getMainExecutor(this),
+                object : TakeScreenshotCallback {
+                    override fun onSuccess(screenshot: ScreenshotResult) {
+                        val bitmap = try {
+                            Bitmap.wrapHardwareBuffer(
+                                screenshot.hardwareBuffer,
+                                screenshot.colorSpace,
+                            )?.copy(Bitmap.Config.ARGB_8888, false)
+                        } catch (t: Throwable) {
+                            null
+                        } finally {
+                            screenshot.hardwareBuffer.close()
+                        }
+                        if (cont.isActive) cont.resume(bitmap)
+                    }
+
+                    override fun onFailure(errorCode: Int) {
+                        if (cont.isActive) cont.resume(null)
+                    }
+                },
+            )
+        } catch (t: Throwable) {
+            if (cont.isActive) cont.resume(null)
+        }
+    }
+
+    /** 按当前应用窗口 bounds 裁剪，去掉状态栏 / 导航栏；bounds 异常时保留原图。 */
+    private fun cropToActiveWindow(bitmap: Bitmap, bounds: Rect?, screen: Point): Bitmap {
+        if (bounds == null || screen.x <= 0 || screen.y <= 0) return bitmap
+        val scaleX = bitmap.width.toFloat() / screen.x
+        val scaleY = bitmap.height.toFloat() / screen.y
+        val left = (bounds.left * scaleX).roundToInt().coerceIn(0, bitmap.width - 1)
+        val top = (bounds.top * scaleY).roundToInt().coerceIn(0, bitmap.height - 1)
+        val right = (bounds.right * scaleX).roundToInt().coerceIn(left + 1, bitmap.width)
+        val bottom = (bounds.bottom * scaleY).roundToInt().coerceIn(top + 1, bitmap.height)
+        // 过小的窗口多半是分屏 / 悬浮窗异常值，裁了反而丢正文
+        if (right - left < bitmap.width / 4 || bottom - top < bitmap.height / 4) return bitmap
+        if (left == 0 && top == 0 && right == bitmap.width && bottom == bitmap.height) return bitmap
+        val cropped = Bitmap.createBitmap(bitmap, left, top, right - left, bottom - top)
+        if (cropped !== bitmap) bitmap.recycle()
+        return cropped
+    }
+
+    private fun activeWindowBounds(): Rect? {
+        val window = windows.firstOrNull {
+            it.type == AccessibilityWindowInfo.TYPE_APPLICATION && it.isActive
+        } ?: windows.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+        if (window == null) return null
+        return Rect().also { window.getBoundsInScreen(it) }
+    }
+
+    private fun ocr(): CaptureOcr = ocrClient ?: CaptureOcr().also { ocrClient = it }
+
+    private fun launchCard() {
+        val intent = Intent(this@DdlCaptureAccessibilityService, DdlCaptureActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(intent) }.onFailure {
+            CaptureSession.pending = null
+            CaptureSession.cardOpen = false
+            refreshBallVisibility()
+        }
+        // 部分 OEM 会静默拦截后台启动 Activity：3 秒内没露卡就恢复悬浮球
+        handler.postDelayed({
+            if (CaptureSession.cardOpen && !CaptureSession.cardShown) {
+                CaptureSession.cardOpen = false
+                CaptureSession.pending = null
+                refreshBallVisibility()
+                Toast.makeText(
+                    this@DdlCaptureAccessibilityService,
+                    R.string.capture_launch_failed,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        }, 3_000)
+    }
+
+    // ------------------------------------------------------------ progress
+
+    private fun showProgress() {
+        if (progressView != null) return
+        val screen = screenSize()
+        val pill = TextView(this).apply {
+            text = getString(R.string.capture_reading)
+            setTextColor(if (isNight()) Color.parseColor("#0E1116") else Color.WHITE)
+            textSize = 12.5f
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            background = GradientDrawable().apply {
+                cornerRadius = dp(999).toFloat()
+                setColor(if (isNight()) Color.parseColor("#F2F4F8") else Color.parseColor("#101828"))
+            }
+            elevation = dp(6).toFloat()
+        }
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            y = dp(72).coerceAtMost((screen.y / 4).coerceAtLeast(dp(24)))
+        }
+        runCatching {
+            windowManager.addView(pill, params)
+            progressView = pill
+        }
+    }
+
+    private fun removeProgress() {
+        val view = progressView ?: return
+        progressView = null
+        runCatching { windowManager.removeView(view) }
     }
 
     private fun restoreAfterCard() {

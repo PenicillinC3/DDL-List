@@ -7,6 +7,7 @@ coreKtx = "1.19.1"
 activityCompose = "1.13.0"
 lifecycleCompose = "2.11.0"
 room = "2.8.5"
+mlkitTextRecognition = "16.0.1"
 coroutines = "1.10.2"
 junit = "4.13.2"
 orgJson = "20240303"
@@ -23,6 +24,7 @@ compose-foundation = { group = "androidx.compose.foundation", name = "foundation
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+mlkit-text-recognition-chinese = { group = "com.google.mlkit", name = "text-recognition-chinese", version.ref = "mlkitTextRecognition" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 org-json = { group = "org.json", name = "json", version.ref = "orgJson" }

@@ -13,13 +13,23 @@ android {
         applicationId = "com.gammac3.ddlapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 28
-        versionName = "1.17.0"
+        versionCode = 29
+        versionName = "1.18.0"
+        // OCR 的 native 库很大；只保留现代手机使用的 64 位 ARM
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+        }
+    }
+    packaging {
+        jniLibs {
+            // 压缩 .so，避免 APK 体积翻倍
+            useLegacyPackaging = true
         }
     }
     compileOptions {
@@ -48,6 +58,7 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.mlkit.text.recognition.chinese)
     ksp(libs.room.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

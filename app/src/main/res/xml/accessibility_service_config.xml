@@ -5,6 +5,7 @@
     android:accessibilityFlags="flagRetrieveInteractiveWindows"
     android:notificationTimeout="100"
     android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
     android:description="@string/capture_accessibility_description"
     android:settingsActivity="com.gammac3.ddlapp.MainActivity"
     android:isAccessibilityTool="false" />

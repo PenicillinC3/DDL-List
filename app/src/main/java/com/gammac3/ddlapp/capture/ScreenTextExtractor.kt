@@ -60,4 +60,24 @@ object ScreenTextExtractor {
         visit(root, 0)
         return lines.joinToString("\n")
     }
+
+    /** 当前窗口是否存在用户可见的密码框；只用于决定是否跳过 OCR。 */
+    fun containsVisiblePassword(root: AccessibilityNodeInfo?): Boolean {
+        if (root == null) return false
+        var visited = 0
+
+        fun visit(node: AccessibilityNodeInfo, depth: Int): Boolean {
+            if (visited >= MAX_NODES || depth > MAX_DEPTH) return false
+            visited++
+            if (node.isPassword && node.isVisibleToUser) return true
+            for (index in 0 until node.childCount) {
+                if (visited >= MAX_NODES) return false
+                val child = node.getChild(index) ?: continue
+                if (visit(child, depth + 1)) return true
+            }
+            return false
+        }
+
+        return visit(root, 0)
+    }
 }

@@ -164,8 +164,8 @@
     <string name="capture_open_settings">System settings ›</string>
     <string name="capture_app_info">App info ›</string>
     <string name="capture_scope">Scope</string>
-    <string name="capture_scope_value">Text pages · images/posters not supported yet</string>
-    <string name="capture_privacy">Privacy: page text is never saved or uploaded; password fields are skipped. The app has no internet permission.</string>
+    <string name="capture_scope_value">Text pages · images/posters supported on Android 11+</string>
+    <string name="capture_privacy">Privacy: page text is never saved or uploaded; password fields are skipped. Image OCR also runs on-device; screenshots are never saved or uploaded. The app has no internet permission.</string>
     <string name="capture_restricted_hint">On Android 13+, sideloaded apps must allow restricted settings in App info → ⋮ before accessibility can be enabled</string>
     <string name="capture_coloros_hint">ColorOS: also allow auto-start and background running, or the system may kill the floating ball</string>
     <string name="capture_card_title">Auto capture</string>
@@ -181,7 +181,8 @@
     <string name="capture_launch_failed">Couldn\'t open the capture card — check whether background pop-ups are allowed</string>
     <string name="capture_ball_desc">Auto-capture floating ball</string>
     <string name="capture_first_hint">Tap to read this page</string>
-    <string name="capture_accessibility_description">Reads the current page text when you tap the floating ball to find a DDL. Text is never saved or uploaded.</string>
+    <string name="capture_reading">Reading…</string>
+    <string name="capture_accessibility_description">Reads the current page text or captures the current window when you tap the floating ball to find a DDL. Text and screenshots are never saved or uploaded.</string>
     <string name="fmt_capture_chip">MMM d, HH:mm</string>
 
     <!-- ===== Plurals ===== -->
