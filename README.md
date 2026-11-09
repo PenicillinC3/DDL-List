@@ -14,7 +14,7 @@
 
 ## 安装使用
 
-1. 在 Android 8.0+ 手机上安装 `app/build/outputs/apk/debug/app-debug.apk`（侧载即可，无需 Play 商店）。
+1. 在 Android 8.0+ 手机上安装 `dist/DDL清单-1.18.0.apk`（侧载即可，无需 Play 商店）。
 2. Android 13+ 首次启动会请求「通知」权限——必须允许才能收到提醒；若误拒，页面顶部会出现提示条，点击可跳到系统设置。
 3. 点击右下角 ＋ 添加 DDL，可勾选多个提前量（5 分钟 ~ 7 天）；不勾选则仅在截止时刻提醒，勾选「不提醒」则完全静音。
 4. **精确闹钟**：安卓 13+ 需在系统设置允许精确闹钟，应用内横幅可跳转；安卓 12+ 同样需要在系统里允许「闹钟和提醒」权限。未开启时列表顶部会显示提示条，点击跳转系统设置；在开启之前提醒仍会送达，但可能不准时。
@@ -24,7 +24,7 @@
 需要 JDK 21 与 Android SDK（compileSdk 37、build-tools 37）。仓库已配置阿里云镜像源，国内网络可直接构建；APK 为 debug 签名，仅供侧载测试，发布前需替换为正式签名。在仓库根目录执行：
 
 ```powershell
-# 构建 debug APK -> app/build/outputs/apk/debug/app-debug.apk
+# 构建 debug APK -> dist/DDL清单-1.18.0.apk
 .\gradlew.bat assembleDebug
 
 # 运行单元测试
