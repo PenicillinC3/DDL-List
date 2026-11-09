@@ -61,6 +61,15 @@ class CaptureTextTest {
     }
 
     @Test
+    fun `contained title and deadline dedupes`() {
+        val merged = CaptureText.merge(
+            listOf(candidate("【作业】第三章习题", 60)),
+            listOf(candidate("第三章习题", 61)),
+        )
+        assertEquals(1, merged.size)
+    }
+
+    @Test
     fun `same title different deadline is kept`() {
         val merged = CaptureText.merge(
             listOf(candidate("第三章习题", 60)),

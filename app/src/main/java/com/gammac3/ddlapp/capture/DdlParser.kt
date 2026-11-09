@@ -77,6 +77,80 @@ object DdlParser {
     )
     private val RESIDUAL_NOISE = Regex("""[\s\d，,。.;；:：!！?？、\-–—/\\（）()【】\[\]<>《》""''“”‘’]+""")
 
+    // 标题清洗：只留下任务名本身，去掉称呼、字段标签和正文从句。
+    private val LEADING_VOCATIVE = Regex(
+        """^(?:各位|亲爱的|尊敬的)?\s*(?:同学|老师|家长|同事|朋友|大家)\s*[们]?\s*[，,：:]\s*""",
+    )
+    private val LEADING_TITLE_LABEL = Regex(
+        """^(?:作业名称|作业标题|任务名称|活动名称|项目名称|课程名称|考试名称|论文题目|标题|题目|主题|名称)\s*[:：]\s*""",
+    )
+    private val LEADING_SUBMIT_LABEL = Regex("""^(?:提交|上交|上传)\s*(?=截止|时间|日期)""")
+    private val TRAILING_BODY_CLAUSE = Regex(
+        """[，,；;]\s*(?:请|于|在|将|把|从|对|为|如|若|需|应|可|各|注意|联系|咨询|如有|凡|所有|全体)[^，,；;]*$""",
+    )
+    private val SENTENCE_END = Regex("""[。！？!?]""")
+    private val CLAUSE_PUNCT = Regex("""[，,；;]""")
+
+    // 正文/句子开头的信号：出现在标题位置时通常只是句子片段。
+    private val BODY_STARTER = Regex(
+        """^(?:请|于|在|将|把|从|对|为|如|若|需|应|可|各|其中|注意|温馨提示|联系|咨询|电话|邮箱|地址|时间|地点|对象|要求|说明|备注|附件|来源|编辑|审核|发布|点击|扫描|长按|关注|转发|分享|收藏|评论|点赞|阅读|返回|首页|消息|通讯录|发现|微信|文件|更多|搜索|取消|确定|保存|如有|凡|所有|全体)""",
+    )
+    private val SENTENCE_STARTER = Regex(
+        """^(?:本次|本学期|本周|本月|这学期|大家|我们|你们|同学们|各位|所有|凡|如有|请注意)""",
+    )
+    private val SENTENCE_STARTER_EN = Regex(
+        """^(?:please|submit|send|upload|complete|finish|make\s+sure|remember|note\s+that|all\s+students|students)\b""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val INSTRUCTION_HINT = Regex(
+        """要求|需要|必须|务必|按时|及时|独立完成|认真|仔细|不得|严禁|统一|按照|根据|通过|进行""",
+    )
+    private val SECTION_HEADING = Regex(
+        """^[一二三四五六七八九十百]+[、.．]\s*|^[（(][一二三四五六七八九十]+[)）]\s*""",
+    )
+    private val BARE_ACTION = Regex(
+        """^(?:提交|上交|上传|发送|完成|交|做|写|看|参加|出席|报名|回复|确认|填写)$""",
+    )
+    private val ACTION_FRAGMENT = Regex(
+        """^(?:提交|上交|上传|发送|完成|交|做|写|参加|出席|填写|回复|确认)""",
+    )
+    private val DEADLINE_TITLE_WORD = Regex(
+        """截止|ddl|deadline|due|submit\s+by""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val URL_OR_EMAIL = Regex(
+        """https?://|www\.|@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val STRONG_TITLE_WORD = Regex(
+        """作业|实验|报告|论文|考试|测验|答辩|报名|会议|讲座|活动|比赛|竞赛|项目|任务|课程|问卷|申请|评选|公示|通知|公告|安排|计划|总结|检查|培训|招聘|宣讲|社团|志愿|实习|设计|习题|练习|期中|期末|补考|选课|缴费|注册|材料|展示|汇报|调研|实践|读书|观后感|心得|毕业|开题|复试|面试|笔试|预约|打卡|签到|投票|测评|\b(?:assignment|homework|essay|report|paper|project|exam|quiz|test|midterm|final|thesis|dissertation|presentation|defense|submission|registration|application|meeting|seminar|workshop|lecture|event|competition|contest|survey|questionnaire|proposal|lab|reading|discussion|exercise)\b""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val HEADING_HINT = Regex(
+        """^关于|^【|^《|^「|^“|(?:通知|公告|安排|计划|要求|说明|方案|须知|细则|办法)$""",
+    )
+    private val META_LINE = Regex(
+        """^\s*(?:发布时间|更新时间|发布日期|发表时间|编辑时间|修改时间|创建时间|上传时间|发布于|发表于)\s*[:：]?\s*""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val UI_CHROME = setOf(
+        "首页", "消息", "通讯录", "发现", "我", "返回", "关闭", "取消", "确定", "完成",
+        "保存", "编辑", "删除", "复制", "粘贴", "分享", "转发", "收藏", "评论", "点赞",
+        "在看", "阅读原文", "更多", "搜索", "微信", "文件", "图片", "视频", "链接",
+        "表情", "相册", "拍摄", "位置", "语音", "名片", "红包", "转账", "发送", "举报",
+        "投诉", "关注", "已关注", "朋友", "朋友圈", "公众号", "小程序", "视频号", "扫一扫",
+        "看一看", "搜一搜", "订阅号", "服务号", "文件传输助手", "新的朋友", "群聊", "标签",
+        "设置", "反馈", "帮助", "登录", "注册", "退出", "个人中心", "我的", "推荐", "热门",
+        "最新", "全部", "筛选", "排序", "展开", "收起", "查看全文", "阅读全文", "展开全文",
+        "长按识别", "扫描二维码", "点击查看", "点击这里", "知道了", "我知道了", "跳过",
+        "下一步", "上一步", "主页", "菜单", "个人主页",
+        "home", "back", "close", "cancel", "ok", "done", "save", "edit", "delete", "copy",
+        "share", "comment", "like", "more", "search", "settings", "profile", "menu", "next",
+        "previous", "skip", "continue", "send", "download", "upload", "open", "view",
+        "read more", "see more", "subscribe", "follow", "following", "message", "messages",
+        "notifications", "notification",
+    )
+
     fun parse(text: String, now: ZonedDateTime): List<DdlCandidate> {
         if (text.isBlank()) return emptyList()
 
@@ -145,20 +219,28 @@ object DdlParser {
         val dateHit = findDate(line, now, timeHit)
         if (dateHit == null && timeHit == null) return null
 
+        // 发布/更新/编辑时间不是截止时间，避免把文章元信息当成 DDL。
+        if (META_LINE.containsMatchIn(line)) return null
+
         val deadline = resolveDeadline(dateHit, timeHit, now) ?: return null
         val hasKeyword = DEADLINE_KEYWORD.containsMatchIn(line)
+        val start = listOfNotNull(dateHit?.start, timeHit?.start).min()
+        val end = listOfNotNull(dateHit?.end, timeHit?.end).max()
+
+        // 只有日期/时间、没有任务名的行更像文章时间戳，排序时让有标题的行优先。
+        val hasTitleText = looksLikeTitle(line.substring(0, start)) ||
+            looksLikeTitle(line.substring(end))
+        val bare = !hasKeyword && !hasTitleText
         val confidence = when {
             hasKeyword && dateHit != null && timeHit != null -> 0.9f
             hasKeyword && dateHit != null -> 0.8f
-            dateHit?.relative == true && timeHit != null -> 0.75f
-            dateHit != null && timeHit != null -> 0.65f
-            dateHit != null -> 0.6f
-            timeHit != null -> 0.5f
+            dateHit?.relative == true && timeHit != null -> if (bare) 0.6f else 0.75f
+            dateHit != null && timeHit != null -> if (bare) 0.5f else 0.65f
+            dateHit != null -> if (bare) 0.45f else 0.6f
+            timeHit != null -> if (bare) 0.4f else 0.5f
             else -> return null
         }
 
-        val start = listOfNotNull(dateHit?.start, timeHit?.start).min()
-        val end = listOfNotNull(dateHit?.end, timeHit?.end).max()
         return LineParse(deadline, confidence, start, end)
     }
 
@@ -491,23 +573,46 @@ object DdlParser {
 
     // ---------------------------------------------------------------- title
 
+    /**
+     * 从同一页的多行文字里挑标题：优先同一行的前后片段，其次邻近行，
+     * 最后才回退到整页；所有候选按「像不像一个任务名」打分，而不是见到第一行就用。
+     */
     private fun pickTitle(lines: List<String>, index: Int, parsed: LineParse): String {
         val line = lines[index]
+        val options = mutableListOf<Pair<String, Int>>()
+
+        fun consider(raw: String, base: Int, rejectBodyStarter: Boolean = false) {
+            val title = cleanTitle(raw)
+            if (!looksLikeTitle(title)) return
+            if (UI_CHROME.any { title.equals(it, ignoreCase = true) }) return
+            if (BARE_ACTION.matches(title)) return
+            if (rejectBodyStarter && BODY_STARTER.containsMatchIn(title)) return
+            options += title to (base + titleScore(title))
+        }
 
         val before = line.substring(0, parsed.matchStart.coerceIn(0, line.length))
-        cleanTitle(before).takeIf { looksLikeTitle(it) }?.let { return it }
+        consider(before, base = 60, rejectBodyStarter = true)
 
         val after = line.substring(parsed.matchEnd.coerceIn(0, line.length))
-        cleanTitle(stripLeadingClause(after)).takeIf { looksLikeTitle(it) }?.let { return it }
+        consider(stripLeadingClause(after), base = 56, rejectBodyStarter = true)
 
-        for (previous in index - 1 downTo maxOf(0, index - 3)) {
-            cleanTitle(lines[previous]).takeIf { looksLikeTitle(it) }?.let { return it }
+        // 标题通常在截止时间的上方；下两行则覆盖 OCR 把标题排到日期后面的情况。
+        for (distance in 1..4) {
+            val i = index - distance
+            if (i < 0) break
+            consider(lines[i], base = 52 - distance * 4)
+        }
+        for (distance in 1..2) {
+            val i = index + distance
+            if (i >= lines.size) break
+            consider(lines[i], base = 40 - distance * 4)
         }
 
-        for (candidate in lines) {
-            cleanTitle(candidate).takeIf { looksLikeTitle(it) }?.let { return it }
+        lines.forEachIndexed { i, raw ->
+            if (i != index) consider(raw, base = 16 + if (i == 0) 8 else 0)
         }
-        return ""
+
+        return options.maxByOrNull { it.second }?.first ?: ""
     }
 
     private fun stripLeadingClause(raw: String): String = raw
@@ -517,13 +622,48 @@ object DdlParser {
     private fun cleanTitle(raw: String): String {
         var title = raw.trim()
         title = LEADING_BULLET.replace(title, "")
+        title = LEADING_VOCATIVE.replace(title, "")
+        title = LEADING_TITLE_LABEL.replace(title, "")
+        title = LEADING_SUBMIT_LABEL.replace(title, "")
         title = LEADING_KEYWORD.replace(title, "")
         title = TRAILING_STRONG.replace(title, "")
         title = TRAILING_WEAK.replace(title, "")
+        title = TRAILING_BODY_CLAUSE.replace(title, "")
+        title = cutAtSentence(title)
         title = EDGE_PUNCT.replace(title, "")
         title = WHITESPACE.replace(title, " ").trim()
         if (title.length > MAX_TITLE_CHARS) title = title.take(MAX_TITLE_CHARS).trim()
         return title
+    }
+
+    /** 只保留第一个完整短句，避免把整段正文带进标题。 */
+    private fun cutAtSentence(raw: String): String {
+        val end = SENTENCE_END.find(raw)?.range?.first ?: return raw
+        return if (end >= 2) raw.take(end).trim() else raw
+    }
+
+    /** 标题质量分：短、干净、像任务名的行得分高；正文片段、导航文字得分低。 */
+    private fun titleScore(title: String): Int {
+        var score = when {
+            title.length <= 24 -> 6
+            title.length <= 36 -> 3
+            title.length <= 48 -> 0
+            else -> -6
+        }
+        if (SENTENCE_END.containsMatchIn(title)) score -= 12
+        if (CLAUSE_PUNCT.containsMatchIn(title)) score -= 6
+        val sentenceStart = title.length > 8 &&
+            (SENTENCE_STARTER.containsMatchIn(title) || SENTENCE_STARTER_EN.containsMatchIn(title))
+        if (sentenceStart) score -= 14
+        if (title.length > 10 && INSTRUCTION_HINT.containsMatchIn(title)) score -= 8
+        if (SECTION_HEADING.containsMatchIn(title)) score -= 24
+        if (BODY_STARTER.containsMatchIn(title)) score -= 24
+        if (DEADLINE_TITLE_WORD.containsMatchIn(title)) score -= 10
+        if (URL_OR_EMAIL.containsMatchIn(title)) score -= 30
+        if (title.length <= 8 && ACTION_FRAGMENT.containsMatchIn(title)) score -= 10
+        if (STRONG_TITLE_WORD.containsMatchIn(title)) score += 6
+        if (HEADING_HINT.containsMatchIn(title)) score += 3
+        return score
     }
 
     private fun looksLikeTitle(raw: String): Boolean {
@@ -550,15 +690,8 @@ object DdlParser {
         val merged = mutableListOf<DdlCandidate>()
         for (candidate in candidates) {
             val existingIndex = merged.indexOfFirst { existing ->
-                val a = existing.deadline
-                val b = candidate.deadline
-                when {
-                    a == null && b == null -> true
-                    a != null && b != null -> kotlin.math.abs(
-                        a.toInstant().toEpochMilli() - b.toInstant().toEpochMilli(),
-                    ) <= MERGE_WINDOW_MILLIS
-                    else -> false
-                }
+                sameDeadline(existing.deadline, candidate.deadline) &&
+                    sameTitle(existing.title, candidate.title)
             }
             if (existingIndex < 0) {
                 merged += candidate
@@ -574,10 +707,32 @@ object DdlParser {
         return merged
     }
 
+    private fun sameDeadline(a: ZonedDateTime?, b: ZonedDateTime?): Boolean = when {
+        a == null && b == null -> true
+        a != null && b != null -> kotlin.math.abs(
+            a.toInstant().toEpochMilli() - b.toInstant().toEpochMilli(),
+        ) <= MERGE_WINDOW_MILLIS
+        else -> false
+    }
+
+    /** 同标题或一方没标题才合并；同截止时间的两个不同作业要保留成两条。 */
+    private fun sameTitle(a: String, b: String): Boolean {
+        if (a.isBlank() || b.isBlank()) return true
+        val left = CaptureDuplicate.normalizeTitle(a)
+        val right = CaptureDuplicate.normalizeTitle(b)
+        if (left == right) return true
+        val shorter = minOf(left.length, right.length)
+        return shorter >= 3 && (left.contains(right) || right.contains(left))
+    }
+
     private fun noDeadlineCandidate(lines: List<String>): DdlCandidate {
-        val title = lines.firstNotNullOfOrNull { line ->
-            cleanTitle(line).takeIf { looksLikeTitle(it) }
-        } ?: ""
+        val title = lines.mapIndexedNotNull { index, line ->
+            val cleaned = cleanTitle(line)
+            if (!looksLikeTitle(cleaned)) return@mapIndexedNotNull null
+            if (UI_CHROME.any { cleaned.equals(it, ignoreCase = true) }) return@mapIndexedNotNull null
+            if (BARE_ACTION.matches(cleaned)) return@mapIndexedNotNull null
+            cleaned to (titleScore(cleaned) + if (index == 0) 8 else 0)
+        }.maxByOrNull { it.second }?.first ?: ""
         return DdlCandidate(
             title = title,
             deadline = null,

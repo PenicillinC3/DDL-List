@@ -36,13 +36,22 @@ object CaptureText {
     }
 
     private fun sameItem(a: DdlCandidate, b: DdlCandidate): Boolean {
-        val title = CaptureDuplicate.normalizeTitle(a.title)
-        if (title.isEmpty() || title != CaptureDuplicate.normalizeTitle(b.title)) return false
+        if (!sameTitle(a.title, b.title)) return false
         val deadlineA = a.deadline?.toInstant()?.toEpochMilli()
         val deadlineB = b.deadline?.toInstant()?.toEpochMilli()
         if (deadlineA == null || deadlineB == null) {
             return deadlineA == null && deadlineB == null
         }
         return abs(deadlineA - deadlineB) <= MERGE_WINDOW_MILLIS
+    }
+
+    /** 同标题，或一个标题包含另一个（如 OCR 少读了「【作业】」前缀），都视为同一条。 */
+    private fun sameTitle(a: String, b: String): Boolean {
+        val left = CaptureDuplicate.normalizeTitle(a)
+        val right = CaptureDuplicate.normalizeTitle(b)
+        if (left.isEmpty() || right.isEmpty()) return false
+        if (left == right) return true
+        val shorter = minOf(left.length, right.length)
+        return shorter >= 3 && (left.contains(right) || right.contains(left))
     }
 }

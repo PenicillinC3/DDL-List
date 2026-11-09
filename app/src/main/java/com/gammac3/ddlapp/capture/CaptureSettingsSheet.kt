@@ -193,9 +193,9 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
-            }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(

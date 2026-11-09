@@ -135,6 +135,89 @@ class DdlParserTest {
         assertEquals("没有截止时间的通知", candidates.first().title)
     }
 
+    // ------------------------------------------------------------- title quality
+
+    @Test
+    fun `complex page picks article heading over sentence fragment`() {
+        val text = """
+            关于做好2026年秋季学期期中教学检查工作的通知
+            各学院：
+            为做好本学期期中教学检查工作，现将有关事项通知如下。
+            一、检查时间
+            11月10日至11月14日
+            请各学院于11月13日17:00前将检查总结交至教务处。
+        """.trimIndent()
+        val candidate = parse(text).first { it.deadline == at(2026, 11, 13, 17, 0) }
+        assertEquals("关于做好2026年秋季学期期中教学检查工作的通知", candidate.title)
+    }
+
+    @Test
+    fun `submit deadline label is not used as title`() {
+        val text = "期中论文提交要求\n提交截止时间：2026年11月20日 23:59"
+        assertEquals("期中论文提交要求", first(text).title)
+    }
+
+    @Test
+    fun `instruction sentence is not chosen as title`() {
+        val text = "第三章习题\n本次作业要求独立完成\n截止时间：11月13日 23:59"
+        assertEquals("第三章习题", first(text).title)
+    }
+
+    @Test
+    fun `title label prefix is removed`() {
+        val text = "标题：第三章习题\n截止：11月13日 23:59"
+        assertEquals("第三章习题", first(text).title)
+    }
+
+    @Test
+    fun `vocative prefix is removed from title`() {
+        val text = "各位同学，本次作业\n截止：11月13日 23:59"
+        assertEquals("本次作业", first(text).title)
+    }
+
+    @Test
+    fun `chat chrome is not used as title`() {
+        val text = "文件传输助手\n今天 14:30"
+        assertEquals("", first(text).title)
+    }
+
+    @Test
+    fun `publish time is not a deadline`() {
+        val text = "发布时间：2026-11-01 10:00\n正文\n截止：11月13日 23:59"
+        val candidates = parse(text)
+        assertTrue(candidates.none { it.deadline == at(2026, 11, 1, 10, 0) })
+    }
+
+    @Test
+    fun `same deadline with different titles stays separate`() {
+        val text = "作业A 11月13日 23:59\n作业B 11月13日 23:59"
+        assertEquals(2, parse(text).size)
+    }
+
+    @Test
+    fun `generic action fragment loses to heading`() {
+        val text = "第三章习题\n请于11月13日23:59前提交材料"
+        assertEquals("第三章习题", first(text).title)
+    }
+
+    @Test
+    fun `english heading beats generic submit phrase`() {
+        val text = "CS101 - Assignment 3\nPlease submit your essay by Friday 5pm"
+        assertEquals("CS101 - Assignment 3", first(text).title)
+    }
+
+    @Test
+    fun `bare action is not used as title`() {
+        val text = "关于XX的通知\n请于11月13日前提交"
+        assertEquals("关于XX的通知", first(text).title)
+    }
+
+    @Test
+    fun `bare timestamp ranks below titled deadline`() {
+        val text = "关于XX的通知\n2026-11-01 10:00\n第三章习题 11月13日 23:59"
+        assertEquals(at(2026, 11, 13, 23, 59), parse(text).first().deadline)
+    }
+
     // ------------------------------------------------------------- english
 
     @Test
