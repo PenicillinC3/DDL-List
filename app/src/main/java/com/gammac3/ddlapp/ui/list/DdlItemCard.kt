@@ -15,10 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -36,6 +33,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gammac3.ddlapp.R
@@ -45,10 +44,14 @@ import com.gammac3.ddlapp.ui.theme.BellMuted
 import com.gammac3.ddlapp.ui.theme.BellSolid
 import com.gammac3.ddlapp.ui.theme.DataFont
 import com.gammac3.ddlapp.ui.theme.FigureFont
+import com.gammac3.ddlapp.ui.theme.UiFont
+import com.gammac3.ddlapp.ui.theme.SerifFont
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 
+// 一张纸卡：亮一档的纸面 + 1dp 细边，零投影。
+// 标题用宋体（像议程上的一行议题），数字用 Maple（像账簿上的墨迹），
+// 其余信息用黑体小字。层级靠字号与留白，不靠色块。
 @Composable
 fun DdlItemCard(
     row: DdlRow,
@@ -62,50 +65,61 @@ fun DdlItemCard(
     // 点击统一收敛到整行的 detectTapGestures（见 SwipeRow）。
     // 例外（v1.15.0 顺延 chip）：卡内唯一可点区，hit 区小而独立，拖动不入此层。
     val context = LocalContext.current
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    val shape = RoundedCornerShape(18.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape),
     ) {
-        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Column(Modifier.padding(start = 16.dp, end = 14.dp, top = 12.dp, bottom = 10.dp)) {
             Text(
                 text = if (row.title.length > 28) row.title.take(28) + "…" else row.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
+                fontFamily = SerifFont,
+                fontSize = 16.5.sp,
+                lineHeight = 23.sp,
+                letterSpacing = 0.2.sp,
+                color = if (row.isDone) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+                textDecoration = if (row.isDone) TextDecoration.LineThrough else null,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             if (row.note.isNotBlank()) {
                 Text(
                     text = row.note,
-                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = UiFont,
+                    fontSize = 12.sp,
+                    lineHeight = 17.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    modifier = Modifier.padding(top = 2.dp),
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 3.dp),
                 )
             }
             if (row.isDone) {
                 Text(
                     text = stringResource(R.string.card_done_tag),
-                    fontSize = 13.sp,
+                    fontFamily = UiFont,
+                    fontSize = 11.sp,
+                    letterSpacing = 0.6.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp),
+                    modifier = Modifier.padding(top = 7.dp),
                 )
             } else {
+                // 账簿上的数字：墨色正体，逾期才转赭红
                 Text(
                     text = Format.remaining(context, row.deadlineMillis, nowMillis),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontFamily = DataFont,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 23.sp,
+                        lineHeight = 28.sp,
+                        fontWeight = FontWeight.Bold,
                         fontFeatureSettings = "tnum",
                     ),
                     color = if (overdue) MaterialTheme.colorScheme.error
-                    else MaterialTheme.colorScheme.primary,
+                    else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(top = 6.dp),
                 )
             }
@@ -115,9 +129,10 @@ fun DdlItemCard(
                     Format.absolute(context, row.deadlineMillis),
                 ),
                 fontFamily = FigureFont,
-                fontSize = 12.sp,
+                fontSize = 11.5.sp,
+                letterSpacing = 0.2.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.padding(top = 3.dp),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -150,7 +165,7 @@ fun DdlItemCard(
     }
 }
 
-/** 逾期一键顺延 chip：视觉 ~24dp 胶囊，外层透明 contact 环补足 48dp 防误触；
+/** 逾期一键顺延：一枚描边小印（不是胶囊），外层透明 contact 环补足 48dp 防误触；
  *  按压微缩走 R48 的 pressed 反馈语汇（无 ripple）。菜单目标：今晚/明天 23:59、
  *  明天同一时刻、自定义（onPostpone(null) → 屏上层转编辑器）。 */
 @Composable
@@ -182,7 +197,7 @@ private fun PostponeChip(
     val customLabel = stringResource(R.string.postpone_custom)
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.size(width = 52.dp, height = 44.dp),
+        modifier = modifier.size(width = 54.dp, height = 44.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -191,21 +206,25 @@ private fun PostponeChip(
                     scaleX = pressScale
                     scaleY = pressScale
                 }
-                .clip(CircleShape)
-                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                .clip(RoundedCornerShape(3.dp))
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(3.dp),
+                )
                 .clickable(interactionSource = interaction, indication = null) { menuOpen = true }
-                .padding(horizontal = 12.dp, vertical = 5.dp),
+                .padding(start = 8.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
         ) {
             Text(
                 text = postponeText,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                fontFamily = UiFont,
+                fontSize = 11.5.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(3.dp))
             Text(
                 text = "▾",
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -235,34 +254,50 @@ private fun PostponeChip(
 @Composable
 private fun PostponeMenuItem(label: String, onClick: () -> Unit) {
     DropdownMenuItem(
-        text = { Text(label, fontSize = 14.sp) },
+        text = { Text(label, fontFamily = UiFont, fontSize = 14.sp) },
         onClick = onClick,
     )
 }
 
+/** 提醒标签：有提醒 = 麦色小签（像贴在纸上的便利贴），不提醒 = 只留一圈细边。 */
 @Composable
 private fun ReminderPill(
     muted: Boolean,
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    val background = if (muted) MaterialTheme.colorScheme.surfaceVariant
+    val shape = RoundedCornerShape(3.dp)
+    val background = if (muted) androidx.compose.ui.graphics.Color.Transparent
     else MaterialTheme.colorScheme.primaryContainer
     val foreground = if (muted) MaterialTheme.colorScheme.onSurfaceVariant
     else MaterialTheme.colorScheme.onPrimaryContainer
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .background(color = background, shape = RoundedCornerShape(6.dp))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            .clip(shape)
+            .background(color = background, shape = shape)
+            .then(
+                if (muted) {
+                    Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+                } else {
+                    Modifier
+                }
+            )
+            .padding(horizontal = 7.dp, vertical = 3.dp),
     ) {
         Icon(
             imageVector = if (muted) BellMuted else BellSolid,
             contentDescription = null,
-            modifier = Modifier.size(13.dp),
+            modifier = Modifier.size(12.dp),
             tint = foreground,
         )
         Spacer(Modifier.width(4.dp))
-        Text(text = text, fontSize = 11.sp, color = foreground)
+        Text(
+            text = text,
+            fontFamily = UiFont,
+            fontSize = 10.5.sp,
+            letterSpacing = 0.2.sp,
+            color = foreground,
+        )
     }
 }

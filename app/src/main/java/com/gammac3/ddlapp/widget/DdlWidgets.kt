@@ -6,19 +6,17 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Typeface
 import android.os.Build
 import android.text.SpannableString
 import android.text.style.TypefaceSpan
 import android.widget.RemoteViews
-import androidx.annotation.FontRes
-import androidx.core.content.res.ResourcesCompat
 import com.gammac3.ddlapp.DdlApplication
 import com.gammac3.ddlapp.MainActivity
 import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.data.DdlEntity
 import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.Format
+import com.gammac3.ddlapp.ui.theme.ScriptTypeface
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -73,7 +71,7 @@ object DdlWidgets {
         Spec(DdlWidgetV3Receiver::class.java, R.layout.widget_v3),
     )
 
-    // ---------- 调色（与 Theme.kt 令牌一致） ----------
+    // ---------- 调色（与 Theme.kt 的暖纸/陶土令牌一致） ----------
 
     private class Palette(
         val bgRes: Int,
@@ -93,14 +91,14 @@ object DdlWidgets {
         val night = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
         return if (night) Palette(
-            R.drawable.widget_bg_dark, 0xFFE8ECF1.toInt(), 0xFF8B949E.toInt(),
-            0xFFFF7A7F.toInt(), 0xFF8FA3FF.toInt(),
-            R.drawable.widget_calpg_dark, 0xFF2B0D0F.toInt(), R.drawable.widget_ruler_track_dark,
+            R.drawable.widget_bg_dark, 0xFFF2EFE6.toInt(), 0xFFA9A599.toInt(),
+            0xFFEE9A85.toInt(), 0xFFE2906F.toInt(),
+            R.drawable.widget_calpg_dark, 0xFFF6E3D8.toInt(), R.drawable.widget_ruler_track_dark,
             R.drawable.dot_ind_dark, R.drawable.widget_cell_dark, R.drawable.widget_cell_today_dark,
         ) else Palette(
-            R.drawable.widget_bg_light, 0xFF101828.toInt(), 0xFF5F6771.toInt(),
-            0xFFE5484D.toInt(), 0xFF3A5AF0.toInt(),
-            R.drawable.widget_calpg_light, 0xFFFFFFFF.toInt(), R.drawable.widget_ruler_track_light,
+            R.drawable.widget_bg_light, 0xFF141413.toInt(), 0xFF5F5C53.toInt(),
+            0xFF9C3D24.toInt(), 0xFFC6613F.toInt(),
+            R.drawable.widget_calpg_light, 0xFF141413.toInt(), R.drawable.widget_ruler_track_light,
             R.drawable.dot_ind_light, R.drawable.widget_cell_light, R.drawable.widget_cell_today_light,
         )
     }
@@ -142,41 +140,41 @@ object DdlWidgets {
         val nearest = model.nearest
         rv.setTextViewText(
             R.id.widget_header,
-            mixed(context, context.getString(R.string.wgt_header_recent), R.font.source_han_cn_600, R.font.source_han_cn_600),
+            styled(context, context.getString(R.string.wgt_header_recent), true),
         )
         rv.setTextColor(R.id.widget_header, p.gray)
         applyCalTab(context, rv, p, nearest)
         applyRuler(rv, p, model)
         if (nearest == null) {
-            rv.setTextViewText(R.id.widget_title, mixed(context, context.getString(R.string.wgt_empty_short), R.font.source_han_cn_600, R.font.source_han_cn_600))
+            rv.setTextViewText(R.id.widget_title, styled(context, context.getString(R.string.wgt_empty_short), true))
             rv.setTextColor(R.id.widget_title, p.ink)
-            rv.setTextViewText(R.id.widget_countdown, mixed(context, context.getString(R.string.wgt_dash), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
+            rv.setTextViewText(R.id.widget_countdown, styled(context, context.getString(R.string.wgt_dash), true))
             rv.setTextColor(R.id.widget_countdown, p.gray)
             rv.setTextViewText(
                 R.id.widget_date,
-                if (model.overdueCount > 0) mixed(context, context.getString(R.string.wgt_more_overdue, model.overdueCount), R.font.timeless_serif_text, R.font.source_han_cn_400) else "",
+                if (model.overdueCount > 0) styled(context, context.getString(R.string.wgt_more_overdue, model.overdueCount), false) else "",
             )
             rv.setTextColor(R.id.widget_date, p.gray)
-            rv.setTextViewText(R.id.widget_meta, mixed(context, metaEmpty(context, model), R.font.timeless_serif_text, R.font.source_han_cn_400))
+            rv.setTextViewText(R.id.widget_meta, styled(context, metaEmpty(context, model), false))
             rv.setTextColor(R.id.widget_meta, p.gray)
             return
         }
         val now = System.currentTimeMillis()
         val urgent = nearest.deadlineMillis - now < 24 * 3_600_000L
-        rv.setTextViewText(R.id.widget_title, mixed(context, nearest.title, R.font.source_han_cn_600, R.font.source_han_cn_600))
+        rv.setTextViewText(R.id.widget_title, styled(context, nearest.title, true))
         rv.setTextColor(R.id.widget_title, p.ink)
-        rv.setTextViewText(R.id.widget_countdown, mixed(context, Format.remaining(context, nearest.deadlineMillis, now), R.font.maple_mono_bold_data, R.font.source_han_cn_700))
+        rv.setTextViewText(R.id.widget_countdown, styled(context, Format.remaining(context, nearest.deadlineMillis, now), true))
         rv.setTextColor(R.id.widget_countdown, if (urgent) p.red else p.ink)
-        rv.setTextViewText(R.id.widget_date, mixed(context, absoluteLine(context, nearest.deadlineMillis), R.font.timeless_serif_text, R.font.source_han_cn_400))
+        rv.setTextViewText(R.id.widget_date, styled(context, absoluteLine(context, nearest.deadlineMillis), false))
         rv.setTextColor(R.id.widget_date, p.gray)
-        rv.setTextViewText(R.id.widget_meta, mixed(context, metaFilled(context, model), R.font.timeless_serif_text, R.font.source_han_cn_400))
+        rv.setTextViewText(R.id.widget_meta, styled(context, metaFilled(context, model), false))
         rv.setTextColor(R.id.widget_meta, p.gray)
     }
 
     private fun renderV3(context: Context, rv: RemoteViews, p: Palette, model: DdlWidgetModel) {
         rv.setTextViewText(
             R.id.widget_header,
-            mixed(context, context.getString(R.string.wgt_header_recent), R.font.source_han_cn_600, R.font.source_han_cn_600),
+            styled(context, context.getString(R.string.wgt_header_recent), true),
         )
         rv.setTextColor(R.id.widget_header, p.gray)
         applyCalTab(context, rv, p, model.nearest)
@@ -195,7 +193,7 @@ object DdlWidgets {
     ) {
         if (row == null) {
             if (emptyTitle.isNotEmpty()) {
-                rv.setTextViewText(titleId, mixed(context, emptyTitle, R.font.source_han_cn_500, R.font.source_han_cn_500))
+                rv.setTextViewText(titleId, styled(context, emptyTitle, false))
             }
             rv.setTextColor(titleId, p.gray)
             rv.setTextViewText(cdId, context.getString(R.string.wgt_dash))
@@ -205,14 +203,14 @@ object DdlWidgets {
             return
         }
         val urgent = row.deadlineMillis - System.currentTimeMillis() < 24 * 3_600_000L
-        rv.setTextViewText(titleId, mixed(context, row.title, R.font.source_han_cn_500, R.font.source_han_cn_500))
+        rv.setTextViewText(titleId, styled(context, row.title, false))
         rv.setTextColor(titleId, p.ink)
         rv.setTextViewText(
             cdId,
-            mixed(
+            styled(
                 context,
                 Format.remaining(context, row.deadlineMillis, System.currentTimeMillis()),
-                R.font.maple_mono_bold_data, R.font.source_han_cn_700,
+                true,
             ),
         )
         rv.setTextColor(cdId, if (urgent) p.red else p.ink)
@@ -233,9 +231,9 @@ object DdlWidgets {
         val month = z.format(DateTimeFormatter.ofPattern(
             context.getString(R.string.fmt_calpg_month), localeOf(context),
         ))
-        rv.setTextViewText(R.id.widget_calpg_month, mixed(context, month, R.font.source_han_cn_600, R.font.source_han_cn_600))
+        rv.setTextViewText(R.id.widget_calpg_month, styled(context, month, true))
         rv.setTextColor(R.id.widget_calpg_month, p.calpgInk)
-        rv.setTextViewText(R.id.widget_calpg_day, mixed(context, z.dayOfMonth.toString(), R.font.timeless_serif_text, R.font.timeless_serif_text))
+        rv.setTextViewText(R.id.widget_calpg_day, styled(context, z.dayOfMonth.toString(), false))
         rv.setTextColor(R.id.widget_calpg_day, p.calpgInk)
     }
 
@@ -329,35 +327,20 @@ object DdlWidgets {
         return z.format(DateTimeFormatter.ofPattern(pattern, localeOf(context)))
     }
 
-    // ---------- 西文×思源 混排（桌面版的 DataFont/FigureFont 链） ----------
-
-    private val typefaceCache = mutableMapOf<Int, Typeface?>()
-
-    private fun typeface(context: Context, @FontRes res: Int): Typeface? =
-        typefaceCache.getOrPut(res) { ResourcesCompat.getFont(context, res) }
+    // ---------- 小组件排版：宋体底字 + Timeless 西文回退 ----------
 
     /**
-     * 分段规则：CJK（含全角）每个连续段套思源，其余段套西文（数字/冒号走 Maple / Serif）。
-     * API < 28 无 TypefaceSpan(Typeface)，保持原样由 XML fontFamily + 系统回退兜底。
+     * 单个 TypefaceSpan 覆盖整段：ScriptTypeface 返回的组合字面在缺字时逐字回退，
+     * 汉字走思源宋体、西文与数字走 Timeless，不用按字符分段。
+     * API < 28 无 TypefaceSpan(Typeface)，保持原样由系统字体兜底。
      */
-    private fun mixed(context: Context, text: String, latinRes: Int, hanRes: Int): CharSequence {
+    private fun styled(context: Context, text: String, semibold: Boolean): CharSequence {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return text
+        val tf = ScriptTypeface.get(context, semibold)
         val ss = SpannableString(text)
-        var i = 0
-        while (i < text.length) {
-            val han = isHanChar(text[i])
-            var j = i
-            while (j < text.length && isHanChar(text[j]) == han) j++
-            val tf = typeface(context, if (han) hanRes else latinRes)
-            if (tf != null) ss.setSpan(TypefaceSpan(tf), i, j, 0)
-            i = j
-        }
+        ss.setSpan(TypefaceSpan(tf), 0, text.length, 0)
         return ss
     }
-
-    private fun isHanChar(c: Char): Boolean =
-        c.code in 0x2E80..0x9FFF || c.code in 0xF900..0xFAFF || c.code in 0xFF00..0xFFEF ||
-            c.code == 0x00B7 || c.code == 0x2014 || c.code == 0x2026
 }
 
 /** 仓库内部映射：实体 → 行（与 ViewModel 内字段拷贝保持同义）。 */

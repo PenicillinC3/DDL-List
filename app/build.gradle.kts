@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val appVersionCode = 30
-val appVersionName = "1.18.1"
+val appVersionCode = 31
+val appVersionName = "1.19.0"
 
 android {
     namespace = "com.gammac3.ddlapp"
@@ -34,6 +34,10 @@ android {
             // 压缩 .so，避免 APK 体积翻倍
             useLegacyPackaging = true
         }
+    }
+    androidResources {
+        // 字体运行时用 AssetFileDescriptor 打开，必须保持未压缩
+        noCompress += listOf("ttf", "otf")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

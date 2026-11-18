@@ -38,16 +38,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gammac3.ddlapp.R
+import com.gammac3.ddlapp.ui.theme.UiFont
+import com.gammac3.ddlapp.ui.theme.SectionLabel
+import com.gammac3.ddlapp.ui.theme.SerifFont
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +74,7 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
     ) {
         Column(
             Modifier
@@ -83,23 +87,33 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         stringResource(R.string.capture_settings_title),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+                        fontFamily = SerifFont,
+                        fontSize = 23.sp,
+                        lineHeight = 30.sp,
+                        letterSpacing = 0.6.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
+                    Spacer(Modifier.height(2.dp))
                     Text(
                         stringResource(R.string.capture_settings_subtitle),
-                        fontSize = 12.sp,
+                        fontFamily = UiFont,
+                        fontSize = 11.5.sp,
+                        lineHeight = 17.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 StateChip(running)
             }
 
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(4.dp))
                     .toggleable(
                         value = enabled,
                         role = Role.Switch,
@@ -124,8 +138,10 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         stringResource(R.string.capture_floating_ball),
+                        fontFamily = UiFont,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.3.sp,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
@@ -133,6 +149,7 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                             if (running) R.string.capture_state_running
                             else R.string.capture_state_off,
                         ),
+                        fontFamily = UiFont,
                         fontSize = 11.5.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -155,30 +172,36 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                             .border(
                                 width = 1.dp,
                                 color = MaterialTheme.colorScheme.error,
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(4.dp),
                             )
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(4.dp))
                             .clickable { openAccessibilitySettings() }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(horizontal = 12.dp, vertical = 11.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(
                                 stringResource(R.string.capture_accessibility),
+                                fontFamily = UiFont,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.3.sp,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
                                 stringResource(R.string.capture_accessibility_off),
-                                fontSize = 12.sp,
+                                fontFamily = UiFont,
+                                fontSize = 11.5.sp,
+                                lineHeight = 17.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Text(
                             stringResource(R.string.capture_open_settings),
-                            fontSize = 12.sp,
+                            fontFamily = UiFont,
+                            fontSize = 11.5.sp,
                             color = MaterialTheme.colorScheme.error,
+                            textDecoration = TextDecoration.Underline,
                         )
                     }
                     Text(
@@ -188,8 +211,10 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                             .offset(x = 12.dp, y = (-8).dp)
                             .background(MaterialTheme.colorScheme.surface)
                             .padding(horizontal = 6.dp),
+                        fontFamily = UiFont,
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.6.sp,
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
@@ -197,55 +222,63 @@ fun CaptureSettingsSheet(open: Boolean, onDismiss: () -> Unit) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    stringResource(R.string.capture_scope),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                SectionLabel(stringResource(R.string.capture_scope))
                 Text(
                     stringResource(R.string.capture_scope_value),
+                    fontFamily = UiFont,
                     fontSize = 12.sp,
+                    lineHeight = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
             Text(
                 stringResource(R.string.capture_privacy),
-                fontSize = 11.sp,
+                fontFamily = UiFont,
+                fontSize = 10.5.sp,
+                lineHeight = 16.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !connected) {
                 Text(
                     stringResource(R.string.capture_restricted_hint),
-                    fontSize = 11.sp,
+                    fontFamily = UiFont,
+                    fontSize = 10.5.sp,
+                    lineHeight = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
         }
     }
 }
 
 @Composable
 private fun StateChip(running: Boolean) {
+    val shape = RoundedCornerShape(3.dp)
     Box(
         Modifier
-            .clip(RoundedCornerShape(999.dp))
+            .clip(shape)
             .background(
-                if (running) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerHighest,
+                if (running) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
             )
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .border(
+                width = 1.dp,
+                color = if (running) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.outlineVariant,
+                shape = shape,
+            )
+            .padding(horizontal = 9.dp, vertical = 4.dp),
     ) {
         Text(
             stringResource(
                 if (running) R.string.capture_state_running else R.string.capture_state_off,
             ),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
+            fontFamily = UiFont,
+            fontSize = 10.5.sp,
+            letterSpacing = 0.6.sp,
             color = if (running) MaterialTheme.colorScheme.onPrimaryContainer
             else MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -257,7 +290,7 @@ private fun StateChip(running: Boolean) {
 private fun BallSwitch(checked: Boolean) {
     val trackColor by animateColorAsState(
         targetValue = if (checked) MaterialTheme.colorScheme.onSurface
-        else MaterialTheme.colorScheme.surfaceContainerHighest,
+        else MaterialTheme.colorScheme.surfaceContainerHigh,
         animationSpec = tween(durationMillis = 220),
         label = "ballSwitchTrack",
     )
@@ -277,18 +310,19 @@ private fun BallSwitch(checked: Boolean) {
             .border(
                 width = 1.dp,
                 color = if (checked) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.outline,
+                else MaterialTheme.colorScheme.outlineVariant,
                 shape = RoundedCornerShape(999.dp),
             ),
     ) {
+        // 小球是一张纸片：细边，不用投影
         Box(
             Modifier
                 .align(Alignment.CenterStart)
                 .offset(x = thumbOffset)
                 .size(28.dp)
-                .shadow(2.dp, CircleShape)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface),
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

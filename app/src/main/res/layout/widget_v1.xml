@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/wgt_header_recent"
-            android:textColor="#FF5F6771"
+            android:textColor="#FF5F5C53"
             android:textSize="10sp"
             android:letterSpacing="0.14"
 />
@@ -36,7 +36,7 @@
             android:layout_marginTop="4dp"
             android:layout_marginEnd="48dp"
             android:text="@string/ph_dash"
-            android:textColor="#FF101828"
+            android:textColor="#FF141413"
             android:textSize="15sp"
             android:maxLines="1"
             android:ellipsize="end"
@@ -49,7 +49,7 @@
             android:layout_marginTop="3dp"
             android:layout_marginBottom="1dp"
             android:text="@string/ph_cd"
-            android:textColor="#FF101828"
+            android:textColor="#FF141413"
             android:textSize="26sp"
             android:maxLines="1"
             android:letterSpacing="0.01"
@@ -60,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/ph_dash"
-            android:textColor="#FF5F6771"
+            android:textColor="#FF5F5C53"
             android:textSize="11.5sp"
             android:letterSpacing="0.02"
 />
@@ -71,7 +71,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:text="@string/ph_dash"
-            android:textColor="#FF5F6771"
+            android:textColor="#FF5F5C53"
             android:textSize="11sp"
 />
 
@@ -209,7 +209,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/ph_calpg_month"
-            android:textColor="#FFFFFFFF"
+            android:textColor="#FF141413"
             android:textSize="7.5sp"
             android:letterSpacing="0.08"
 />
@@ -219,7 +219,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="22"
-            android:textColor="#FFFFFFFF"
+            android:textColor="#FF141413"
             android:textSize="15sp"
 />
     </LinearLayout>

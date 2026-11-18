@@ -26,16 +26,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gammac3.ddlapp.R
+import com.gammac3.ddlapp.ui.theme.UiFont
 
 /**
- * 顶栏入口胶囊：26dp 高、15dp 星芒图标 +「自动识别」。
- * 实心 = 悬浮球已开启；描边 = 未开启。点击始终打开设置卡，不直接切换。
+ * 顶栏入口小签：26dp 高、15dp 星芒图标 +「自动识别」。
+ * 实心墨色 = 悬浮球已开启；细边 = 未开启。点击始终打开设置卡，不直接切换。
+ * 形制与筛选页签、印章 chip 同一套：近乎直角的小圆，不用胶囊。
  */
 @Composable
 fun CaptureEntryCapsule(onClick: () -> Unit) {
@@ -45,11 +46,12 @@ fun CaptureEntryCapsule(onClick: () -> Unit) {
     val connected by CaptureServiceState.connected.collectAsStateWithLifecycle()
     val running = enabled && connected
 
+    val shape = RoundedCornerShape(3.dp)
     val background = if (running) MaterialTheme.colorScheme.inverseSurface else Color.Transparent
     val content = if (running) MaterialTheme.colorScheme.inverseOnSurface
-    else MaterialTheme.colorScheme.onSurface
+    else MaterialTheme.colorScheme.onSurfaceVariant
     val border = if (running) MaterialTheme.colorScheme.inverseSurface
-    else MaterialTheme.colorScheme.outline
+    else MaterialTheme.colorScheme.outlineVariant
     val stateDesc = stringResource(
         if (running) R.string.capture_state_running else R.string.capture_state_off,
     )
@@ -61,9 +63,9 @@ fun CaptureEntryCapsule(onClick: () -> Unit) {
         Row(
             Modifier
                 .height(26.dp)
-                .clip(RoundedCornerShape(999.dp))
+                .clip(shape)
                 .background(background)
-                .border(1.dp, border, RoundedCornerShape(999.dp))
+                .border(1.dp, border, shape)
                 .clickable(onClick = onClick)
                 .semantics { stateDescription = stateDesc }
                 .padding(start = 7.dp, end = 9.dp),
@@ -74,12 +76,13 @@ fun CaptureEntryCapsule(onClick: () -> Unit) {
                 painter = painterResource(R.drawable.ic_capture_sparkle),
                 contentDescription = null,
                 tint = content,
-                modifier = Modifier.size(15.dp),
+                modifier = Modifier.size(14.dp),
             )
             Text(
                 stringResource(R.string.capture_entry),
+                fontFamily = UiFont,
                 fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.4.sp,
                 color = content,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

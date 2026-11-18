@@ -11,3 +11,10 @@ captures/
 /Debug/
 /font/
 /dist/
+/brag-output/
+/参考/
+# 设计预览：HTML 留档，字体副本与截图是生成物
+/preview/fonts/
+/preview/shots/
+# Python 字体管线缓存
+__pycache__/

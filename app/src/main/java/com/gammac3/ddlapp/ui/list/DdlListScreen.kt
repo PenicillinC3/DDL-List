@@ -18,7 +18,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,27 +31,28 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -61,8 +61,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,6 +74,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
@@ -87,12 +86,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -108,9 +105,10 @@ import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.model.DdlGroup
 import com.gammac3.ddlapp.model.DdlRow
 import com.gammac3.ddlapp.ui.Format
+import com.gammac3.ddlapp.ui.theme.Clay
 import com.gammac3.ddlapp.ui.theme.FigureFont
-import com.gammac3.ddlapp.ui.theme.HanFont
-import com.gammac3.ddlapp.ui.theme.TitleFont
+import com.gammac3.ddlapp.ui.theme.UiFont
+import com.gammac3.ddlapp.ui.theme.SerifFont
 import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.exp
@@ -312,17 +310,7 @@ fun DdlListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(postponeSnacks) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.app_name),
-                        fontFamily = TitleFont,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
+            Masthead(
                 actions = {
                     CaptureEntryCapsule(onClick = { captureSettingsOpen = true })
                     Box {
@@ -330,8 +318,8 @@ fun DdlListScreen(
                         IconButton(onClick = { menuOpen = true }) {
                             Text(
                                 "⋯",
-                                fontSize = 22.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 20.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
@@ -357,27 +345,17 @@ fun DdlListScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                ),
             )
         },
         floatingActionButton = {
-            val fabDesc = stringResource(R.string.add_ddl)
-            FloatingActionButton(
-                onClick = { onEdit(null) },
-                modifier = Modifier.semantics { contentDescription = fabDesc },
-                shape = RoundedCornerShape(18.dp),
-                containerColor = MaterialTheme.colorScheme.inverseSurface,
-                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-            ) { Text("＋", fontFamily = HanFont, fontSize = 24.sp) }
+            NewDdlButton(onClick = { onEdit(null) })
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             // 精确闹钟引导（Android 12+ 未授权）
             if (!exactOk) {
-                TextButton(
+                Notice(
+                    text = stringResource(R.string.banner_exact_alarm),
                     onClick = {
                         context.startActivity(
                             Intent(
@@ -386,88 +364,48 @@ fun DdlListScreen(
                             )
                         )
                     },
-                ) {
-                    Text(
-                        stringResource(R.string.banner_exact_alarm),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
+                )
             }
             // 通知权限被拒绝提示（Android 13+）
             if (notifDenied) {
-                Text(
-                    stringResource(R.string.banner_notifications),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            context.startActivity(
-                                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            )
-                        }
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                Notice(
+                    text = stringResource(R.string.banner_notifications),
+                    onClick = {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        )
+                    },
                 )
             }
             // 电池优化豁免引导（准点保障）：厂商省电策略会压后台闹钟，加白名单显著减小延迟
             if (!batteryWhitelisted && !batteryCardDismissed) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(
-                        onClick = {
-                            context.startActivity(
-                                Intent(
-                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                    Uri.parse("package:${context.packageName}"),
-                                )
+                Notice(
+                    text = stringResource(R.string.banner_battery),
+                    onClick = {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                                Uri.parse("package:${context.packageName}"),
                             )
-                        },
-                        modifier = Modifier.weight(1f, fill = false),
-                    ) {
-                        Text(
-                            stringResource(R.string.banner_battery),
-                            color = MaterialTheme.colorScheme.error,
                         )
-                    }
-                    TextButton(onClick = { batteryCardDismissed = true }) {
-                        Text(stringResource(R.string.banner_not_now), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            }
-            // 过滤 chips
-            Row(
-                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                DdlFilter.entries.forEach { f ->
-                    val selected = state.filter == f
-                    FilterChip(
-                        selected = selected,
-                        label = {
+                    },
+                    trailing = {
+                        TextButton(onClick = { batteryCardDismissed = true }) {
                             Text(
-                                when (f) {
-                                    DdlFilter.ALL -> stringResource(R.string.chip_all)
-                                    DdlFilter.ACTIVE -> stringResource(R.string.chip_active)
-                                    DdlFilter.DONE -> stringResource(R.string.chip_done)
-                                }
+                                stringResource(R.string.banner_not_now),
+                                fontSize = 11.5.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                        },
-                        onClick = { viewModel.setFilter(f) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-                            selectedLabelColor = MaterialTheme.colorScheme.inverseOnSurface,
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            if (selected) MaterialTheme.colorScheme.inverseSurface
-                            else MaterialTheme.colorScheme.outlineVariant,
-                        ),
-                    )
-                }
+                        }
+                    },
+                )
             }
+            // 筛选：印刷式的文字页签 + 墨线下划线，不用胶囊
+            FilterTabs(
+                selected = state.filter,
+                onSelect = { viewModel.setFilter(it) },
+            )
             // 分组列表
             val grouped = remember(state.rows, now) {
                 DdlGrouper.group(state.rows, now, zone)
@@ -483,70 +421,85 @@ fun DdlListScreen(
             }
             LazyColumn(
                 Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 88.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (state.rows.isEmpty() && state.tombstones.isEmpty()) {
                     item(key = "empty") {
-                        Text(
-                            text = if (state.filter == DdlFilter.ALL) {
-                                stringResource(R.string.empty_all)
-                            } else {
-                                stringResource(R.string.empty_filtered)
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 40.dp),
-                        )
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 28.dp, vertical = 64.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Text(
+                                text = if (state.filter == DdlFilter.ALL) {
+                                    stringResource(R.string.empty_all)
+                                } else {
+                                    stringResource(R.string.empty_filtered)
+                                },
+                                fontFamily = SerifFont,
+                                fontSize = 19.sp,
+                                lineHeight = 30.sp,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center,
+                            )
+                            Spacer(Modifier.height(14.dp))
+                            Box(
+                                Modifier
+                                    .width(30.dp)
+                                    .height(1.dp)
+                                    .background(Clay),
+                            )
+                        }
                     }
                 } else {
-                    var firstGroup = true
                     groupOrder.forEach { group ->
                         val rows = grouped[group].orEmpty()
                         val tombs = tombsByGroup[group].orEmpty()
                         if (rows.isEmpty() && tombs.isEmpty()) return@forEach
-                        if (!firstGroup) {
-                            item(key = "separator_$group") {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-                                    thickness = 1.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                            }
-                        }
-                        firstGroup = false
                         item(key = "header_$group") {
                             Row(
                                 Modifier.fillMaxWidth()
                                     .clickable(enabled = group == DdlGroup.DONE) {
                                         doneExpanded = !doneExpanded
                                     }
-                                    .padding(top = 8.dp, bottom = 2.dp),
+                                    .padding(top = 10.dp, bottom = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 if (group == DdlGroup.OVERDUE) {
                                     OverdueSeal(count = rows.size)
                                 } else {
-                                    // buildAnnotatedString 的 builder 非 Composable 空间，标签/括号先在此取
-                                    val label = groupName(group)
-                                    val parenOpen = stringResource(R.string.group_count_open)
-                                    val parenClose = stringResource(R.string.group_count_close)
                                     Text(
-                                        text = buildAnnotatedString {
-                                            append(label)
-                                            append(parenOpen)
-                                            withStyle(SpanStyle(fontFamily = FigureFont)) {
-                                                append("${rows.size}")
-                                            }
-                                            append(parenClose)
-                                            if (group == DdlGroup.DONE) append(if (doneExpanded) " ▾" else " ▸")
-                                        },
-                                        fontFamily = HanFont,
-                                        fontSize = 11.5.sp,
+                                        text = groupName(group),
+                                        fontFamily = UiFont,
+                                        fontSize = 10.5.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        letterSpacing = 0.6.sp,
+                                        letterSpacing = 1.5.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = "${rows.size}",
+                                        fontFamily = FigureFont,
+                                        fontSize = 11.5.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(start = 6.dp),
+                                    )
+                                }
+                                // 编辑式的「行尾细线」：组名像一本书的章节，线把右侧留白收住
+                                Box(
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(start = 12.dp)
+                                        .height(1.dp)
+                                        .background(MaterialTheme.colorScheme.outlineVariant),
+                                )
+                                if (group == DdlGroup.DONE) {
+                                    Text(
+                                        text = if (doneExpanded) "▾" else "▸",
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(start = 8.dp),
                                     )
                                 }
                             }
@@ -597,6 +550,162 @@ fun DdlListScreen(
         open = captureSettingsOpen,
         onDismiss = { captureSettingsOpen = false },
     )
+}
+
+/**
+ * 报头：宋体字标 + 一枚陶土句点，下面一条 1dp 细线。
+ * 没有底栏阴影、没有大色块——像一页纸的页眉。
+ */
+@Composable
+private fun Masthead(actions: @Composable RowScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 4.dp, top = 6.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(R.string.app_name),
+                fontFamily = SerifFont,
+                fontSize = 25.sp,
+                lineHeight = 32.sp,
+                letterSpacing = 0.8.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Box(
+                Modifier
+                    .padding(start = 5.dp, top = 3.dp)
+                    .size(5.dp)
+                    .background(Clay, CircleShape),
+            )
+            Spacer(Modifier.weight(1f))
+            actions()
+        }
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+    }
+}
+
+/** 筛选：印刷目录式的文字页签，选中项在字下压一条墨线（不是胶囊）。 */
+@Composable
+private fun FilterTabs(selected: DdlFilter, onSelect: (DdlFilter) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(start = 20.dp, end = 20.dp, top = 2.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+    ) {
+        DdlFilter.entries.forEach { f ->
+            val on = f == selected
+            val ink = MaterialTheme.colorScheme.onSurface
+            Text(
+                text = when (f) {
+                    DdlFilter.ALL -> stringResource(R.string.chip_all)
+                    DdlFilter.ACTIVE -> stringResource(R.string.chip_active)
+                    DdlFilter.DONE -> stringResource(R.string.chip_done)
+                },
+                fontFamily = UiFont,
+                fontSize = 13.sp,
+                fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                letterSpacing = 0.4.sp,
+                color = if (on) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onSelect(f) },
+                    )
+                    .padding(top = 10.dp, bottom = 11.dp)
+                    .drawBehind {
+                        if (on) {
+                            val h = 1.5.dp.toPx()
+                            drawRect(
+                                color = ink,
+                                topLeft = Offset(0f, size.height - h),
+                                size = Size(size.width, h),
+                            )
+                        }
+                    },
+            )
+        }
+    }
+}
+
+/** 系统权限提示：一个陶土小方点 + 一行赭红小字，克制、可点。 */
+@Composable
+private fun Notice(
+    text: String,
+    onClick: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(enabled = onClick != null) { onClick?.invoke() }
+            .padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(4.dp)
+                .background(MaterialTheme.colorScheme.error, CircleShape),
+        )
+        Spacer(Modifier.width(9.dp))
+        Text(
+            text = text,
+            fontFamily = UiFont,
+            fontSize = 11.5.sp,
+            lineHeight = 17.sp,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.weight(1f),
+        )
+        trailing?.invoke()
+    }
+}
+
+/** 新建：墨色纸签，上方两角近直角、下方两角圆——像从纸堆里抽出来的一页。 */
+@Composable
+private fun NewDdlButton(onClick: () -> Unit) {
+    val desc = stringResource(R.string.add_ddl)
+    Row(
+        Modifier
+            .semantics { contentDescription = desc }
+            .clip(
+                RoundedCornerShape(
+                    topStart = 2.dp,
+                    topEnd = 2.dp,
+                    bottomStart = 13.dp,
+                    bottomEnd = 13.dp,
+                )
+            )
+            .background(MaterialTheme.colorScheme.inverseSurface)
+            .clickable(onClick = onClick)
+            .padding(start = 18.dp, end = 20.dp, top = 13.dp, bottom = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "＋",
+            fontFamily = UiFont,
+            fontSize = 16.sp,
+            color = MaterialTheme.colorScheme.inverseOnSurface,
+        )
+        Spacer(Modifier.width(7.dp))
+        Text(
+            stringResource(R.string.fab_new),
+            fontFamily = UiFont,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.5.sp,
+            color = MaterialTheme.colorScheme.inverseOnSurface,
+        )
+    }
 }
 
 @Composable
@@ -680,7 +789,7 @@ private fun SwipeRow(
     Box(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
             // 点击收敛整行（R46）：卡片本体不再自带 clickable（Card(onClick) 参与横向手势
             // 竞争，是结算丢失的头号嫌疑）。悬停中点本体 = 收拢（读快照态保新鲜），
             // 未悬停点本体 = 进编辑器；红底点按仍走下方 bg 的 clickable(enabled=docked) 删除
@@ -743,13 +852,17 @@ private fun SwipeRow(
             Text(
                 text = deleteLabel,
                 color = onErr,
-                fontWeight = FontWeight.Bold,
+                fontFamily = UiFont,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
             )
         }
         Text(
             text = doneLabel,
             color = onDone,
-            fontWeight = FontWeight.Bold,
+            fontFamily = UiFont,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .graphicsLayer { alpha = (visualState.value / donePx).coerceIn(0f, 1f) }
@@ -823,7 +936,8 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
         label = "tombPress",
     )
     val remainSec = (((tomb.expiresAtMillis - nowMillis) + 999) / 1_000).toInt().coerceIn(0, 5)
-    val ink = MaterialTheme.colorScheme.onSurfaceVariant
+    val ink = MaterialTheme.colorScheme.onSurface
+    val soft = MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -831,11 +945,17 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
                 scaleX = pressScale
                 scaleY = pressScale
             }
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .clip(RoundedCornerShape(13.dp))
+            // 一张麦色便条：比纸卡低一档的纸，1dp 细边，没有阴影
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(13.dp),
+            )
             .clickable(interactionSource = interaction, indication = null, onClick = onUndo),
     ) {
-        // 进度读条（__fill 定款）：matchParentSize 自绘矩形，宽 = 满宽 × 已读占比，左锚不动
+        // 读秒条：陶土色一层薄墨自左向右读满，读满即被 GC 摘除
         Box(
             Modifier
                 .matchParentSize()
@@ -843,7 +963,7 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
                     val f = progress.value.coerceIn(0f, 1f)
                     if (f > 0.002f) {
                         drawRect(
-                            ink.copy(alpha = 0.10f),
+                            Clay.copy(alpha = 0.16f),
                             size = Size(size.width * f, size.height),
                         )
                     }
@@ -851,11 +971,11 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 15.dp, vertical = 14.dp),
+            modifier = Modifier.padding(start = 15.dp, end = 16.dp, top = 13.dp, bottom = 13.dp),
         ) {
             Box(
                 Modifier
-                    .size(15.dp)
+                    .size(14.dp)
                     .graphicsLayer {
                         alpha = glyphIn.value
                         translationY = (1f - glyphIn.value) * size.height * 0.7f
@@ -864,15 +984,15 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
                 Icon(
                     painter = painterResource(R.drawable.ic_del),
                     contentDescription = null,
-                    tint = ink,
-                    modifier = Modifier.size(15.dp),
+                    tint = soft,
+                    modifier = Modifier.size(14.dp),
                 )
             }
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(9.dp))
             Text(
                 text = stringResource(R.string.tomb_deleted, tomb.row.title),
                 fontSize = 12.sp,
-                fontFamily = HanFont,
+                fontFamily = UiFont,
                 color = ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -886,15 +1006,16 @@ private fun TombCard(tomb: Tombstone, nowMillis: Long, onUndo: () -> Unit, modif
                     fontSize = 10.5.sp,
                     fontFeatureSettings = "tnum",
                 ),
-                color = ink.copy(alpha = 0.85f),
+                color = soft,
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(12.dp))
+            // 撤销是这里唯一的行动点：常驻下划线，像纸上被划出来的一句
             Text(
                 text = stringResource(R.string.tomb_tap_undo),
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = HanFont,
+                fontSize = 12.sp,
+                fontFamily = UiFont,
                 color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
                 modifier = Modifier.graphicsLayer {
                     alpha = glyphIn.value
                     translationY = (1f - glyphIn.value) * size.height * 0.7f
@@ -925,41 +1046,33 @@ private fun OverdueSeal(count: Int) {
         }
     }
     val sealText = stringResource(R.string.seal_overdue)
-    val parenOpen = stringResource(R.string.group_count_open)
-    val parenClose = stringResource(R.string.group_count_close)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = sealText,
-            fontSize = 10.5.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
-            letterSpacing = 1.5.sp,
+            letterSpacing = 1.8.sp,
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.graphicsLayer {
                 val p = press.value
-                scaleX = 1.7f - 0.7f * p
-                scaleY = 1.7f - 0.7f * p
-                rotationZ = -13f + 10f * p
+                scaleX = 1.55f - 0.55f * p
+                scaleY = 1.55f - 0.55f * p
+                rotationZ = -9f + 7f * p
                 alpha = (p * 4f).coerceIn(0f, 1f)
             }
                 .border(
-                    width = 2.dp,
+                    width = 1.5.dp,
                     color = MaterialTheme.colorScheme.error,
-                    shape = RoundedCornerShape(3.dp),
+                    shape = RoundedCornerShape(2.dp),
                 )
-                .padding(start = 7.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+                .padding(start = 8.dp, end = 7.dp, top = 3.5.dp, bottom = 3.5.dp),
         )
         Text(
-            text = buildAnnotatedString {
-                append(parenOpen)
-                withStyle(SpanStyle(fontFamily = FigureFont)) { append("$count") }
-                append(parenClose)
-            },
-            fontFamily = HanFont,
+            text = "$count",
+            fontFamily = FigureFont,
             fontSize = 11.5.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.6.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 6.dp),
+            modifier = Modifier.padding(start = 8.dp),
         )
     }
 }

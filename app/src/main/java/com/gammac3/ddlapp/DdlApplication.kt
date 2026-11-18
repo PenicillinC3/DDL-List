@@ -26,5 +26,10 @@ class DdlApplication : Application() {
         // 数据变更 → 小组件整批刷新；进程冷启动/被系统重建时也对一次表
         container.repository.onChanged = { com.gammac3.ddlapp.widget.DdlWidgets.refresh(this) }
         com.gammac3.ddlapp.widget.DdlWidgets.refresh(this)
+        // 首帧前把两档组合字面准备好：汉字子集有 1.4MB，别让第一次排版在 UI 线程读盘
+        Thread {
+            com.gammac3.ddlapp.ui.theme.ScriptTypeface.get(this, semibold = false)
+            com.gammac3.ddlapp.ui.theme.ScriptTypeface.get(this, semibold = true)
+        }.apply { isDaemon = true }.start()
     }
 }

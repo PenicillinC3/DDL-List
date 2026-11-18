@@ -6,6 +6,7 @@
 
     <!-- ===== Common ===== -->
     <string name="add_ddl">Add DDL</string>
+    <string name="fab_new">New</string>
     <string name="edit_ddl">Edit DDL</string>
     <string name="btn_save">Save</string>
     <string name="btn_delete">Delete</string>
@@ -34,9 +35,9 @@
     <string name="swipe_done">Done</string>
 
     <!-- ===== Banners ===== -->
-    <string name="banner_exact_alarm">⚠ Exact reminders are off — tap to open Settings (reminders may arrive late)</string>
-    <string name="banner_notifications">🔔 Notifications are off — you won\'t get reminders. Tap to open system settings</string>
-    <string name="banner_battery">🔋 Battery optimization may delay alarms — tap to whitelist this app</string>
+    <string name="banner_exact_alarm">Exact reminders are off — tap to open Settings (reminders may arrive late)</string>
+    <string name="banner_notifications">Notifications are off — you won\'t get reminders. Tap to open system settings</string>
+    <string name="banner_battery">Battery optimization may delay alarms — tap to whitelist this app</string>
     <string name="banner_not_now">Not now</string>
 
     <!-- ===== Empty states ===== -->

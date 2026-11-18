@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -31,11 +33,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +67,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.gammac3.ddlapp.DdlApplication
@@ -73,6 +76,13 @@ import com.gammac3.ddlapp.data.DdlEntity
 import com.gammac3.ddlapp.notify.CandidateLeads
 import com.gammac3.ddlapp.notify.LeadLabels
 import com.gammac3.ddlapp.ui.theme.DdlAppTheme
+import com.gammac3.ddlapp.ui.theme.FieldShape
+import com.gammac3.ddlapp.ui.theme.FigureFont
+import com.gammac3.ddlapp.ui.theme.UiFont
+import com.gammac3.ddlapp.ui.theme.SectionLabel
+import com.gammac3.ddlapp.ui.theme.SerifFont
+import com.gammac3.ddlapp.ui.theme.StampChip
+import com.gammac3.ddlapp.ui.theme.paperFieldColors
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -222,12 +232,7 @@ private fun CaptureCard(
 
     BackHandler(onBack = onCancel)
 
-    val chipColors = FilterChipDefaults.filterChipColors(
-        containerColor = MaterialTheme.colorScheme.surface,
-        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        selectedContainerColor = MaterialTheme.colorScheme.inverseSurface,
-        selectedLabelColor = MaterialTheme.colorScheme.inverseOnSurface,
-    )
+    val fieldColors = paperFieldColors()
 
     fun save(forceDuplicate: Boolean) {
         if (!canSave) return
@@ -289,9 +294,10 @@ private fun CaptureCard(
                     indication = null,
                     onClick = {},
                 ),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shadowElevation = 0.dp,
         ) {
             Column(
                 Modifier
@@ -306,16 +312,19 @@ private fun CaptureCard(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(15.dp),
                     )
-                    Spacer(Modifier.width(6.dp))
+                    Spacer(Modifier.width(7.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
                             stringResource(R.string.capture_card_title),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontFamily = SerifFont,
+                            fontSize = 18.5.sp,
+                            lineHeight = 25.sp,
+                            letterSpacing = 0.5.sp,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
                             stringResource(R.string.capture_card_subtitle),
+                            fontFamily = UiFont,
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -328,6 +337,10 @@ private fun CaptureCard(
                         )
                     }
                 }
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
 
                 if (datedCandidates.size > 1) {
                     FlowRow(
@@ -337,7 +350,8 @@ private fun CaptureCard(
                     ) {
                         datedCandidates.forEachIndexed { index, candidate ->
                             val selected = index == selectedIndex
-                            FilterChip(
+                            StampChip(
+                                text = candidate.deadline?.let { formatChip(context, it) }.orEmpty(),
                                 selected = selected,
                                 onClick = {
                                     selectedIndex = index
@@ -348,17 +362,6 @@ private fun CaptureCard(
                                     duplicateWarning = false
                                     saveFailed = false
                                 },
-                                label = {
-                                    Text(
-                                        candidate.deadline?.let { formatChip(context, it) }.orEmpty(),
-                                    )
-                                },
-                                colors = chipColors,
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (selected) MaterialTheme.colorScheme.inverseSurface
-                                    else MaterialTheme.colorScheme.outlineVariant,
-                                ),
                             )
                         }
                     }
@@ -376,6 +379,13 @@ private fun CaptureCard(
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
                     singleLine = true,
+                    shape = FieldShape,
+                    colors = fieldColors,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = SerifFont,
+                        fontSize = 16.5.sp,
+                        letterSpacing = 0.2.sp,
+                    ),
                 )
 
                 val editorLocale = remember(context) { context.resources.configuration.locales[0] }
@@ -396,6 +406,12 @@ private fun CaptureCard(
                             label = { Text(stringResource(R.string.editor_date)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
+                            shape = FieldShape,
+                            colors = fieldColors,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                fontFamily = FigureFont,
+                                fontSize = 15.sp,
+                            ),
                         )
                         Box(
                             Modifier
@@ -413,6 +429,12 @@ private fun CaptureCard(
                             label = { Text(stringResource(R.string.editor_time)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
+                            shape = FieldShape,
+                            colors = fieldColors,
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                fontFamily = FigureFont,
+                                fontSize = 15.sp,
+                            ),
                         )
                         Box(
                             Modifier
@@ -430,47 +452,47 @@ private fun CaptureCard(
                     label = { Text(stringResource(R.string.editor_note_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    shape = FieldShape,
+                    colors = fieldColors,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = UiFont,
+                        fontSize = 14.sp,
+                    ),
                 )
 
-                Text(
-                    stringResource(R.string.editor_leads_title),
-                    style = MaterialTheme.typography.titleSmall,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    SectionLabel(stringResource(R.string.editor_leads_title))
+                    Spacer(
+                        Modifier
+                            .weight(1f)
+                            .padding(start = 12.dp)
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                    )
+                }
                 FlowRow(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
-                    FilterChip(
+                    StampChip(
+                        text = stringResource(R.string.pill_muted),
                         selected = muted,
-                        label = { Text(stringResource(R.string.pill_muted)) },
                         onClick = {
                             muted = !muted
                             if (muted) leads = ArrayList()
                         },
-                        colors = chipColors,
-                        border = BorderStroke(
-                            1.dp,
-                            if (muted) MaterialTheme.colorScheme.inverseSurface
-                            else MaterialTheme.colorScheme.outlineVariant,
-                        ),
                     )
                     leadChoices.forEach { lead ->
                         val selected = lead in leads
-                        FilterChip(
+                        StampChip(
+                            text = LeadLabels.text(context, lead),
                             selected = selected,
-                            label = { Text(LeadLabels.text(context, lead)) },
                             onClick = {
                                 leads = ArrayList(
                                     if (selected) leads - lead else leads + lead,
                                 )
                                 muted = false
                             },
-                            colors = chipColors,
-                            border = BorderStroke(
-                                1.dp,
-                                if (selected) MaterialTheme.colorScheme.inverseSurface
-                                else MaterialTheme.colorScheme.outlineVariant,
-                            ),
                         )
                     }
                 }
@@ -478,40 +500,54 @@ private fun CaptureCard(
                 if (noText) {
                     Text(
                         stringResource(R.string.capture_no_text),
+                        fontFamily = UiFont,
                         fontSize = 11.sp,
+                        lineHeight = 16.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else if (noDeadline) {
                     Text(
                         stringResource(R.string.capture_no_deadline),
+                        fontFamily = UiFont,
                         fontSize = 11.sp,
+                        lineHeight = 16.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 if (inPast) {
                     Text(
                         stringResource(R.string.editor_past_error),
+                        fontFamily = UiFont,
+                        fontSize = 11.5.sp,
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelMedium,
                     )
                 }
                 if (saveFailed) {
                     Text(
                         stringResource(R.string.capture_save_failed),
+                        fontFamily = UiFont,
+                        fontSize = 11.5.sp,
                         color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelMedium,
                     )
                 }
                 if (duplicateWarning) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             stringResource(R.string.capture_duplicate),
+                            fontFamily = UiFont,
+                            fontSize = 11.5.sp,
+                            lineHeight = 17.sp,
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.labelMedium,
                             modifier = Modifier.weight(1f),
                         )
                         TextButton(onClick = { save(forceDuplicate = true) }) {
-                            Text(stringResource(R.string.capture_add_anyway))
+                            Text(
+                                stringResource(R.string.capture_add_anyway),
+                                fontFamily = UiFont,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                textDecoration = TextDecoration.Underline,
+                            )
                         }
                     }
                 }
@@ -519,22 +555,43 @@ private fun CaptureCard(
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.btn_cancel))
+                        Text(
+                            stringResource(R.string.btn_cancel),
+                            fontFamily = UiFont,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     Button(
                         enabled = canSave,
                         onClick = { save(forceDuplicate = false) },
                         modifier = Modifier.weight(2f),
+                        shape = RoundedCornerShape(3.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.inverseSurface,
+                            contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        ),
                     ) {
-                        Text(stringResource(R.string.capture_btn_add))
+                        Text(
+                            stringResource(R.string.capture_btn_add),
+                            fontFamily = UiFont,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = 0.6.sp,
+                        )
                     }
                 }
 
                 Text(
                     stringResource(R.string.capture_privacy),
+                    fontFamily = UiFont,
                     fontSize = 10.sp,
+                    lineHeight = 15.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }

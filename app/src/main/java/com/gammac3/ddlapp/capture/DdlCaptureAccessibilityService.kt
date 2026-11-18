@@ -45,6 +45,12 @@ import java.time.ZonedDateTime
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 
+// 暖纸调色（与 ui/theme/Theme.kt 同源）：悬浮球是墨点，星芒是纸白；夜间反相。
+private const val INK_HEX = "#141413"
+private const val PAPER_HEX = "#FAF9F5"
+private const val NIGHT_BALL_HEX = "#F2EFE6"
+private const val NIGHT_INK_HEX = "#171614"
+
 /**
  * 自动记 DDL 的无障碍服务。
  *
@@ -199,12 +205,16 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
     private fun buildBall(): View {
         val icon = ImageView(this).apply {
             setImageResource(R.drawable.ic_capture_sparkle)
-            setColorFilter(if (isNight()) Color.parseColor("#0E1116") else Color.WHITE)
+            setColorFilter(
+                Color.parseColor(if (isNight()) NIGHT_INK_HEX else PAPER_HEX),
+            )
         }
         return FrameLayout(this).apply {
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(if (isNight()) Color.parseColor("#F2F4F8") else Color.parseColor("#101828"))
+                setColor(
+                    Color.parseColor(if (isNight()) NIGHT_BALL_HEX else INK_HEX),
+                )
             }
             elevation = dp(4).toFloat()
             contentDescription = getString(R.string.capture_ball_desc)
@@ -314,12 +324,12 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
         val screen = screenSize()
         val hint = TextView(this).apply {
             text = getString(R.string.capture_first_hint)
-            setTextColor(if (isNight()) Color.parseColor("#0E1116") else Color.WHITE)
+            setTextColor(Color.parseColor(if (isNight()) NIGHT_INK_HEX else PAPER_HEX))
             textSize = 12f
             setPadding(dp(10), dp(6), dp(10), dp(6))
             background = GradientDrawable().apply {
-                cornerRadius = dp(999).toFloat()
-                setColor(if (isNight()) Color.parseColor("#F2F4F8") else Color.parseColor("#101828"))
+                cornerRadius = dp(4).toFloat()
+                setColor(Color.parseColor(if (isNight()) NIGHT_BALL_HEX else INK_HEX))
             }
         }
         val hintParams = WindowManager.LayoutParams(
@@ -512,12 +522,12 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
         val screen = screenSize()
         val pill = TextView(this).apply {
             text = getString(R.string.capture_reading)
-            setTextColor(if (isNight()) Color.parseColor("#0E1116") else Color.WHITE)
+            setTextColor(Color.parseColor(if (isNight()) NIGHT_INK_HEX else PAPER_HEX))
             textSize = 12.5f
             setPadding(dp(16), dp(10), dp(16), dp(10))
             background = GradientDrawable().apply {
-                cornerRadius = dp(999).toFloat()
-                setColor(if (isNight()) Color.parseColor("#F2F4F8") else Color.parseColor("#101828"))
+                cornerRadius = dp(4).toFloat()
+                setColor(Color.parseColor(if (isNight()) NIGHT_BALL_HEX else INK_HEX))
             }
             elevation = dp(6).toFloat()
         }
@@ -571,12 +581,12 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
             contentDescription = getString(R.string.capture_added) + " · " +
                 getString(R.string.capture_undo)
             background = GradientDrawable().apply {
-                cornerRadius = dp(999).toFloat()
-                setColor(if (isNight()) Color.parseColor("#F2F4F8") else Color.parseColor("#101828"))
+                cornerRadius = dp(4).toFloat()
+                setColor(Color.parseColor(if (isNight()) NIGHT_BALL_HEX else INK_HEX))
             }
             elevation = dp(6).toFloat()
         }
-        val ink = if (isNight()) Color.parseColor("#0E1116") else Color.WHITE
+        val ink = Color.parseColor(if (isNight()) NIGHT_INK_HEX else PAPER_HEX)
         pill.addView(TextView(this).apply {
             text = getString(R.string.capture_added)
             setTextColor(ink)
@@ -591,7 +601,8 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
             text = getString(R.string.capture_undo)
             setTextColor(ink)
             textSize = 12.5f
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            // 撤销是唯一的行动点：下划线比加粗更接近「纸上划出的一句」
+            paintFlags = paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
         })
         pill.setOnClickListener {
             removeUndo()

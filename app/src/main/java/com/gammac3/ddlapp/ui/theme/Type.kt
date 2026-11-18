@@ -1,58 +1,66 @@
 package com.gammac3.ddlapp.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import com.gammac3.ddlapp.R
+import androidx.compose.ui.unit.sp
 
-// F5 字体：中文全部走思源黑体（GB 一级字集），品牌标题/数据/日期各有专用字面。
-// 同一 Family 内多字重同权重条目 = Compose 字形回退链：
-// 拉丁字符先命中首个字体，缺失字形（中文）回退到思源黑体。
+// 两套字面，一条分界：
+// 西文一律 Timeless Serif Text，中文一律思源宋体（Source Han Serif SC）。
+// 两份字体原样随包发布，运行时由 ScriptTypeface 逐字回退拼成一套字面
+// （见 ScriptTypeface.kt）。只有 400 / 600 两档，层级靠字号与留白，不靠加粗。
 
-/** 所有中文正文。 */
-val HanFont = FontFamily(
-    Font(R.font.source_han_cn_400, FontWeight.W400),
-    Font(R.font.source_han_cn_500, FontWeight.W500),
-    Font(R.font.source_han_cn_600, FontWeight.W600),
-    Font(R.font.source_han_cn_700, FontWeight.W700),
+/** 界面正文与控件：思源宋体 + Timeless Serif Text。 */
+val UiFont = FontFamily(
+    scriptFont(FontWeight.W400),
+    scriptFont(FontWeight.W500),
+    scriptFont(FontWeight.W600),
+    scriptFont(FontWeight.W700),
 )
 
-/** 应用标题：拉丁 Timeless Grotesk Bold + 中文思源黑体 Bold。 */
-val TitleFont = FontFamily(
-    Font(R.font.timeless_grotesk_bold, FontWeight.W700),
-    Font(R.font.source_han_cn_700, FontWeight.W700),
+/** 编辑式标题：同一套字面，固定 400，不加粗。 */
+val SerifFont = FontFamily(
+    scriptFont(FontWeight.W400, semibold = false),
+    scriptFont(FontWeight.W500, semibold = false),
+    scriptFont(FontWeight.W600, semibold = false),
+    scriptFont(FontWeight.W700, semibold = false),
 )
 
-/** 倒计时：Maple Mono 数字 + 中文单位（天/小时/分）。 */
-val DataFont = FontFamily(
-    Font(R.font.maple_mono_bold_data, FontWeight.W700),
-    Font(R.font.source_han_cn_700, FontWeight.W700),
+/** 应用标题：宋体正体。 */
+val TitleFont = SerifFont
+
+/** 倒计时：数字按 tnum 等宽（调用处已开 fontFeatureSettings）。 */
+val DataFont = UiFont
+
+/** 日期/期限：衬线数字 + 思源宋体。 */
+val FigureFont = SerifFont
+
+private fun serif(size: Int, lineHeight: Float, spacing: Double = 0.0) = TextStyle(
+    fontFamily = SerifFont,
+    fontWeight = FontWeight.W400,
+    fontSize = size.sp,
+    lineHeight = (size * lineHeight).sp,
+    letterSpacing = spacing.sp,
 )
 
-/** 日期/期限数字：Timeless Serif Text + 中文回退。 */
-val FigureFont = FontFamily(
-    Font(R.font.timeless_serif_text, FontWeight.W400),
-    Font(R.font.source_han_cn_400, FontWeight.W400),
-)
-
-/** 全局基线：所有排版槽位默认思源黑体，仅 titleLarge 使用品牌标题字体。 */
+/** 全局基线：正文界面字，标题衬线字。 */
 val DdlTypography: Typography = Typography().let { base ->
     base.copy(
-        displayLarge = base.displayLarge.copy(fontFamily = HanFont),
-        displayMedium = base.displayMedium.copy(fontFamily = HanFont),
-        displaySmall = base.displaySmall.copy(fontFamily = HanFont),
-        headlineLarge = base.headlineLarge.copy(fontFamily = HanFont),
-        headlineMedium = base.headlineMedium.copy(fontFamily = HanFont),
-        headlineSmall = base.headlineSmall.copy(fontFamily = HanFont),
-        titleLarge = base.titleLarge.copy(fontFamily = TitleFont),
-        titleMedium = base.titleMedium.copy(fontFamily = HanFont),
-        titleSmall = base.titleSmall.copy(fontFamily = HanFont),
-        bodyLarge = base.bodyLarge.copy(fontFamily = HanFont),
-        bodyMedium = base.bodyMedium.copy(fontFamily = HanFont),
-        bodySmall = base.bodySmall.copy(fontFamily = HanFont),
-        labelLarge = base.labelLarge.copy(fontFamily = HanFont),
-        labelMedium = base.labelMedium.copy(fontFamily = HanFont),
-        labelSmall = base.labelSmall.copy(fontFamily = HanFont),
+        displayLarge = serif(48, 1.12f),
+        displayMedium = serif(40, 1.15f),
+        displaySmall = serif(34, 1.18f),
+        headlineLarge = serif(30, 1.2f),
+        headlineMedium = serif(26, 1.22f),
+        headlineSmall = serif(22, 1.25f),
+        titleLarge = serif(22, 1.25f),
+        titleMedium = base.titleMedium.copy(fontFamily = UiFont, fontWeight = FontWeight.W600),
+        titleSmall = base.titleSmall.copy(fontFamily = UiFont, fontWeight = FontWeight.W600),
+        bodyLarge = base.bodyLarge.copy(fontFamily = UiFont),
+        bodyMedium = base.bodyMedium.copy(fontFamily = UiFont),
+        bodySmall = base.bodySmall.copy(fontFamily = UiFont),
+        labelLarge = base.labelLarge.copy(fontFamily = UiFont),
+        labelMedium = base.labelMedium.copy(fontFamily = UiFont),
+        labelSmall = base.labelSmall.copy(fontFamily = UiFont),
     )
 }

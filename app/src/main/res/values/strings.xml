@@ -6,6 +6,7 @@
 
     <!-- ===== 通用 ===== -->
     <string name="add_ddl">添加 DDL</string>
+    <string name="fab_new">新建</string>
     <string name="edit_ddl">编辑 DDL</string>
     <string name="btn_save">保存</string>
     <string name="btn_delete">删除</string>
@@ -34,9 +35,9 @@
     <string name="swipe_done">完成</string>
 
     <!-- ===== 顶部引导横幅 ===== -->
-    <string name="banner_exact_alarm">⚠ 精确提醒未开启，点击去设置（关闭后提醒可能略晚）</string>
-    <string name="banner_notifications">🔔 通知权限未开启，将收不到提醒，点击去系统设置</string>
-    <string name="banner_battery">🔋 后台省电时闹钟可能被延迟，点击加入电池白名单</string>
+    <string name="banner_exact_alarm">精确提醒未开启，点击去设置（关闭后提醒可能略晚）</string>
+    <string name="banner_notifications">通知权限未开启，将收不到提醒，点击去系统设置</string>
+    <string name="banner_battery">后台省电时闹钟可能被延迟，点击加入电池白名单</string>
     <string name="banner_not_now">先不</string>
 
     <!-- ===== 空态 ===== -->

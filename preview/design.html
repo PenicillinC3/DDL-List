@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDL 清单 · 纸与墨 · 交互预览</title>
+<style>
+  /* 西文 Timeless Serif Text（原样），中文思源宋体；浏览器按字逐字回退，等同 App 里
+     Typeface.CustomFallbackBuilder 的效果。 */
+  @font-face { font-family: "LatinSerif"; src: url("./fonts/timeless_serif_400.ttf") format("truetype"); font-weight: 400 500; font-display: block; }
+  @font-face { font-family: "LatinSerif"; src: url("./fonts/timeless_serif_600.ttf") format("truetype"); font-weight: 600 700; font-display: block; }
+  @font-face { font-family: "HanCN"; src: url("./fonts/han_serif_400.ttf") format("truetype"); font-weight: 400 500; font-display: block; }
+  @font-face { font-family: "HanCN"; src: url("./fonts/han_serif_600.ttf") format("truetype"); font-weight: 600 700; font-display: block; }
+
+  html[data-theme="light"] {
+    --bg: #F0EEE6;
+    --surface: #FAF9F5;
+    --ink: #141413;
+    --ink-soft: #3D3D3A;
+    --muted: #5F5C53;
+    --hairline: #DFDACB;
+    --outline: #C9C4B4;
+    --clay: #D97757;
+    --clay-deep: #A34826;
+    --rust: #9C3D24;
+    --manilla: #F5E3C7;
+    --oat: #E3DACC;
+    --field: #EDE9DD;
+    --err-bg: #F2DDD3;
+    --on-err: #4A1809;
+    --scrim: rgba(20, 20, 19, .32);
+    --page: #E7E3D7;
+    --page-ink: #3D3D3A;
+    --page-muted: #8B8779;
+    --shadow: 0 24px 70px rgba(64, 56, 38, .18), 0 2px 6px rgba(64, 56, 38, .08);
+  }
+  html[data-theme="dark"] {
+    --bg: #171614;
+    --surface: #1F1E1B;
+    --ink: #F2EFE6;
+    --ink-soft: #D8D2C2;
+    --muted: #A9A599;
+    --hairline: #33302A;
+    --outline: #3E3A32;
+    --clay: #E2906F;
+    --clay-deep: #E2906F;
+    --rust: #EE9A85;
+    --manilla: #3D2A1F;
+    --oat: #33302A;
+    --field: #2A2823;
+    --err-bg: #4A2016;
+    --on-err: #FFD9CC;
+    --scrim: rgba(0, 0, 0, .55);
+    --page: #121110;
+    --page-ink: #D8D2C2;
+    --page-muted: #7E7A6F;
+    --shadow: 0 24px 70px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #E7E3D7;
+    color: #141413;
+    font-family: "LatinSerif", "HanCN", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 28px 32px 40px;
+  }
+  html[data-theme="dark"] body { background: #0E0D0C; color: #F2EFE6; }
+
+  .page-head {
+    max-width: 1180px; margin: 0 auto 20px;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  }
+  .kicker { font-size: 11px; letter-spacing: 2px; opacity: .55; text-transform: uppercase; }
+  h1 {
+    font-family: "LatinSerif", "HanCN", Georgia, serif; font-weight: 400;
+    font-size: 34px; line-height: 1.15; letter-spacing: 1px; margin: 6px 0 4px;
+  }
+  h1 .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #D97757; margin-left: 7px; vertical-align: 9px; }
+  .sub { margin: 0; font-size: 12.5px; line-height: 1.6; opacity: .6; }
+
+  .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .seg { display: flex; gap: 2px; padding: 3px; border: 1px solid rgba(20,20,19,.16); border-radius: 3px; background: rgba(250,249,245,.5); }
+  html[data-theme="dark"] .seg { border-color: #33302A; background: #1F1E1B; }
+  .seg button {
+    appearance: none; border: 0; background: transparent; cursor: pointer;
+    font-family: inherit; font-size: 12.5px; letter-spacing: .4px; padding: 7px 13px; border-radius: 2px;
+    color: #5F5C53;
+  }
+  html[data-theme="dark"] .seg button { color: #A9A599; }
+  .seg button.on { background: #141413; color: #FAF9F5; }
+  html[data-theme="dark"] .seg button.on { background: #F2EFE6; color: #171614; }
+
+  .tbtn {
+    appearance: none; cursor: pointer; font-family: inherit; font-size: 12.5px; letter-spacing: .4px;
+    padding: 9px 14px; border-radius: 3px; border: 1px solid rgba(20,20,19,.2); background: transparent; color: inherit;
+  }
+  html[data-theme="dark"] .tbtn { border-color: #3E3A32; }
+  .tbtn:hover { border-color: #D97757; color: #A34826; }
+  html[data-theme="dark"] .tbtn:hover { color: #E2906F; }
+
+  .stage { max-width: 1180px; margin: 0 auto; display: flex; gap: 56px; align-items: flex-start; }
+  .phone-col { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .phone-col .under { display: flex; gap: 8px; }
+
+  /* ---------- 设备 ---------- */
+  .device {
+    width: 393px; height: 852px; flex: 0 0 auto;
+    border-radius: 40px; padding: 0; overflow: hidden; position: relative;
+    background: var(--bg); color: var(--ink);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,.12);
+    transition: background .18s ease, color .18s ease;
+  }
+  html[data-theme="dark"] .device { border-color: #33302A; }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
+
+  .statusbar {
+    height: 34px; flex: 0 0 34px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px 0 26px; font-size: 11.5px; letter-spacing: .3px; color: var(--ink); opacity: .82;
+    font-family: "LatinSerif", "HanCN", serif;
+  }
+  .statusbar .icons { display: flex; align-items: center; gap: 5px; opacity: .85; }
+
+  /* ---------- 报头 ---------- */
+  .app { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--bg); }
+  .masthead { display: flex; align-items: center; padding: 6px 4px 4px 20px; gap: 0; }
+  .wordmark {
+    font-family: "LatinSerif", "HanCN", Georgia, serif; font-size: 25px; line-height: 32px; letter-spacing: .8px;
+    color: var(--ink); white-space: nowrap;
+  }
+  .wordmark .dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--clay); margin-left: 5px; vertical-align: 12px; }
+  .mast-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+  .capsule {
+    appearance: none; cursor: pointer; font-family: inherit; font-size: 11px; letter-spacing: .3px;
+    color: var(--muted); background: transparent; border: 1px solid var(--hairline); border-radius: 3px;
+    padding: 5px 9px; margin-right: 2px;
+  }
+  .capsule:hover { color: var(--clay-deep); border-color: var(--clay); }
+  .more {
+    appearance: none; background: none; border: 0; cursor: pointer; color: var(--muted);
+    font-size: 20px; line-height: 1; padding: 8px 10px; font-family: inherit;
+  }
+  .hairline { height: 1px; background: var(--hairline); flex: 0 0 1px; }
+
+  /* ---------- 页签 ---------- */
+  .tabs { display: flex; gap: 24px; padding: 2px 20px; overflow-x: auto; scrollbar-width: none; flex: 0 0 auto; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    appearance: none; background: none; border: 0; cursor: pointer; font-family: inherit;
+    font-size: 13px; letter-spacing: .4px; color: var(--muted); padding: 10px 0 11px;
+    position: relative; white-space: nowrap;
+  }
+  .tab.on { color: var(--ink); font-weight: 500; }
+  .tab.on::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px; background: var(--ink);
+  }
+
+  /* ---------- 列表 ---------- */
+  .list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 16px 96px; scrollbar-width: none; }
+  .list::-webkit-scrollbar { display: none; }
+
+  .ghead { display: flex; align-items: center; padding: 10px 0 2px; cursor: default; }
+  .ghead.clickable { cursor: pointer; }
+  .glabel { font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); }
+  .gcount { font-family: "LatinSerif", "HanCN", serif; font-size: 11.5px; color: var(--muted); margin-left: 6px; }
+  .grule { flex: 1; height: 1px; background: var(--hairline); margin-left: 12px; }
+  .gcaret { font-size: 10px; color: var(--muted); margin-left: 8px; }
+  .seal {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.8px; color: var(--rust);
+    border: 1.5px solid var(--rust); border-radius: 2px; padding: 3.5px 7px 3.5px 8px;
+    transform: rotate(-2deg); display: inline-block; line-height: 1;
+  }
+
+  .swipe { position: relative; border-radius: 18px; overflow: hidden; margin-top: 8px; touch-action: pan-y; }
+  .swipe .back { position: absolute; inset: 0; display: flex; align-items: center; }
+  .swipe .back-del { justify-content: flex-end; padding-right: 24px; background: var(--err-bg); color: var(--on-err); gap: 4px; opacity: 0; }
+  .swipe .back-done { justify-content: flex-start; padding-left: 20px; background: var(--manilla); color: var(--ink); opacity: 0; }
+  .swipe .back span { font-size: 13px; font-weight: 500; }
+  .card {
+    position: relative; background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 18px; padding: 12px 14px 10px 16px; cursor: pointer;
+    will-change: transform;
+  }
+  .card .title {
+    font-family: "LatinSerif", "HanCN", Georgia, serif; font-size: 16.5px; line-height: 23px; letter-spacing: .2px;
+    color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card.done .title { color: var(--muted); text-decoration: line-through; }
+  .card .note { font-size: 12px; line-height: 17px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .cd {
+    font-family: "LatinSerif", "HanCN", serif; font-weight: 700; font-size: 23px; line-height: 28px;
+    letter-spacing: 0; margin-top: 6px; color: var(--ink); font-feature-settings: "tnum";
+  }
+  .card.overdue .cd { color: var(--rust); }
+  .card .due { font-family: "LatinSerif", "HanCN", serif; font-size: 11.5px; line-height: 16px; letter-spacing: .2px; color: var(--muted); margin-top: 3px; }
+  .card .foot { display: flex; align-items: center; margin-top: 8px; min-height: 22px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px; border-radius: 3px;
+    background: var(--manilla); color: var(--ink); padding: 3px 7px;
+    font-size: 10.5px; letter-spacing: .2px; line-height: 1;
+  }
+  .pill.muted { background: transparent; border: 1px solid var(--hairline); color: var(--muted); }
+  .pill svg { display: block; }
+  .done-tag { font-size: 11px; letter-spacing: .6px; color: var(--muted); margin-top: 7px; }
+  .chip-wrap { margin-left: auto; width: 54px; height: 44px; display: flex; align-items: center; justify-content: center; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 3px; cursor: pointer;
+    border: 1px solid var(--outline); border-radius: 3px; padding: 4px 6px 4px 8px;
+    color: var(--muted); font-size: 11.5px; line-height: 1; transition: transform .14s ease;
+  }
+  .chip:active { transform: scale(.94); }
+  .chip .caret { font-size: 9px; }
+  .chip:hover { border-color: var(--clay); color: var(--clay-deep); }
+
+  /* 墓碑 */
+  .tomb {
+    position: relative; margin-top: 8px; border-radius: 13px; overflow: hidden; cursor: pointer;
+    background: var(--oat); border: 1px solid var(--hairline);
+    display: flex; align-items: center; padding: 13px 16px 13px 15px; gap: 9px;
+    transition: transform .16s ease;
+  }
+  .tomb:active { transform: scale(.97); }
+  .tomb .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: rgba(217,119,87,.16); }
+  .tomb .body { position: relative; display: flex; align-items: center; gap: 9px; width: 100%; }
+  .tomb .name { font-size: 12px; color: var(--ink); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tomb .sec { font-family: "LatinSerif", "HanCN", serif; font-size: 10.5px; color: var(--muted); font-feature-settings: "tnum"; }
+  .tomb .undo { font-size: 12px; color: var(--clay-deep); text-decoration: underline; text-underline-offset: 3px; margin-left: 3px; }
+
+  /* FAB */
+  .fab {
+    position: absolute; right: 16px; bottom: 24px; z-index: 4;
+    display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+    border: 0; font-family: inherit; padding: 13px 20px 13px 18px;
+    background: var(--ink); color: var(--bg);
+    border-radius: 2px 2px 13px 13px;
+    font-size: 14px; font-weight: 500; letter-spacing: .5px;
+    box-shadow: 0 6px 18px rgba(20,20,19,.18);
+  }
+  .fab .plus { font-size: 16px; line-height: 1; margin-top: -1px; }
+  .fab:active { background: var(--clay-deep); }
+
+  /* ---------- 遮罩 / 面板 ---------- */
+  .overlay { position: absolute; inset: 0; z-index: 10; display: none; }
+  .overlay.show { display: block; }
+  .overlay.below-status { top: 34px; }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); }
+
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface);
+    border-radius: 20px 20px 0 0; padding: 4px 20px 0; max-height: 640px; overflow-y: auto;
+    transform: translateY(12px); opacity: 0; transition: transform .22s cubic-bezier(.23,1,.32,1), opacity .18s ease;
+    scrollbar-width: none;
+  }
+  .sheet::-webkit-scrollbar { display: none; }
+  .overlay.show .sheet { transform: translateY(0); opacity: 1; }
+  .sheet-head { padding-top: 12px; }
+  .sheet-title {
+    font-family: "LatinSerif", "HanCN", Georgia, serif; font-size: 23px; line-height: 30px; letter-spacing: .6px; color: var(--ink);
+  }
+  .sheet-rule { height: 1px; background: var(--hairline); margin-top: 10px; }
+  .sheet-body { display: flex; flex-direction: column; gap: 12px; padding: 12px 0 0; }
+
+  .field {
+    position: relative; height: 56px; border: 1px solid var(--hairline); border-radius: 4px;
+    display: flex; align-items: center; padding: 6px 16px 0; background: transparent; transition: border-color .15s ease;
+  }
+  .field .flabel {
+    position: absolute; top: -7px; left: 11px; padding: 0 5px; background: var(--surface);
+    font-size: 12px; color: var(--muted); line-height: 1;
+  }
+  .field input {
+    width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink);
+    font-family: "LatinSerif", "HanCN", serif; font-size: 16px; padding: 0;
+  }
+  .field.focus { border-color: var(--clay); }
+  .field.focus .flabel { color: var(--clay-deep); }
+  .field.empty .flabel { top: 50%; transform: translateY(-50%); background: transparent; font-size: 16px; }
+  .field.empty.focus .flabel { top: -7px; transform: none; background: var(--surface); font-size: 12px; }
+  .field .fixed { font-size: 15px; color: var(--ink); font-family: "LatinSerif", "HanCN", serif; white-space: nowrap; overflow: hidden; }
+  .row2 { display: flex; gap: 8px; }
+  .row2 > .field { flex: 1; }
+
+  .section { display: flex; align-items: center; }
+  .slabel { font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); white-space: nowrap; }
+  .srule { flex: 1; height: 1px; background: var(--hairline); margin-left: 12px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .stamp {
+    appearance: none; font-family: inherit; cursor: pointer; border: 1px solid var(--hairline);
+    background: transparent; color: var(--muted); border-radius: 3px; padding: 6px 10px;
+    font-size: 12px; letter-spacing: .3px; line-height: 1; transition: background .12s ease, color .12s ease;
+  }
+  .stamp.on { background: var(--ink); color: var(--bg); border-color: transparent; }
+
+  .actions { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+  .btn-save {
+    flex: 2; height: 46px; border: 0; border-radius: 3px; cursor: pointer;
+    background: var(--ink); color: var(--bg); font-family: inherit; font-size: 14px; font-weight: 500; letter-spacing: .6px;
+  }
+  .btn-save:active { background: var(--clay-deep); }
+  .btn-ghost {
+    flex: 1.2; height: 46px; border: 0; background: transparent; cursor: pointer;
+    font-family: inherit; font-size: 12.5px; color: var(--muted);
+  }
+  .btn-del {
+    flex: 1; height: 46px; border: 0; background: transparent; cursor: pointer; font-family: inherit;
+    font-size: 12.5px; color: var(--rust); display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .sheet-foot { height: 24px; flex: 0 0 24px; }
+
+  /* ---------- 捕获浮卡 ---------- */
+  .page-bg { position: absolute; inset: 0; background: var(--page); color: var(--page-ink); padding: 56px 24px; overflow: hidden; }
+  .page-bg h3 { font-family: "LatinSerif", "HanCN", serif; font-weight: 400; font-size: 21px; margin: 0 0 10px; letter-spacing: .4px; }
+  .page-bg p { font-size: 12.5px; line-height: 22px; margin: 0 0 12px; opacity: .72; }
+  .page-bg .meta { font-size: 10.5px; color: var(--page-muted); letter-spacing: .4px; margin-bottom: 18px; }
+  .page-bg .fake-line { height: 9px; border-radius: 2px; background: currentColor; opacity: .07; margin: 10px 0; }
+  .page-bg .fake-line.s { width: 62%; }
+  .page-bg .fake-line.m { width: 84%; }
+
+  .cap-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .cap {
+    width: 92%; max-width: 361px; background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px;
+    transform: translateY(10px) scale(.985); opacity: 0; transition: transform .2s cubic-bezier(.23,1,.32,1), opacity .16s ease;
+    max-height: 560px; overflow-y: auto; scrollbar-width: none;
+  }
+  .cap::-webkit-scrollbar { display: none; }
+  .overlay.show .cap { transform: none; opacity: 1; }
+  .cap-head { display: flex; align-items: flex-start; gap: 7px; }
+  .cap-head .spark { margin-top: 3px; }
+  .cap-titles { flex: 1; }
+  .cap-title { font-family: "LatinSerif", "HanCN", serif; font-size: 18.5px; line-height: 25px; letter-spacing: .5px; color: var(--ink); }
+  .cap-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .cap-x { appearance: none; border: 0; background: none; cursor: pointer; font-family: inherit; font-size: 20px; line-height: 1; color: var(--muted); padding: 4px 6px; }
+
+  /* ---------- 小组件 ---------- */
+  .home {
+    position: absolute; inset: 0; padding: 34px 18px; display: flex; flex-direction: column; gap: 14px;
+    background:
+      radial-gradient(120% 60% at 12% 0%, rgba(217,119,87,.20), transparent 60%),
+      radial-gradient(90% 50% at 92% 12%, rgba(245,227,199,.55), transparent 62%),
+      linear-gradient(180deg, #F1EDE2 0%, #E6E0D1 100%);
+    color: #141413;
+  }
+  html[data-theme="dark"] .home {
+    background:
+      radial-gradient(120% 60% at 12% 0%, rgba(217,119,87,.16), transparent 60%),
+      radial-gradient(90% 50% at 92% 12%, rgba(61,42,31,.7), transparent 62%),
+      linear-gradient(180deg, #1A1917 0%, #121110 100%);
+    color: #F2EFE6;
+  }
+  .home .hint { font-size: 10px; letter-spacing: 1.4px; opacity: .5; text-align: center; margin-bottom: 2px; }
+  .wg {
+    position: relative; border-radius: 18px; border: 1px solid #E6E0D0; background: #FBF9F3;
+    color: #141413; overflow: hidden;
+  }
+  html[data-theme="dark"] .wg { background: #201F1C; border-color: #3A3730; color: #F2EFE6; }
+  .wg-v3 { height: 192px; padding: 11px 17px 8px; display: flex; flex-direction: column; }
+  .wg-h { font-size: 10px; letter-spacing: 1.4px; color: #5F5C53; }
+  html[data-theme="dark"] .wg-h { color: #A9A599; }
+  .wg-row { margin-top: 4px; }
+  .wg-row .top { display: flex; align-items: baseline; gap: 10px; }
+  .wg-row .t { font-size: 15px; color: inherit; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wg-row .c { font-family: "LatinSerif", "HanCN", serif; font-weight: 700; font-size: 12px; letter-spacing: 0; }
+  .wg-row .c.late { color: #9C3D24; }
+  html[data-theme="dark"] .wg-row .c.late { color: #EE9A85; }
+  .fuse { position: relative; height: 3px; margin-top: 2px; background: rgba(20,20,19,.13); border-radius: 2px; overflow: hidden; }
+  html[data-theme="dark"] .fuse { background: rgba(242,239,230,.16); }
+  .fuse i { position: absolute; left: 0; top: 0; bottom: 0; background: #B4522E; border-radius: 2px; }
+  html[data-theme="dark"] .fuse i { background: #C4663F; }
+  .wg-v3 .gap { flex: 1; }
+  .week { display: flex; gap: 2px; margin-top: 8px; }
+  .wcell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 2px 0; border-radius: 3px; }
+  .wcell.today { background: #F5E3C7; }
+  html[data-theme="dark"] .wcell.today { background: #3D2A1F; }
+  .wcell .d { font-size: 8.5px; color: #5F5C53; }
+  html[data-theme="dark"] .wcell .d { color: #A9A599; }
+  .wcell .dots { display: flex; gap: 3px; height: 5px; align-items: center; }
+  .wcell .dots i { width: 5px; height: 5px; border-radius: 50%; background: #5F5C53; }
+  .wcell .dots i.soft { background: rgba(198,97,63,.5); }
+  html[data-theme="dark"] .wcell .dots i { background: #A9A599; }
+  .wcell .dots i.red { background: #C6613F; }
+  .calpg {
+    position: absolute; top: 0; right: 18px; width: 36px; padding: 2px 0; text-align: center;
+    background: #D97757; color: #141413; border-radius: 0 0 6px 6px;
+  }
+  html[data-theme="dark"] .calpg { background: #7E3D28; color: #F2EFE6; }
+  .calpg .m { font-size: 7px; letter-spacing: .6px; display: block; }
+  .calpg .d { font-family: "LatinSerif", "HanCN", serif; font-size: 13px; line-height: 15px; display: block; }
+
+  .wg-v1 { height: 176px; padding: 11px 17px 8px; display: flex; flex-direction: column; justify-content: center; }
+  .wg-v1 .t1 { font-size: 15px; margin-top: 4px; margin-right: 48px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wg-v1 .big { font-family: "LatinSerif", "HanCN", serif; font-weight: 700; font-size: 26px; letter-spacing: .2px; margin: 3px 0 1px; }
+  .wg-v1 .date { font-family: "LatinSerif", "HanCN", serif; font-size: 11.5px; color: #5F5C53; letter-spacing: .2px; }
+  html[data-theme="dark"] .wg-v1 .date { color: #A9A599; }
+  .wg-v1 .meta { font-size: 11px; color: #5F5C53; margin-top: 5px; }
+  html[data-theme="dark"] .wg-v1 .meta { color: #A9A599; }
+  .ruler { position: relative; height: 12px; margin-top: 3px; }
+  .ruler .ticks { position: absolute; inset: 0; display: flex; }
+  .ruler .ticks span { flex: 1; position: relative; }
+  .ruler .ticks span::before { content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 4px; background: rgba(139,132,119,.45); }
+  .ruler .prog { position: absolute; left: 0; bottom: 2px; height: 2px; background: #B4522E; }
+
+  /* ---------- 图标 ---------- */
+  .iconwall {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+    background:
+      radial-gradient(120% 70% at 20% 0%, rgba(217,119,87,.22), transparent 60%),
+      linear-gradient(180deg, #F1EDE2, #E3DCCB);
+  }
+  html[data-theme="dark"] .iconwall { background: radial-gradient(120% 70% at 20% 0%, rgba(217,119,87,.18), transparent 60%), linear-gradient(180deg, #1A1917, #100F0E); }
+  .icon-tile { width: 132px; height: 132px; border-radius: 34px; overflow: hidden; box-shadow: 0 14px 30px rgba(60,40,20,.22); }
+  .icon-cap { text-align: center; }
+  .icon-cap .n { font-size: 12.5px; letter-spacing: .3px; opacity: .85; }
+  .icon-cap .d { font-size: 10.5px; opacity: .5; margin-top: 4px; letter-spacing: .6px; }
+  .icon-row { display: flex; gap: 18px; align-items: flex-start; }
+  .icon-mini { width: 56px; height: 56px; border-radius: 14px; overflow: hidden; opacity: .95; }
+
+  /* ---------- 说明 ---------- */
+  .notes { flex: 1; min-width: 280px; max-width: 460px; font-size: 13px; line-height: 1.85; }
+  html[data-theme="dark"] .notes { color: #D8D2C2; }
+  .notes h2 {
+    font-family: "LatinSerif", "HanCN", serif; font-weight: 400; font-size: 20px; letter-spacing: .5px;
+    margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid rgba(20,20,19,.14);
+  }
+  html[data-theme="dark"] .notes h2 { border-color: #33302A; }
+  .notes ul { margin: 0 0 22px; padding: 0; list-style: none; }
+  .notes li { padding: 7px 0 7px 18px; position: relative; opacity: .82; }
+  .notes li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 4px; height: 4px; border-radius: 50%; background: #D97757; }
+  .notes b { font-weight: 500; opacity: .95; }
+  .notes .k {
+    font-size: 11px; letter-spacing: 1.6px; opacity: .45; margin: 0 0 10px;
+  }
+  .swatches { display: flex; gap: 8px; margin: 4px 0 22px; flex-wrap: wrap; }
+  .sw { display: flex; flex-direction: column; gap: 5px; align-items: center; font-size: 9.5px; opacity: .7; letter-spacing: .3px; }
+  .sw i { width: 34px; height: 34px; border-radius: 3px; border: 1px solid rgba(0,0,0,.1); }
+  html[data-theme="dark"] .sw i { border-color: rgba(255,255,255,.14); }
+
+  @media (max-width: 940px) {
+    body { padding: 24px 16px 40px; }
+    .stage { flex-direction: column; align-items: center; gap: 32px; }
+    .notes { max-width: 393px; }
+    .device { transform-origin: top center; }
+  }
+  @media (max-height: 900px) and (min-width: 941px) {
+    body { padding-top: 22px; }
+    .page-head { margin-bottom: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div>
+    <div class="kicker">DDL 清单 · v1.19.0 · 设计预览</div>
+    <h1>纸与墨<span class="dot"></span></h1>
+    <p class="sub">人文编辑界面 — 羊皮纸、宋体、陶土；零投影，靠细线与留白分层。<br>下面是可点的 HTML 复刻（同色值 / 同字号 / 同间距），不是真机截图。</p>
+  </div>
+  <div class="controls">
+    <div class="seg" id="views">
+      <button data-view="list" class="on">清单</button>
+      <button data-view="editor">编辑</button>
+      <button data-view="capture">捕获</button>
+      <button data-view="widget">小组件</button>
+      <button data-view="icon">图标</button>
+    </div>
+    <button class="tbtn" id="themeBtn">深色</button>
+  </div>
+</header>
+
+<main class="stage">
+  <div class="phone-col">
+    <div class="device" id="device">
+      <div class="screen">
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="icons">
+            <svg width="15" height="10" viewBox="0 0 15 10" fill="currentColor"><rect x="0" y="6" width="2.4" height="4" rx=".6"/><rect x="4" y="4" width="2.4" height="6" rx=".6"/><rect x="8" y="2" width="2.4" height="8" rx=".6"/><rect x="12" y="0" width="2.4" height="10" rx=".6" opacity=".35"/></svg>
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M1 3.4a8.6 8.6 0 0 1 12 0"/><path d="M3.6 5.9a5.2 5.2 0 0 1 6.8 0"/><path d="M6.2 8.3a1.9 1.9 0 0 1 1.6 0"/></svg>
+            <svg width="21" height="10" viewBox="0 0 21 10" fill="none"><rect x=".5" y=".5" width="17" height="9" rx="2.4" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="12.5" height="6" rx="1.4" fill="currentColor"/><path d="M19 3.4v3.2a1.9 1.9 0 0 0 0-3.2Z" fill="currentColor" opacity=".5"/></svg>
+          </span>
+        </div>
+
+        <!-- 清单 -->
+        <div class="app" id="app">
+          <div class="masthead">
+            <div class="wordmark">DDL 清单<span class="dot"></span></div>
+            <div class="mast-actions">
+              <button class="capsule" id="capBtn">自动识别</button>
+              <button class="more" title="导入 / 导出">⋯</button>
+            </div>
+          </div>
+          <div class="hairline"></div>
+          <div class="tabs" id="tabs">
+            <button class="tab on" data-filter="all">全部</button>
+            <button class="tab" data-filter="active">未完成</button>
+            <button class="tab" data-filter="done">已完成</button>
+          </div>
+          <div class="list" id="list"></div>
+          <button class="fab" id="fab"><span class="plus">＋</span>新建</button>
+        </div>
+
+        <!-- 编辑面板 -->
+        <div class="overlay" id="editorOverlay">
+          <div class="scrim" data-close="editor"></div>
+          <div class="sheet">
+            <div class="sheet-head">
+              <div class="sheet-title" id="edTitle">新建 DDL</div>
+              <div class="sheet-rule"></div>
+            </div>
+            <div class="sheet-body">
+              <div class="field empty" id="fTitle">
+                <span class="flabel">标题（必填）</span>
+                <input id="inTitle" autocomplete="off">
+              </div>
+              <div class="row2">
+                <div class="field" style="flex:3"><span class="flabel">日期</span><span class="fixed" id="edDate">📅 2026年11月20日</span></div>
+                <div class="field" style="flex:2"><span class="flabel">时间</span><span class="fixed" id="edTime">⏰ 23:59</span></div>
+              </div>
+              <div class="field" id="fNote">
+                <span class="flabel">备注（可选）</span>
+                <input id="inNote" autocomplete="off">
+              </div>
+              <div class="section"><span class="slabel">提前提醒（可多选）</span><span class="srule"></span></div>
+              <div class="chips" id="leadChips"></div>
+              <div class="actions">
+                <button class="btn-save" id="edSave">保存</button>
+                <button class="btn-ghost" id="edDone">已完成</button>
+                <button class="btn-del" id="edDel">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+                  删除
+                </button>
+              </div>
+            </div>
+            <div class="sheet-foot"></div>
+          </div>
+        </div>
+
+        <!-- 捕获浮卡 -->
+        <div class="overlay below-status" id="captureOverlay">
+          <div class="page-bg">
+            <div class="meta">班级群 · 今天 09:12</div>
+            <h3>关于社会实践报告提交的通知</h3>
+            <p>各位同学：本学期社会实践报告请于 11 月 18 日 23:59 前提交至班长处，逾期不予补交。</p>
+            <div class="fake-line"></div><div class="fake-line m"></div><div class="fake-line s"></div>
+            <div class="fake-line m"></div><div class="fake-line"></div><div class="fake-line s"></div>
+          </div>
+          <div class="scrim" style="background: rgba(20,20,19,.46)"></div>
+          <div class="cap-wrap">
+            <div class="cap">
+              <div class="cap-head">
+                <span class="spark">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color: var(--clay-deep)"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2Z"/><path d="M19 15l.9 2.6L22.5 18.5 19.9 19.4 19 22l-.9-2.6L15.5 18.5 18.1 17.6 19 15Z" opacity=".55"/></svg>
+                </span>
+                <div class="cap-titles">
+                  <div class="cap-title">自动识别</div>
+                  <div class="cap-sub">来自当前页面</div>
+                </div>
+                <button class="cap-x" data-close="capture">×</button>
+              </div>
+              <div class="sheet-rule" style="margin-top: 0"></div>
+              <div class="chips">
+                <button class="stamp on">11月18日 23:59</button>
+                <button class="stamp">11月20日 10:00</button>
+              </div>
+              <div class="field"><span class="flabel">标题（必填）</span><input value="提交社会实践报告"></div>
+              <div class="row2">
+                <div class="field" style="flex:3"><span class="flabel">日期</span><span class="fixed">📅 2026年11月18日</span></div>
+                <div class="field" style="flex:2"><span class="flabel">时间</span><span class="fixed">⏰ 23:59</span></div>
+              </div>
+              <div class="field empty">
+                <span class="flabel">备注（可选）</span>
+                <input autocomplete="off">
+              </div>
+              <div class="section"><span class="slabel">提前提醒（可多选）</span><span class="srule"></span></div>
+              <div class="chips">
+                <button class="stamp">不提醒</button>
+                <button class="stamp">1 小时</button>
+                <button class="stamp on">1 天</button>
+                <button class="stamp">3 天</button>
+              </div>
+              <div class="actions" style="padding-top: 2px">
+                <button class="btn-save" id="capAdd" style="flex:1">添加</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 小组件 -->
+        <div class="overlay below-status" id="widgetOverlay">
+          <div class="home">
+            <div class="hint">桌面小组件 · 4×2</div>
+            <div class="wg wg-v1">
+              <div class="wg-h">最近到期</div>
+              <div class="t1">交毕业论文初稿</div>
+              <div class="big">剩10小时12分</div>
+              <div class="date">11月17日 周二 23:59</div>
+              <div class="meta">共 6 条未完成 · 今日 2 条 · 本周 4 条</div>
+              <div class="ruler">
+                <div class="ticks"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="prog" style="width: 46%"></div>
+              </div>
+              <div class="calpg"><span class="m">11月</span><span class="d">17</span></div>
+            </div>
+            <div class="wg wg-v3">
+              <div class="wg-h">最近到期</div>
+              <div class="gap" style="flex:.5"></div>
+              <div class="wg-row">
+                <div class="top"><span class="t">交毕业论文初稿</span><span class="c">剩10小时12分</span></div>
+                <div class="fuse"><i style="width: 62%"></i></div>
+              </div>
+              <div class="gap"></div>
+              <div class="wg-row">
+                <div class="top"><span class="t">预约体检</span><span class="c">剩3小时05分</span></div>
+                <div class="fuse"><i style="width: 34%"></i></div>
+              </div>
+              <div class="gap"></div>
+              <div class="wg-row">
+                <div class="top"><span class="t">报销 3 月差旅</span><span class="c late">已过期2天5小时</span></div>
+                <div class="fuse"><i style="width: 100%"></i></div>
+              </div>
+              <div class="gap" style="flex:1.7"></div>
+              <div class="week">
+                <div class="wcell today"><span class="d">一</span><div class="dots"><i class="red"></i><i class="soft"></i></div></div>
+                <div class="wcell"><span class="d">二</span><div class="dots"><i></i></div></div>
+                <div class="wcell"><span class="d">三</span><div class="dots"><i></i><i></i></div></div>
+                <div class="wcell"><span class="d">四</span><div class="dots"></div></div>
+                <div class="wcell"><span class="d">五</span><div class="dots"><i></i></div></div>
+                <div class="wcell"><span class="d">六</span><div class="dots"></div></div>
+                <div class="wcell"><span class="d">日</span><div class="dots"><i class="soft"></i></div></div>
+              </div>
+              <div class="calpg"><span class="m">11月</span><span class="d">17</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 图标 -->
+        <div class="overlay below-status" id="iconOverlay">
+          <div class="iconwall">
+            <div class="icon-row">
+              <div class="icon-tile">
+                <svg viewBox="0 0 108 108" width="132" height="132">
+                  <rect width="108" height="108" fill="#D97757"/>
+                  <path d="M42 25 V37 M66 25 V37" stroke="#141413" stroke-width="5" stroke-linecap="round" fill="none"/>
+                  <path d="M40 36 H68 A7 7 0 0 1 75 43 V69 A7 7 0 0 1 68 76 H40 A7 7 0 0 1 33 69 V43 A7 7 0 0 1 40 36 Z" fill="#FAF9F5"/>
+                  <path d="M33 49 V43 A7 7 0 0 1 40 36 H68 A7 7 0 0 1 75 43 V49 Z" fill="#141413"/>
+                  <path d="M42 58 H64 A2 2 0 0 1 64 62 H42 A2 2 0 0 1 42 58 Z" fill="#141413"/>
+                  <path d="M35 79 L76 55" stroke="#9C3D24" stroke-width="7" stroke-linecap="round" fill="none"/>
+                </svg>
+              </div>
+              <div class="icon-row" style="flex-direction: column; gap: 14px">
+                <div class="icon-mini">
+                  <svg viewBox="0 0 108 108" width="56" height="56">
+                    <rect width="108" height="108" fill="#D97757"/>
+                    <path d="M42 25 V37 M66 25 V37" stroke="#141413" stroke-width="5" stroke-linecap="round" fill="none"/>
+                    <path d="M40 36 H68 A7 7 0 0 1 75 43 V69 A7 7 0 0 1 68 76 H40 A7 7 0 0 1 33 69 V43 A7 7 0 0 1 40 36 Z" fill="#FAF9F5"/>
+                    <path d="M33 49 V43 A7 7 0 0 1 40 36 H68 A7 7 0 0 1 75 43 V49 Z" fill="#141413"/>
+                    <path d="M35 79 L76 55" stroke="#9C3D24" stroke-width="7" stroke-linecap="round" fill="none"/>
+                  </svg>
+                </div>
+                <div class="icon-mini">
+                  <svg viewBox="0 0 108 108" width="56" height="56">
+                    <rect width="108" height="108" fill="#1F1E1B"/>
+                    <path d="M42 25 V37 M66 25 V37" stroke="#F2EFE6" stroke-width="5" stroke-linecap="round" fill="none"/>
+                    <path d="M40 36 H68 A7 7 0 0 1 75 43 V69 A7 7 0 0 1 68 76 H40 A7 7 0 0 1 33 69 V43 A7 7 0 0 1 40 36 Z" fill="#FAF9F5"/>
+                    <path d="M33 49 V43 A7 7 0 0 1 40 36 H68 A7 7 0 0 1 75 43 V49 Z" fill="#141413"/>
+                    <path d="M35 79 L76 55" stroke="#E2906F" stroke-width="7" stroke-linecap="round" fill="none"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="icon-cap">
+              <div class="n">DDL 清单</div>
+              <div class="d">陶土底 · 米纸页 · 墨色页眉 · 赭红斜杠</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="under">
+      <button class="tbtn" id="replayTomb">重放删除（墓碑）</button>
+    </div>
+  </div>
+
+  <aside class="notes">
+    <h2>这一版在说什么</h2>
+    <p class="k">交互提示</p>
+    <ul>
+      <li>点任意卡片 → <b>编辑面板</b>（宋体页眉 + 铅笔框输入 + 印章选项）</li>
+      <li>卡片<b>左划</b> → 删除；<b>右划</b> → 标为完成</li>
+      <li>删除后出现燕麦色<b>便条</b>，5 秒读条内可撤销</li>
+      <li>逾期卡右侧「顺延 ▾」→ 今晚 / 明天 / 自定义</li>
+      <li>顶部页签 → 筛选；「已完成」组头可展开</li>
+      <li>右上「自动识别」→ 捕获浮卡（预览里点它会直接跳到该页）</li>
+    </ul>
+
+    <p class="k">色</p>
+    <div class="swatches">
+      <span class="sw"><i style="background:#F0EEE6"></i>羊皮纸</span>
+      <span class="sw"><i style="background:#FAF9F5"></i>纸面</span>
+      <span class="sw"><i style="background:#141413"></i>墨</span>
+      <span class="sw"><i style="background:#D97757"></i>陶土</span>
+      <span class="sw"><i style="background:#A34826"></i>陶土深</span>
+      <span class="sw"><i style="background:#9C3D24"></i>赭红</span>
+      <span class="sw"><i style="background:#F5E3C7"></i>麦色</span>
+      <span class="sw"><i style="background:#E3DACC"></i>燕麦</span>
+    </div>
+
+    <p class="k">三条规则</p>
+    <ul>
+      <li><b>陶土只做标记</b>：逾期、当前页签、日历签、启动图标；正文不用彩色。</li>
+      <li><b>一套字面，两种字形</b>：中文一律思源宋体，西文与数字一律 Timeless Serif Text；两份字体原样随包发布，运行时按字回退，只有 400 / 600 两档，层级靠字号与留白。</li>
+      <li><b>零投影</b>：卡片靠 1dp 细线与纸的明度分层；唯一的「立体」是新建按钮上直下方的纸签圆角。</li>
+    </ul>
+
+    <p class="k">数字</p>
+    <ul>
+      <li>倒计时 Timeless Serif Text Semibold 23sp，tnum 等宽，随秒跳动。</li>
+      <li>日期 Timeless Serif Text 11.5sp；组名界面字 10.5sp / 字距 1.5。</li>
+      <li>深色不是反相：画布 #171614，纸面 #1F1E1B，陶土提亮到 #E2906F（对比度 7.14:1）。</li>
+    </ul>
+  </aside>
+</main>
+
+<script>
+(function () {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const pad = (n) => String(n).padStart(2, "0");
+  const H = 3600000, D = 86400000;
+
+  const bellSolid = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6a5.4 5.4 0 0 0-5.4 5.4v3.3L5 15.4h14l-1.6-4.1V8A5.4 5.4 0 0 0 12 2.6Zm0 18.2a2.7 2.7 0 0 0 2.6-2H9.4a2.7 2.7 0 0 0 2.6 2Z"/></svg>';
+  const bellMuted = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3.2a5 5 0 0 0-5 5v3.5L5.4 15h13.2L17 11.7V8.2a5 5 0 0 0-5-5Z"/><path d="M9.6 18.2a2.5 2.5 0 0 0 4.8 0"/></svg>';
+  const trash = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
+
+  // ---- 演示数据（截止时间用相对毫秒，倒计时会真的走） ----
+  const now0 = Date.now();
+  let seq = 100;
+  const mk = (o) => Object.assign({ id: ++seq, note: "", leads: [], muted: false, done: false, group: "today" }, o);
+
+  const rows = [
+    mk({ title: "报销 3 月差旅", note: "财务已催两次", group: "overdue", dl: now0 - 2 * D - 5 * H - 12 * 60000, leads: [1440] }),
+    mk({ title: "交毕业论文初稿", note: "导师要看第三章", group: "today", dl: now0 + 10 * H + 12 * 60000, leads: [1440, 60] }),
+    mk({ title: "预约体检", note: "空腹 · 带身份证", group: "today", dl: now0 + 3 * H + 5 * 60000, leads: [] }),
+    mk({ title: "给妈妈打电话", group: "tomorrow", dl: now0 + D + 9 * H, leads: [60] }),
+    mk({ title: "读书笔记 第二章", group: "week", dl: now0 + 4 * D + 12 * H, leads: [], muted: true }),
+    mk({ title: "续签租房合同", group: "week", dl: now0 + 6 * D + 20 * H, leads: [4320] }),
+    mk({ title: "缴纳电费", group: "done", dl: now0 - 3 * D, leads: [], done: true }),
+  ];
+
+  // 墓碑：{ row, expires }
+  let tombs = [{ row: mk({ title: "买猫粮", group: "today", dl: now0 + 6 * H, leads: [] }), expires: Date.now() + 5000 }];
+
+  const state = { filter: "all", doneOpen: false, editorId: null };
+
+  const GROUPS = [
+    ["overdue", "已过期"], ["today", "今天"], ["tomorrow", "明天"],
+    ["week", "未来 7 天"], ["later", "更晚"], ["done", "已完成"],
+  ];
+
+  function remaining(dl) {
+    const diff = dl - Date.now();
+    const past = diff < 0;
+    let d = Math.abs(diff);
+    const days = Math.floor(d / D); d -= days * D;
+    const hours = Math.floor(d / H); d -= hours * H;
+    const mins = Math.floor(d / 60000);
+    let body;
+    if (days > 0) body = days + "天" + pad(hours) + ":" + pad(mins);
+    else if (hours > 0) body = hours + "小时" + mins + "分";
+    else if (mins > 0) body = mins + "分钟";
+    else body = "1分钟内";
+    return (past ? "已过期" : "剩") + body;
+  }
+
+  function absDate(dl) {
+    const d = new Date(dl);
+    return (d.getMonth() + 1) + "月" + d.getDate() + "日 " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  function leadText(m) {
+    const map = { 5: "5 分钟", 15: "15 分钟", 30: "30 分钟", 60: "1 小时", 180: "3 小时", 1440: "1 天", 4320: "3 天", 10080: "7 天" };
+    return map[m] || (m + " 分钟");
+  }
+
+  function pillText(row) {
+    if (row.muted) return "不提醒";
+    if (!row.leads.length) return "到期时提醒";
+    return "提前 " + row.leads.slice().sort((a, b) => a - b).map(leadText).join(" · ");
+  }
+
+  function visible(row) {
+    if (state.filter === "active") return !row.done;
+    if (state.filter === "done") return row.done;
+    return true;
+  }
+
+  function cardHTML(row) {
+    const overdue = !row.done && row.dl < Date.now();
+    return `
+      <div class="swipe" data-id="${row.id}">
+        <div class="back back-done">${'<span>完成</span>'}</div>
+        <div class="back back-del">${trash}<span>删除</span></div>
+        <div class="card${row.done ? " done" : ""}${overdue ? " overdue" : ""}">
+          <div class="title">${esc(row.title)}</div>
+          ${row.note ? `<div class="note">${esc(row.note)}</div>` : ""}
+          ${row.done
+            ? `<div class="done-tag">已完成</div>`
+            : `<div class="cd">${remaining(row.dl)}</div>`}
+          <div class="due">期限 ${absDate(row.dl)}</div>
+          <div class="foot">
+            <span class="pill${row.muted ? " muted" : ""}">${row.muted ? bellMuted : bellSolid}${pillText(row)}</span>
+            ${overdue ? `<span class="chip-wrap"><span class="chip" data-postpone="${row.id}">顺延<span class="caret">▾</span></span></span>` : ""}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function tombHTML(t) {
+    const sec = Math.max(0, Math.ceil((t.expires - Date.now()) / 1000));
+    return `
+      <div class="tomb" data-tomb="${t.row.id}">
+        <div class="fill" style="width:${Math.min(100, (1 - (t.expires - Date.now()) / 5000) * 100)}%"></div>
+        <div class="body">
+          ${trash.replace('currentColor', 'var(--muted)')}
+          <span class="name">已删除「${esc(t.row.title)}」</span>
+          <span class="sec">${sec}″</span>
+          <span class="undo">点此撤销</span>
+        </div>
+      </div>`;
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  function render() {
+    const list = $("#list");
+    const anyVisible = rows.some(visible) || tombs.length;
+    if (!anyVisible) {
+      list.innerHTML = `
+        <div style="padding:64px 28px; text-align:center">
+          <div style="font-family:'LatinSerif','HanCN',serif; font-size:19px; line-height:30px; color:var(--ink)">${
+            state.filter === "all" ? "还没有 DDL，点右下角 ＋ 添加" : "该筛选下暂无条目，试试切换筛选"
+          }</div>
+          <div style="width:30px; height:1px; background:var(--clay); margin:14px auto 0"></div>
+        </div>`;
+      return;
+    }
+
+    let html = "";
+    for (const [key, label] of GROUPS) {
+      const groupRows = rows.filter((r) => r.group === key && visible(r)).sort((a, b) => a.dl - b.dl);
+      const groupTombs = key === "today" ? tombs : [];
+      if (!groupRows.length && !groupTombs.length) continue;
+
+      const collapsed = key === "done" && !state.doneOpen;
+      html += `<div class="ghead${key === "done" ? " clickable" : ""}" ${key === "done" ? 'data-toggle-done="1"' : ""}>`;
+      if (key === "overdue") {
+        html += `<span class="seal">逾期</span><span class="gcount">${groupRows.length}</span>`;
+      } else {
+        html += `<span class="glabel">${label}</span><span class="gcount">${groupRows.length}</span>`;
+      }
+      html += `<span class="grule"></span>`;
+      if (key === "done") html += `<span class="gcaret">${state.doneOpen ? "▾" : "▸"}</span>`;
+      html += `</div>`;
+
+      if (collapsed) continue;
+
+      const items = groupRows.map((r) => ({ kind: "row", dl: r.dl, row: r }))
+        .concat(groupTombs.map((t) => ({ kind: "tomb", dl: t.row.dl, t })));
+      items.sort((a, b) => a.dl - b.dl);
+      for (const it of items) html += it.kind === "row" ? cardHTML(it.row) : tombHTML(it.t);
+    }
+    list.innerHTML = html;
+    wire();
+  }
+
+  // ---- 滑动 ----
+  function wire() {
+    $$(".swipe").forEach((el) => {
+      const card = $(".card", el);
+      const del = $(".back-del", el);
+      const done = $(".back-done", el);
+      let startX = 0, dx = 0, dragging = false, open = false;
+
+      const setX = (x) => { card.style.transform = `translateX(${x}px)`; };
+
+      el.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".chip")) return;
+        dragging = true; startX = e.clientX; dx = open ? -92 : 0;
+        try { el.setPointerCapture(e.pointerId); } catch (_) {}
+        card.style.transition = "none";
+      });
+      el.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        let x = (open ? -92 : 0) + (e.clientX - startX);
+        x = Math.max(-104, Math.min(72, x));
+        dx = x;
+        setX(x);
+        del.style.opacity = Math.min(1, Math.max(0, -x / 55));
+        done.style.opacity = Math.min(1, Math.max(0, x / 40));
+      });
+      el.addEventListener("pointerup", () => {
+        if (!dragging) return;
+        dragging = false;
+        card.style.transition = "transform .2s cubic-bezier(.23,1,.32,1)";
+        if (open) {
+          if (dx > -70) { open = false; setX(0); del.style.opacity = 0; }
+          else setX(-92);
+        } else if (dx <= -70) {
+          open = true; setX(-92);
+        } else if (dx >= 64) {
+          open = false; setX(0); del.style.opacity = 0; done.style.opacity = 0;
+          toggleDone(Number(el.dataset.id));
+        } else {
+          setX(0); del.style.opacity = 0; done.style.opacity = 0;
+        }
+      });
+      el.addEventListener("pointercancel", () => { dragging = false; open = false; setX(0); });
+
+      // 点击：开着 → 收起；否则进编辑器
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".chip")) return;
+        if (open) {
+          open = false; card.style.transition = "transform .2s"; setX(0); del.style.opacity = 0;
+          return;
+        }
+        openEditor(Number(el.dataset.id));
+      });
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (open) removeRow(Number(el.dataset.id));
+      });
+    });
+
+    $$("[data-tomb]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const id = Number(el.dataset.tomb);
+        const t = tombs.find((x) => x.row.id === id);
+        if (!t) return;
+        tombs = tombs.filter((x) => x.row.id !== id);
+        rows.push(t.row);
+        render();
+      });
+    });
+
+    $$("[data-postpone]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openPostpone(Number(el.dataset.postpone), el);
+      });
+    });
+
+    $$("[data-toggle-done]").forEach((el) => {
+      el.addEventListener("click", () => { state.doneOpen = !state.doneOpen; render(); });
+    });
+  }
+
+  function toggleDone(id) {
+    const r = rows.find((x) => x.id === id);
+    if (!r) return;
+    r.done = !r.done;
+    r.group = r.done ? "done" : groupOf(r);
+    render();
+  }
+
+  function groupOf(r) {
+    const diff = r.dl - Date.now();
+    if (diff < 0) return "overdue";
+    const today = new Date(); today.setHours(23, 59, 59, 999);
+    if (r.dl <= today.getTime()) return "today";
+    if (r.dl <= today.getTime() + D) return "tomorrow";
+    if (r.dl <= Date.now() + 7 * D) return "week";
+    return "later";
+  }
+
+  function removeRow(id) {
+    const i = rows.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    const [r] = rows.splice(i, 1);
+    tombs.push({ row: r, expires: Date.now() + 5000 });
+    render();
+  }
+
+  // ---- 顺延菜单 ----
+  let menu = null;
+  function closeMenu() { if (menu) { menu.remove(); menu = null; } }
+  function openPostpone(id, anchor) {
+    closeMenu();
+    const r = rows.find((x) => x.id === id);
+    if (!r) return;
+    menu = document.createElement("div");
+    menu.style.cssText = `position:fixed; z-index:99; background:var(--surface); border:1px solid var(--hairline);
+      border-radius:6px; padding:6px 0; min-width:168px; box-shadow:0 12px 32px rgba(20,20,19,.18);
+      font-size:14px; color:var(--ink)`;
+    const items = [
+      ["今晚 23:59", () => setDeadline(r, tonight())],
+      ["明天 23:59", () => setDeadline(r, tomorrow2359())],
+      ["明天同一时刻", () => setDeadline(r, r.dl + D)],
+      ["自定义…", () => { closeMenu(); openEditor(id); }],
+    ];
+    items.forEach(([label, fn]) => {
+      const b = document.createElement("div");
+      b.textContent = label;
+      b.style.cssText = "padding:10px 18px; cursor:pointer; font-family:'LatinSerif','HanCN',serif";
+      b.onmouseenter = () => b.style.background = "var(--field)";
+      b.onmouseleave = () => b.style.background = "transparent";
+      b.onclick = () => { fn(); closeMenu(); };
+      menu.appendChild(b);
+    });
+    document.body.appendChild(menu);
+    const rect = anchor.getBoundingClientRect();
+    const mw = menu.offsetWidth, mh = menu.offsetHeight;
+    let left = Math.min(rect.left, window.innerWidth - mw - 12);
+    let top = rect.bottom + 6;
+    if (top + mh > window.innerHeight - 12) top = rect.top - mh - 6;
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+    setTimeout(() => document.addEventListener("pointerdown", outside, { once: true }), 0);
+    function outside(e) { if (menu && !menu.contains(e.target)) closeMenu(); }
+  }
+  function tonight() { const d = new Date(); d.setHours(23, 59, 0, 0); return d.getTime(); }
+  function tomorrow2359() { const d = new Date(tonight() + D); d.setHours(23, 59, 0, 0); return d.getTime(); }
+  function setDeadline(r, dl) {
+    r.dl = dl;
+    r.group = groupOf(r);
+    render();
+  }
+
+  // ---- 编辑器 ----
+  const LEADS = [5, 15, 30, 60, 180, 1440, 4320, 10080];
+  let editingLeads = new Set();
+  let editingMuted = false;
+
+  function openEditor(id) {
+    const r = id ? rows.find((x) => x.id === id) : null;
+    state.editorId = r ? r.id : null;
+    $("#edTitle").textContent = r ? "编辑 DDL" : "添加 DDL";
+    $("#inTitle").value = r ? r.title : "";
+    $("#inNote").value = r ? r.note : "";
+    editingLeads = new Set(r ? r.leads : []);
+    editingMuted = r ? r.muted : false;
+    $("#edDone").style.display = r ? "" : "none";
+    $("#edDel").style.display = r ? "" : "none";
+    $("#edDone").textContent = r && r.done ? "标为未完成" : "已完成";
+
+    const d = new Date(r ? r.dl : tonight());
+    $("#edDate").textContent = "📅 " + d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
+    $("#edTime").textContent = "⏰ " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+
+    syncField($("#fTitle"), $("#inTitle"));
+    syncField($("#fNote"), $("#inNote"));
+    renderLeadChips();
+    showView("editor");
+    setTimeout(() => $("#inTitle").focus(), 220);
+  }
+
+  function syncField(field, input) {
+    field.classList.toggle("empty", !input.value);
+  }
+
+  function renderLeadChips() {
+    const box = $("#leadChips");
+    const mkChip = (label, on, fn) => {
+      const b = document.createElement("button");
+      b.className = "stamp" + (on ? " on" : "");
+      b.textContent = label;
+      b.onclick = fn;
+      return b;
+    };
+    box.innerHTML = "";
+    box.appendChild(mkChip("不提醒", editingMuted, () => {
+      editingMuted = true; editingLeads.clear(); renderLeadChips();
+    }));
+    LEADS.forEach((m) => {
+      box.appendChild(mkChip(leadText(m), editingLeads.has(m), () => {
+        editingMuted = false;
+        if (editingLeads.has(m)) editingLeads.delete(m); else editingLeads.add(m);
+        renderLeadChips();
+      }));
+    });
+  }
+
+  $("#edSave").onclick = () => {
+    const title = $("#inTitle").value.trim();
+    if (!title) { $("#inTitle").focus(); return; }
+    const note = $("#inNote").value.trim();
+    const leads = Array.from(editingLeads).sort((a, b) => a - b);
+    if (state.editorId) {
+      const r = rows.find((x) => x.id === state.editorId);
+      Object.assign(r, { title, note, leads, muted: editingMuted });
+      r.group = r.done ? "done" : groupOf(r);
+    } else {
+      const r = mk({ title, note, group: "today", dl: tonight() - 60000, leads, muted: editingMuted });
+      r.group = groupOf(r);
+      rows.push(r);
+    }
+    showView("list");
+    render();
+  };
+
+  $("#edDone").onclick = () => {
+    if (!state.editorId) return;
+    toggleDone(state.editorId);
+    showView("list");
+  };
+
+  $("#edDel").onclick = () => {
+    if (!state.editorId) return;
+    removeRow(state.editorId);
+    showView("list");
+  };
+
+  $$(".field input").forEach((inp) => {
+    const field = inp.closest(".field");
+    inp.addEventListener("input", () => field.classList.toggle("empty", !inp.value));
+    inp.addEventListener("focus", () => field.classList.add("focus"));
+    inp.addEventListener("blur", () => field.classList.remove("focus"));
+  });
+
+  // ---- 视图切换 ----
+  const overlays = { editor: "#editorOverlay", capture: "#captureOverlay", widget: "#widgetOverlay", icon: "#iconOverlay" };
+  function showView(v) {
+    $$("#views button").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
+    Object.entries(overlays).forEach(([k, sel]) => $(sel).classList.toggle("show", k === v));
+    $("#app").style.visibility = v === "list" || v === "editor" || v === "capture" ? "visible" : "hidden";
+    if (v === "capture") $("#app").style.visibility = "hidden";
+    if (v !== "list" && v !== "editor") closeMenu();
+  }
+
+  $$("#views button").forEach((b) => {
+    b.onclick = () => {
+      const v = b.dataset.view;
+      if (v === "editor") openEditor(null);
+      else showView(v);
+    };
+  });
+
+  $$("[data-close]").forEach((el) => {
+    el.onclick = () => showView("list");
+  });
+
+  $("#fab").onclick = () => openEditor(null);
+  $("#capBtn").onclick = () => showView("capture");
+  $("#capAdd").onclick = () => {
+    const title = $$("#captureOverlay input")[0].value.trim() || "提交社会实践报告";
+    const r = mk({ title, note: "", group: "tomorrow", dl: now0 + D + 14 * H, leads: [1440] });
+    r.group = groupOf(r);
+    rows.push(r);
+    showView("list");
+    render();
+  };
+
+  // ---- 页签 ----
+  $$("#tabs .tab").forEach((t) => {
+    t.onclick = () => {
+      state.filter = t.dataset.filter;
+      $$("#tabs .tab").forEach((x) => x.classList.toggle("on", x === t));
+      render();
+    };
+  });
+
+  // ---- 主题 ----
+  $("#themeBtn").onclick = () => {
+    const html = document.documentElement;
+    const dark = html.dataset.theme === "dark";
+    html.dataset.theme = dark ? "light" : "dark";
+    $("#themeBtn").textContent = dark ? "深色" : "浅色";
+  };
+
+  // ---- 重放墓碑 ----
+  $("#replayTomb").onclick = () => {
+    tombs = [{ row: mk({ title: "买猫粮", group: "today", dl: Date.now() + 6 * H, leads: [] }), expires: Date.now() + 5000 }];
+    showView("list");
+    state.filter = "all";
+    $$("#tabs .tab").forEach((x) => x.classList.toggle("on", x.dataset.filter === "all"));
+    render();
+  };
+
+  // ---- 秒针：倒计时 / 墓碑读条 ----
+  setInterval(() => {
+    $$(".card:not(.done) .cd").forEach((el) => {
+      const wrap = el.closest(".swipe");
+      const r = rows.find((x) => x.id === Number(wrap && wrap.dataset.id));
+      if (r) el.textContent = remaining(r.dl);
+    });
+    let changed = false;
+    const now = Date.now();
+    tombs = tombs.filter((t) => {
+      if (t.expires <= now) { changed = true; return false; }
+      return true;
+    });
+    if (changed) render();
+    else {
+      $$("[data-tomb]").forEach((el) => {
+        const id = Number(el.dataset.tomb);
+        const t = tombs.find((x) => x.row.id === id);
+        if (!t) return;
+        const sec = Math.max(0, Math.ceil((t.expires - now) / 1000));
+        const s = $(".sec", el); if (s) s.textContent = sec + "″";
+        const f = $(".fill", el); if (f) f.style.width = Math.min(100, (1 - (t.expires - now) / 5000) * 100) + "%";
+      });
+    }
+  }, 1000);
+
+  render();
+  showView("list");
+
+  // 便于截图 / 分享固定状态：?view=editor&theme=dark
+  const Q = new URLSearchParams(location.search);
+  if (Q.get("theme") === "dark") { document.documentElement.dataset.theme = "dark"; $("#themeBtn").textContent = "浅色"; }
+  const v = Q.get("view");
+  if (v === "editor") openEditor(rows.find((r) => r.title === "交毕业论文初稿").id);
+  else if (v) showView(v);
+})();
+</script>
+</body>
+</html>
