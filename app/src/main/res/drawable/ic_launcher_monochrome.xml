@@ -4,18 +4,27 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- 主题图标：仅 alpha 参与着色 -->
-    <path
-        android:pathData="M33,43 A7,7 0 0 1 40,36 H68 A7,7 0 0 1 75,43 V69 A7,7 0 0 1 68,76 H40 A7,7 0 0 1 33,69 Z M42,25 V37 M66,25 V37"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="5"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:fillColor="#00000000" />
-    <path
-        android:pathData="M26,90 L82,50"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000" />
+    <group
+        android:pivotX="64"
+        android:pivotY="64"
+        android:rotation="-7"
+        android:scaleX="0.63"
+        android:scaleY="0.63"
+        android:translateX="-10"
+        android:translateY="-10">
+        <path
+            android:pathData="M35,23 H93 A4,4 0 0 1 97,27 V101 L89,96 81,102 73,96 64,102 55,96 47,102 39,96 31,101 V27 A4,4 0 0 1 35,23 Z"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="3.4"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M35,23 H93 A4,4 0 0 1 97,27 V40 H31 V27 A4,4 0 0 1 35,23 Z"
+            android:fillColor="#FFFFFFFF" />
+        <path
+            android:pathData="M42,54 L46,58 53,50 M42,73 L46,77 53,69 M62,55 H84 M62,74 H78"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+    </group>
 </vector>

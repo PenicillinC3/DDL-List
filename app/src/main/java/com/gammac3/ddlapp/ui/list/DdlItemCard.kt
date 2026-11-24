@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -62,7 +63,7 @@ fun DdlItemCard(
 ) {
     // 纯展示卡（R46）：此前 Card(onClick=…) 是高层 clickable，会参与横向手势竞争——
     // 悬停/划回拖动的「松手结算」若被它截断，卡片就会停在阻尼渐近线（真机截图病例）。
-    // 点击统一收敛到整行的 detectTapGestures（见 SwipeRow）。
+    // SwipeRow 在随手势移动的前景容器上处理卡片点按。
     // 例外（v1.15.0 顺延 chip）：卡内唯一可点区，hit 区小而独立，拖动不入此层。
     val context = LocalContext.current
     val shape = RoundedCornerShape(18.dp)
@@ -165,7 +166,7 @@ fun DdlItemCard(
     }
 }
 
-/** 逾期一键顺延：一枚描边小印（不是胶囊），外层透明 contact 环补足 48dp 防误触；
+/** 逾期一键顺延：描边胶囊，外层透明 contact 环补足 48dp 防误触；
  *  按压微缩走 R48 的 pressed 反馈语汇（无 ripple）。菜单目标：今晚/明天 23:59、
  *  明天同一时刻、自定义（onPostpone(null) → 屏上层转编辑器）。 */
 @Composable
@@ -206,11 +207,11 @@ private fun PostponeChip(
                     scaleX = pressScale
                     scaleY = pressScale
                 }
-                .clip(RoundedCornerShape(3.dp))
+                .clip(CircleShape)
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outline,
-                    shape = RoundedCornerShape(3.dp),
+                    shape = CircleShape,
                 )
                 .clickable(interactionSource = interaction, indication = null) { menuOpen = true }
                 .padding(start = 8.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
@@ -259,14 +260,14 @@ private fun PostponeMenuItem(label: String, onClick: () -> Unit) {
     )
 }
 
-/** 提醒标签：有提醒 = 麦色小签（像贴在纸上的便利贴），不提醒 = 只留一圈细边。 */
+/** 提醒标签：有提醒时用麦色胶囊，静音时用描边胶囊。 */
 @Composable
 private fun ReminderPill(
     muted: Boolean,
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(3.dp)
+    val shape = CircleShape
     val background = if (muted) androidx.compose.ui.graphics.Color.Transparent
     else MaterialTheme.colorScheme.primaryContainer
     val foreground = if (muted) MaterialTheme.colorScheme.onSurfaceVariant

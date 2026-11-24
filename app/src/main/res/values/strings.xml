@@ -33,6 +33,7 @@
     <string name="chip_active">未完成</string>
     <string name="chip_done">已完成</string>
     <string name="swipe_done">完成</string>
+    <string name="swipe_restore">还原</string>
 
     <!-- ===== 顶部引导横幅 ===== -->
     <string name="banner_exact_alarm">精确提醒未开启，点击去设置（关闭后提醒可能略晚）</string>

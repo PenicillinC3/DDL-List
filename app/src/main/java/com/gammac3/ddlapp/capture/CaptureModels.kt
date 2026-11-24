@@ -10,6 +10,15 @@ data class DdlCandidate(
     val sourceLine: String,
 )
 
+internal data class OcrText(val text: String, val lines: List<OcrLine>)
+
+internal data class OcrLine(val text: String, val block: Int, val bounds: OcrBounds?)
+
+internal data class OcrBounds(val left: Int, val top: Int, val right: Int, val bottom: Int) {
+    val width: Int get() = right - left
+    val height: Int get() = bottom - top
+}
+
 /** 一次抓屏的进程内载荷；不落盘、不打日志。 */
 data class CapturePayload(
     val candidates: List<DdlCandidate>,

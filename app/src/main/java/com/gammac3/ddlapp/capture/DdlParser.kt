@@ -159,12 +159,31 @@ object DdlParser {
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .toList()
+        return parseLines(lines, now)
+    }
+
+    internal fun parseOcr(result: OcrText, now: ZonedDateTime): List<DdlCandidate> {
+        // 超长输入交给已有的截断规则，保留页面开头和末尾。
+        if (result.text.length > MAX_TEXT_CHARS) return parse(result.text, now)
+        val lines = result.lines.mapNotNull { line ->
+            val text = line.text.trim()
+            if (text.isEmpty()) null else line.copy(text = text)
+        }
+        if (lines.none { it.bounds != null }) return parse(result.text, now)
+        return parseLines(lines.map { it.text }, now, lines)
+    }
+
+    private fun parseLines(
+        lines: List<String>,
+        now: ZonedDateTime,
+        layout: List<OcrLine>? = null,
+    ): List<DdlCandidate> {
         if (lines.isEmpty()) return emptyList()
 
         val candidates = mutableListOf<DdlCandidate>()
         lines.forEachIndexed { index, line ->
             val parsed = parseLine(line, now) ?: return@forEachIndexed
-            val title = pickTitle(lines, index, parsed)
+            val title = pickTitle(lines, index, parsed, layout)
             candidates += DdlCandidate(
                 title = title,
                 deadline = parsed.deadline,
@@ -577,7 +596,12 @@ object DdlParser {
      * 从同一页的多行文字里挑标题：优先同一行的前后片段，其次邻近行，
      * 最后才回退到整页；所有候选按「像不像一个任务名」打分，而不是见到第一行就用。
      */
-    private fun pickTitle(lines: List<String>, index: Int, parsed: LineParse): String {
+    private fun pickTitle(
+        lines: List<String>,
+        index: Int,
+        parsed: LineParse,
+        layout: List<OcrLine>?,
+    ): String {
         val line = lines[index]
         val options = mutableListOf<Pair<String, Int>>()
 
@@ -596,6 +620,22 @@ object DdlParser {
         val after = line.substring(parsed.matchEnd.coerceIn(0, line.length))
         consider(stripLeadingClause(after), base = 56, rejectBodyStarter = true)
 
+        if (layout != null) {
+            val deadlineLine = layout[index]
+            fun considerBlocks(sameBlock: Boolean) {
+                layout.forEachIndexed { i, candidate ->
+                    if (i == index || (candidate.block == deadlineLine.block) != sameBlock ||
+                        META_LINE.containsMatchIn(candidate.text)
+                    ) return@forEachIndexed
+                    val base = layoutTitleBase(deadlineLine, candidate, sameBlock) ?: return@forEachIndexed
+                    consider(candidate.text, base)
+                }
+            }
+            considerBlocks(sameBlock = true)
+            if (options.isEmpty()) considerBlocks(sameBlock = false)
+            return options.maxByOrNull { it.second }?.first.orEmpty()
+        }
+
         // 标题通常在截止时间的上方；下两行则覆盖 OCR 把标题排到日期后面的情况。
         for (distance in 1..4) {
             val i = index - distance
@@ -613,6 +653,25 @@ object DdlParser {
         }
 
         return options.maxByOrNull { it.second }?.first ?: ""
+    }
+
+    private fun layoutTitleBase(deadline: OcrLine, title: OcrLine, sameBlock: Boolean): Int? {
+        val timeBounds = deadline.bounds ?: return 38.takeIf { sameBlock }
+        val titleBounds = title.bounds ?: return 38.takeIf { sameBlock }
+        val titleAbove = titleBounds.top < timeBounds.top
+        val gap = if (titleAbove) timeBounds.top - titleBounds.bottom else titleBounds.top - timeBounds.bottom
+        val lineHeight = maxOf(timeBounds.height, titleBounds.height)
+        val overlap = minOf(timeBounds.right, titleBounds.right) - maxOf(timeBounds.left, titleBounds.left)
+        val aligned = overlap > 0 &&
+            (overlap >= minOf(timeBounds.width, titleBounds.width) / 2 ||
+                kotlin.math.abs(timeBounds.left - titleBounds.left) <= lineHeight)
+
+        // 两个独立文字块只有在上下紧邻且大致处于同一列时才配对。
+        if (!sameBlock && (!aligned || gap !in 0..(lineHeight * 3 / 2))) return null
+        if (gap > lineHeight * 6) return null
+        val distancePenalty = gap.coerceAtLeast(0) * 3 / lineHeight
+        val blockBase = if (sameBlock) 51 else 31
+        return blockBase - distancePenalty - if (titleAbove) 0 else 7
     }
 
     private fun stripLeadingClause(raw: String): String = raw

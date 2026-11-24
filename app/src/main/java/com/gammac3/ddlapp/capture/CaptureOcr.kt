@@ -14,7 +14,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * 传入的 bitmap 所有权归本类：任务完成 / 失败 / 取消时统一 recycle。
  * 不落盘、不打日志、不上传。
  */
-class CaptureOcr {
+internal class CaptureOcr {
 
     private var recognizer: TextRecognizer? = null
 
@@ -23,24 +23,34 @@ class CaptureOcr {
             ChineseTextRecognizerOptions.Builder().build(),
         ).also { recognizer = it }
 
-    suspend fun recognize(bitmap: Bitmap): String = suspendCancellableCoroutine { cont ->
+    suspend fun recognize(bitmap: Bitmap): OcrText? = suspendCancellableCoroutine { cont ->
         val task = try {
             client().process(InputImage.fromBitmap(bitmap, 0))
         } catch (t: Throwable) {
             bitmap.recycle()
-            cont.resume("")
+            cont.resume(null)
             return@suspendCancellableCoroutine
         }
         // 任务真正结束时才回收：8 秒超时提前返回后，ML Kit 可能仍在读这块内存
         task.addOnCompleteListener { bitmap.recycle() }
         task.addOnSuccessListener { result ->
-            if (cont.isActive) cont.resume(result.text)
+            if (cont.isActive) {
+                val lines = result.textBlocks.flatMapIndexed { blockIndex, block ->
+                    block.lines.map { line ->
+                        val bounds = line.boundingBox
+                            ?.takeIf { it.width() > 0 && it.height() > 0 }
+                            ?.let { OcrBounds(it.left, it.top, it.right, it.bottom) }
+                        OcrLine(line.text, blockIndex, bounds)
+                    }
+                }
+                cont.resume(OcrText(result.text, lines))
+            }
         }
         task.addOnFailureListener {
-            if (cont.isActive) cont.resume("")
+            if (cont.isActive) cont.resume(null)
         }
         task.addOnCanceledListener {
-            if (cont.isActive) cont.resume("")
+            if (cont.isActive) cont.resume(null)
         }
     }
 

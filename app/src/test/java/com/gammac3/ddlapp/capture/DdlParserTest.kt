@@ -16,6 +16,9 @@ class DdlParserTest {
     private fun first(text: String): DdlCandidate = parse(text).first()
     private fun deadline(text: String): ZonedDateTime? = first(text).deadline
 
+    private fun ocr(vararg lines: OcrLine): List<DdlCandidate> =
+        DdlParser.parseOcr(OcrText(lines.joinToString("\n") { it.text }, lines.toList()), now)
+
     private fun at(year: Int, month: Int, day: Int, hour: Int, minute: Int): ZonedDateTime =
         ZonedDateTime.of(year, month, day, hour, minute, 0, 0, zone)
 
@@ -349,5 +352,42 @@ class DdlParserTest {
     fun `confidence for date time without keyword`() {
         val candidate = first("11月13日 23:59 开会")
         assertEquals(0.65f, candidate.confidence, 0.001f)
+    }
+
+    @Test
+    fun `ocr date prefers title in the same block over next column`() {
+        val candidates = ocr(
+            OcrLine("第三章习题", 0, OcrBounds(20, 70, 120, 90)),
+            OcrLine("【期末论文】提交通知", 1, OcrBounds(360, 99, 570, 123)),
+            OcrLine("截止时间：11月13日 23:59", 0, OcrBounds(20, 129, 243, 149)),
+        )
+        assertEquals("第三章习题", candidates.single().title)
+        assertEquals(at(2026, 11, 13, 23, 59), candidates.single().deadline)
+    }
+
+    @Test
+    fun `ocr can use a nearby aligned title in a separate block`() {
+        val candidates = ocr(
+            OcrLine("【期末论文】", 0, OcrBounds(20, 70, 135, 90)),
+            OcrLine("截止时间：11月13日 23:59", 1, OcrBounds(20, 105, 243, 125)),
+        )
+        assertEquals("【期末论文】", candidates.single().title)
+    }
+
+    @Test
+    fun `ocr does not borrow an unrelated distant heading`() {
+        val candidates = ocr(
+            OcrLine("【期末论文】", 0, OcrBounds(20, 70, 135, 90)),
+            OcrLine("截止时间：11月13日 23:59", 1, OcrBounds(20, 425, 243, 445)),
+        )
+        assertEquals("", candidates.single().title)
+        assertEquals(at(2026, 11, 13, 23, 59), candidates.single().deadline)
+    }
+
+    @Test
+    fun `ocr without position data still uses plain text`() {
+        val text = "第三章习题\n截止时间：11月13日 23:59"
+        val lines = text.lines().mapIndexed { i, line -> OcrLine(line, i, null) }
+        assertEquals(parse(text), DdlParser.parseOcr(OcrText(text, lines), now))
     }
 }

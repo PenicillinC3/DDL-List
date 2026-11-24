@@ -18,3 +18,4 @@ captures/
 /preview/shots/
 # Python 字体管线缓存
 __pycache__/
+ddl-list.json

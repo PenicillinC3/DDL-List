@@ -33,6 +33,7 @@
     <string name="chip_active">Active</string>
     <string name="chip_done">Done</string>
     <string name="swipe_done">Done</string>
+    <string name="swipe_restore">Restore</string>
 
     <!-- ===== Banners ===== -->
     <string name="banner_exact_alarm">Exact reminders are off — tap to open Settings (reminders may arrive late)</string>

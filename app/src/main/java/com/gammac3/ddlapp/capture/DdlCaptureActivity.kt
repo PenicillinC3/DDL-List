@@ -353,6 +353,7 @@ private fun CaptureCard(
                             StampChip(
                                 text = candidate.deadline?.let { formatChip(context, it) }.orEmpty(),
                                 selected = selected,
+                                shape = RoundedCornerShape(3.dp),
                                 onClick = {
                                     selectedIndex = index
                                     title = candidate.title

@@ -33,14 +33,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -70,6 +72,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -310,48 +313,62 @@ fun DdlListScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(postponeSnacks) },
         topBar = {
-            Masthead(
-                actions = {
-                    CaptureEntryCapsule(onClick = { captureSettingsOpen = true })
-                    Box {
-                        var menuOpen by remember { mutableStateOf(false) }
-                        IconButton(onClick = { menuOpen = true }) {
-                            Text(
-                                "⋯",
-                                fontSize = 20.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Masthead(
+                    modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(),
+                    actions = {
+                        CaptureEntryCapsule(onClick = { captureSettingsOpen = true })
+                        Box {
+                            var menuOpen by remember { mutableStateOf(false) }
+                            IconButton(onClick = { menuOpen = true }) {
+                                Text(
+                                    "⋯",
+                                    fontSize = 20.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_export_json)) },
+                                    onClick = {
+                                        menuOpen = false
+                                        exportLauncher.launch(
+                                            context.getString(R.string.export_file_prefix) +
+                                                LocalDate.now() + ".json",
+                                        )
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.menu_import_json)) },
+                                    onClick = {
+                                        menuOpen = false
+                                        importLauncher.launch(
+                                            arrayOf("application/json", "text/plain", "application/octet-stream"),
+                                        )
+                                    },
+                                )
+                            }
                         }
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.menu_export_json)) },
-                                onClick = {
-                                    menuOpen = false
-                                    exportLauncher.launch(
-                                        context.getString(R.string.export_file_prefix) +
-                                            LocalDate.now() + ".json",
-                                    )
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.menu_import_json)) },
-                                onClick = {
-                                    menuOpen = false
-                                    importLauncher.launch(
-                                        arrayOf("application/json", "text/plain", "application/octet-stream"),
-                                    )
-                                },
-                            )
-                        }
-                    }
-                },
-            )
+                    },
+                )
+            }
         },
         floatingActionButton = {
-            NewDdlButton(onClick = { onEdit(null) })
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.widthIn(max = 760.dp).fillMaxWidth(),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    NewDdlButton(onClick = { onEdit(null) })
+                }
+            }
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        Box(
+            Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Column(Modifier.widthIn(max = 760.dp).fillMaxWidth().fillMaxHeight()) {
             // 精确闹钟引导（Android 12+ 未授权）
             if (!exactOk) {
                 Notice(
@@ -543,6 +560,7 @@ fun DdlListScreen(
                     }
                 }
             }
+            }
         }
     }
 
@@ -557,8 +575,11 @@ fun DdlListScreen(
  * 没有底栏阴影、没有大色块——像一页纸的页眉。
  */
 @Composable
-private fun Masthead(actions: @Composable RowScope.() -> Unit) {
-    Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+private fun Masthead(
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit,
+) {
+    Column(modifier.fillMaxWidth().statusBarsPadding()) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -670,21 +691,14 @@ private fun Notice(
     }
 }
 
-/** 新建：墨色纸签，上方两角近直角、下方两角圆——像从纸堆里抽出来的一页。 */
+/** 列表右下的墨色圆角新建按钮。 */
 @Composable
 private fun NewDdlButton(onClick: () -> Unit) {
     val desc = stringResource(R.string.add_ddl)
     Row(
         Modifier
             .semantics { contentDescription = desc }
-            .clip(
-                RoundedCornerShape(
-                    topStart = 2.dp,
-                    topEnd = 2.dp,
-                    bottomStart = 13.dp,
-                    bottomEnd = 13.dp,
-                )
-            )
+            .clip(RoundedCornerShape(13.dp))
             .background(MaterialTheme.colorScheme.inverseSurface)
             .clickable(onClick = onClick)
             .padding(start = 18.dp, end = 20.dp, top = 13.dp, bottom = 13.dp),
@@ -720,7 +734,7 @@ private fun SwipeRow(
     modifier: Modifier = Modifier,
 ) {
     // 手势自绘（R44 立骨架，R46 重做映射）：左划最多拖到恰好露出「删除」即停靠；悬停中
-    // 右划只收回，永不误触「已完成」。位移映射 = 工作区线性 1:1 跟手，越过 92dp/64dp
+    // 右划标记完成；已完成条目右划则恢复为未完成。位移映射 = 工作区线性 1:1 跟手，越过 92dp/64dp
     // 边界才上橡皮筋（渐近 24dp 并硬夹），停靠位在数学上不可能再漂到阻尼渐近线；
     // 另设 10 秒看门狗：结算若丢失强制归位，杜绝「停在深水区」复现。
     val openPx = with(LocalDensity.current) { 92.dp.toPx() }
@@ -751,7 +765,7 @@ private fun SwipeRow(
             anchor = if (raw - dragStartRaw >= openPx * 0.75f) 0f else -openPx
         } else when {
             raw <= -openPx * 0.75f -> anchor = -openPx
-            raw >= donePx && !row.isDone -> { onToggleDone(); anchor = 0f }
+            raw >= donePx -> { onToggleDone(); anchor = 0f }
             else -> anchor = 0f
         }
         raw = anchor
@@ -764,6 +778,7 @@ private fun SwipeRow(
     )
 
     val docked = !dragging && anchor <= -openPx * 0.95f
+    val latestOnClick by rememberUpdatedState(onClick)
     // 悬停安全带：3.5 秒不点删除自动收回
     LaunchedEffect(docked) {
         if (docked) {
@@ -790,17 +805,6 @@ private fun SwipeRow(
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(18.dp))
-            // 点击收敛整行（R46）：卡片本体不再自带 clickable（Card(onClick) 参与横向手势
-            // 竞争，是结算丢失的头号嫌疑）。悬停中点本体 = 收拢（读快照态保新鲜），
-            // 未悬停点本体 = 进编辑器；红底点按仍走下方 bg 的 clickable(enabled=docked) 删除
-            .pointerInput(row.id) {
-                detectTapGestures {
-                    if (anchor <= -openPx * 0.95f) {
-                        anchor = 0f
-                        raw = 0f
-                    } else onClick()
-                }
-            }
             // 手势挂整行（R45）：从卡片或露出的底衬任意位置起划都能拖；松手必经 settle
             .pointerInput(row.id) {
                 detectHorizontalDragGestures(
@@ -827,11 +831,18 @@ private fun SwipeRow(
                         visualState.value >= donePx * 0.35f -> drawRect(doneBg)
                     }
                 }
-                .clickable(enabled = docked, onClick = onDelete),
+                // 未停靠时让底板退出触摸命中，禁用的 clickable 也会消费触摸。
+                .then(if (docked) Modifier.clickable(onClick = onDelete) else Modifier),
         )
         // 揭出区「垃圾桶＋删除」（R47，I1 定款）：亮暗随主题 error/onError 自动适配
         val deleteLabel = stringResource(R.string.btn_delete)
-        val doneLabel = stringResource(R.string.swipe_done)
+        val swipeLabel = stringResource(
+            if (swipeActionFor(row.isDone) == SwipeAction.RESTORE) {
+                R.string.swipe_restore
+            } else {
+                R.string.swipe_done
+            },
+        )
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -858,7 +869,7 @@ private fun SwipeRow(
             )
         }
         Text(
-            text = doneLabel,
+            text = swipeLabel,
             color = onDone,
             fontFamily = UiFont,
             fontSize = 13.sp,
@@ -872,7 +883,16 @@ private fun SwipeRow(
         )
         Box(
             Modifier
-                .offset { IntOffset(visualState.value.roundToInt(), 0) },
+                .offset { IntOffset(visualState.value.roundToInt(), 0) }
+                // 点按跟随卡片，露出的底衬和卡内顺延控件各自接收点击。
+                .pointerInput(row.id) {
+                    detectTapGestures {
+                        if (anchor <= -openPx * 0.95f) {
+                            anchor = 0f
+                            raw = 0f
+                        } else latestOnClick()
+                    }
+                },
         ) {
             DdlItemCard(row = row, nowMillis = nowMillis, overdue = overdue, onPostpone = onPostpone)
         }

@@ -262,7 +262,7 @@ fun DdlEditorSheet(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // 保存：墨色纸签（与列表页「＋ 新建」同一枚），按下时陶土色
+                // 保存按钮使用墨色底。
                 Button(
                     enabled = canSave,
                     onClick = {

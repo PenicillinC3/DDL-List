@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -14,11 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// 表单上的两种纸件：铅笔框（输入框）与印章（选项）。
-// 编辑器面板与截屏浮卡共用这一套，保证「同一张纸上同一支笔」。
+// 编辑器面板和截屏浮卡共用的输入框和选项样式。
 
 /** 输入框的纸角：近乎直角的小圆，像铅笔框出来的格子。 */
 val FieldShape = RoundedCornerShape(4.dp)
@@ -37,10 +38,14 @@ fun paperFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
     unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
 )
 
-/** 选项：选中即「盖下」一枚墨色印，未选只留一圈细边。 */
+/** 选中时填充墨色，未选中时显示细描边。 */
 @Composable
-fun StampChip(text: String, selected: Boolean, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(3.dp)
+fun StampChip(
+    text: String,
+    selected: Boolean,
+    shape: Shape = CircleShape,
+    onClick: () -> Unit,
+) {
     Box(
         Modifier
             .clip(shape)

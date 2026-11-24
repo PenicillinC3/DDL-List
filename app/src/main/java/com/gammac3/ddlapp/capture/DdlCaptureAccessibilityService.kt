@@ -420,10 +420,10 @@ class DdlCaptureAccessibilityService : AccessibilityService() {
             val ocrText = withTimeoutOrNull(OCR_TIMEOUT_MILLIS) {
                 ocr().recognize(cropped)
             }
-            if (ocrText.isNullOrBlank()) {
+            if (ocrText == null) {
                 emptyList()
             } else {
-                withContext(Dispatchers.Default) { DdlParser.parse(ocrText, now) }
+                withContext(Dispatchers.Default) { DdlParser.parseOcr(ocrText, now) }
             }
         } catch (c: kotlinx.coroutines.CancellationException) {
             throw c

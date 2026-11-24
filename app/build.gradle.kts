@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val appVersionCode = 31
-val appVersionName = "1.19.0"
+val appVersionCode = 35
+val appVersionName = "1.19.4"
 
 android {
     namespace = "com.gammac3.ddlapp"

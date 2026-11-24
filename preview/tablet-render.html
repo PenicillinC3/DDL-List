@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DDL 清单 · 平板布局预览</title>
+  <style>
+    @font-face {
+      font-family: "AppSerif";
+      src: url("./fonts/han_serif_400.ttf") format("truetype");
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "AppSerif";
+      src: url("./fonts/han_serif_600.ttf") format("truetype");
+      font-weight: 600;
+    }
+    @font-face {
+      font-family: "AppLatin";
+      src: url("./fonts/timeless_serif_400.ttf") format("truetype");
+      font-weight: 400;
+    }
+
+    :root {
+      color-scheme: light;
+      --canvas: #f0eee6;
+      --paper: #faf9f5;
+      --ink: #141413;
+      --muted: #5f5c53;
+      --line: #dfdacb;
+      --outline: #c9c4b4;
+      --clay: #d97757;
+      --manilla: #f5e3c7;
+      --oat: #e3dacc;
+      --error: #f2ddd3;
+      --on-error: #4a1809;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: "AppSerif", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .app {
+      width: min(100%, 760px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding-bottom: 100px;
+      background: var(--canvas);
+      position: relative;
+    }
+    .masthead {
+      min-height: 49px;
+      display: flex;
+      align-items: center;
+      padding: 6px 4px 4px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      font: 400 25px/32px "AppSerif", serif;
+      letter-spacing: .8px;
+    }
+    .brand::after {
+      content: "";
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      margin: 0 0 3px 6px;
+      border-radius: 50%;
+      background: var(--clay);
+    }
+    .actions { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+    .capture {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+    }
+    .more { width: 44px; height: 44px; border: 0; background: transparent; color: var(--muted); font-size: 22px; }
+    .tabs {
+      display: flex;
+      gap: 24px;
+      padding: 2px 20px;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+    .tab {
+      position: relative;
+      padding: 10px 0 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .tab.selected { color: var(--ink); font-weight: 600; }
+    .tab.selected::after { content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 1.5px; background: var(--ink); }
+    .list { padding: 0 16px; }
+    .group {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 14px 0 2px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+    }
+    .rule { height: 1px; flex: 1; margin-left: 5px; background: var(--line); }
+    .count { font: 400 12px "AppLatin", serif; letter-spacing: 0; }
+    .card-wrap {
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+      border-radius: 18px;
+      touch-action: pan-y;
+    }
+    .reveal {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      background: var(--manilla);
+      color: var(--ink);
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    .card {
+      position: relative;
+      padding: 12px 14px 10px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      cursor: grab;
+      touch-action: pan-y;
+      transition: transform .2s cubic-bezier(.23, 1, .32, 1);
+      user-select: none;
+    }
+    .card:active { cursor: grabbing; }
+    .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 16.5px/23px "AppSerif", serif; letter-spacing: .2px; }
+    .note { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .remaining { margin-top: 6px; font: 700 23px/28px "AppLatin", "AppSerif", serif; }
+    .due { margin-top: 3px; color: var(--muted); font: 400 11.5px/16px "AppLatin", "AppSerif", serif; }
+    .foot { display: flex; align-items: center; min-height: 22px; margin-top: 8px; }
+    .pill { display: inline-flex; padding: 4px 8px; border-radius: 999px; background: var(--manilla); font-size: 10.5px; }
+    .completed .title { color: var(--muted); text-decoration: line-through; }
+    .done-tag { margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .new {
+      position: fixed;
+      right: max(24px, calc((100vw - 760px) / 2 + 16px));
+      bottom: 24px;
+      min-height: 48px;
+      padding: 0 20px 0 18px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--ink);
+      color: var(--paper);
+      font: 600 14px "AppSerif", serif;
+      box-shadow: 0 6px 18px rgb(20 20 19 / 14%);
+    }
+    .caption {
+      position: fixed;
+      right: 16px;
+      bottom: 82px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    @media (max-width: 500px) {
+      .app { width: 100%; }
+      .caption { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="masthead">
+      <div class="brand">DDL 清单</div>
+      <div class="actions">
+        <button class="capture">自动识别</button>
+        <button class="more" aria-label="更多选项">⋯</button>
+      </div>
+    </header>
+    <nav class="tabs" aria-label="DDL 筛选">
+      <span class="tab selected">全部</span>
+      <span class="tab">未完成</span>
+      <span class="tab">已完成</span>
+    </nav>
+    <section class="list" aria-label="DDL 清单">
+      <div class="group"><span>逾期</span><span class="count">1</span><span class="rule"></span></div>
+      <div class="card-wrap" data-done="false">
+        <div class="reveal">完成</div>
+        <article class="card">
+          <div class="title">提交课程调研报告</div>
+          <div class="note">补充访谈结论与参考资料</div>
+          <div class="remaining">已逾期 2 天</div>
+          <div class="due">期限 11月22日 周日 23:59</div>
+          <div class="foot"><span class="pill">◉　提前 1 天</span></div>
+        </article>
+      </div>
+      <div class="group"><span>今天</span><span class="count">2</span><span class="rule"></span></div>
+      <div class="card-wrap" data-done="false">
+        <div class="reveal">完成</div>
+        <article class="card">
+          <div class="title">完成数据结构实验报告</div>
+          <div class="remaining">还有 4 小时</div>
+          <div class="due">期限 11月24日 周二 23:59</div>
+          <div class="foot"><span class="pill">◉　提前 1 天 · 3 小时</span></div>
+        </article>
+      </div>
+      <div class="card-wrap" data-done="false">
+        <div class="reveal">完成</div>
+        <article class="card">
+          <div class="title">确认小组展示顺序</div>
+          <div class="remaining">还有 7 小时</div>
+          <div class="due">期限 11月25日 周三 02:00</div>
+          <div class="foot"><span class="pill">◉　到期时提醒</span></div>
+        </article>
+      </div>
+      <div class="group"><span>已完成</span><span class="count">1</span><span class="rule"></span><span>▾</span></div>
+      <div class="card-wrap" data-done="true">
+        <div class="reveal">还原</div>
+        <article class="card completed" style="transform: translateX(64px)">
+          <div class="title">阅读第三章并提交笔记</div>
+          <div class="done-tag">已完成</div>
+          <div class="due">期限 11月23日 周一 18:00</div>
+          <div class="foot"><span class="pill">◉　不提醒</span></div>
+        </article>
+      </div>
+    </section>
+    <div class="caption">拖动已完成卡片向右可还原</div>
+    <button class="new">＋ 新建</button>
+  </main>
+  <script>
+    document.querySelectorAll(".card-wrap").forEach((wrap) => {
+      const card = wrap.querySelector(".card");
+      const reveal = wrap.querySelector(".reveal");
+      let startX = 0;
+      let offset = wrap.dataset.done === "true" ? 64 : 0;
+      const paint = () => {
+        card.style.transform = `translateX(${offset}px)`;
+        reveal.style.opacity = String(Math.min(1, Math.abs(offset) / 40));
+      };
+      if (offset) paint();
+      card.addEventListener("pointerdown", (event) => {
+        startX = event.clientX - offset;
+        card.setPointerCapture(event.pointerId);
+        card.style.transition = "none";
+      });
+      card.addEventListener("pointermove", (event) => {
+        if (!card.hasPointerCapture(event.pointerId)) return;
+        offset = Math.max(-92, Math.min(76, event.clientX - startX));
+        paint();
+      });
+      card.addEventListener("pointerup", () => {
+        card.style.transition = "transform .2s cubic-bezier(.23, 1, .32, 1)";
+        if (offset >= 64) {
+          if (wrap.dataset.done === "true") {
+            wrap.dataset.done = "false";
+            card.classList.remove("completed");
+            card.querySelector(".done-tag")?.remove();
+            const remaining = document.createElement("div");
+            remaining.className = "remaining";
+            remaining.textContent = "还有 2 小时";
+            card.insertBefore(remaining, card.querySelector(".due"));
+            reveal.textContent = "完成";
+          } else {
+            wrap.dataset.done = "true";
+            card.classList.add("completed");
+            reveal.textContent = "还原";
+          }
+        }
+        offset = 0;
+        paint();
+      });
+      card.addEventListener("pointercancel", () => {
+        card.style.transition = "transform .2s cubic-bezier(.23, 1, .32, 1)";
+        offset = 0;
+        paint();
+      });
+    });
+  </script>
+</body>
+</html>

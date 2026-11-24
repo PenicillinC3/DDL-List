@@ -134,7 +134,7 @@
   .mast-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; }
   .capsule {
     appearance: none; cursor: pointer; font-family: inherit; font-size: 11px; letter-spacing: .3px;
-    color: var(--muted); background: transparent; border: 1px solid var(--hairline); border-radius: 3px;
+    color: var(--muted); background: transparent; border: 1px solid var(--hairline); border-radius: 999px;
     padding: 5px 9px; margin-right: 2px;
   }
   .capsule:hover { color: var(--clay-deep); border-color: var(--clay); }
@@ -197,7 +197,7 @@
   .card .due { font-family: "LatinSerif", "HanCN", serif; font-size: 11.5px; line-height: 16px; letter-spacing: .2px; color: var(--muted); margin-top: 3px; }
   .card .foot { display: flex; align-items: center; margin-top: 8px; min-height: 22px; }
   .pill {
-    display: inline-flex; align-items: center; gap: 4px; border-radius: 3px;
+    display: inline-flex; align-items: center; gap: 4px; border-radius: 999px;
     background: var(--manilla); color: var(--ink); padding: 3px 7px;
     font-size: 10.5px; letter-spacing: .2px; line-height: 1;
   }
@@ -207,7 +207,7 @@
   .chip-wrap { margin-left: auto; width: 54px; height: 44px; display: flex; align-items: center; justify-content: center; }
   .chip {
     display: inline-flex; align-items: center; gap: 3px; cursor: pointer;
-    border: 1px solid var(--outline); border-radius: 3px; padding: 4px 6px 4px 8px;
+    border: 1px solid var(--outline); border-radius: 999px; padding: 4px 6px 4px 8px;
     color: var(--muted); font-size: 11.5px; line-height: 1; transition: transform .14s ease;
   }
   .chip:active { transform: scale(.94); }
@@ -234,7 +234,7 @@
     display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
     border: 0; font-family: inherit; padding: 13px 20px 13px 18px;
     background: var(--ink); color: var(--bg);
-    border-radius: 2px 2px 13px 13px;
+    border-radius: 13px;
     font-size: 14px; font-weight: 500; letter-spacing: .5px;
     box-shadow: 0 6px 18px rgba(20,20,19,.18);
   }
@@ -292,6 +292,7 @@
     background: transparent; color: var(--muted); border-radius: 3px; padding: 6px 10px;
     font-size: 12px; letter-spacing: .3px; line-height: 1; transition: background .12s ease, color .12s ease;
   }
+  #leadChips .stamp, .reminder-chips .stamp { border-radius: 999px; }
   .stamp.on { background: var(--ink); color: var(--bg); border-color: transparent; }
 
   .actions { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
@@ -454,7 +455,7 @@
 
 <header class="page-head">
   <div>
-    <div class="kicker">DDL 清单 · v1.19.0 · 设计预览</div>
+    <div class="kicker">DDL 清单 · v1.19.2 · 设计预览</div>
     <h1>纸与墨<span class="dot"></span></h1>
     <p class="sub">人文编辑界面 — 羊皮纸、宋体、陶土；零投影，靠细线与留白分层。<br>下面是可点的 HTML 复刻（同色值 / 同字号 / 同间距），不是真机截图。</p>
   </div>
@@ -575,7 +576,7 @@
                 <input autocomplete="off">
               </div>
               <div class="section"><span class="slabel">提前提醒（可多选）</span><span class="srule"></span></div>
-              <div class="chips">
+              <div class="chips reminder-chips">
                 <button class="stamp">不提醒</button>
                 <button class="stamp">1 小时</button>
                 <button class="stamp on">1 天</button>
@@ -641,39 +642,39 @@
           <div class="iconwall">
             <div class="icon-row">
               <div class="icon-tile">
-                <svg viewBox="0 0 108 108" width="132" height="132">
-                  <rect width="108" height="108" fill="#D97757"/>
-                  <path d="M42 25 V37 M66 25 V37" stroke="#141413" stroke-width="5" stroke-linecap="round" fill="none"/>
-                  <path d="M40 36 H68 A7 7 0 0 1 75 43 V69 A7 7 0 0 1 68 76 H40 A7 7 0 0 1 33 69 V43 A7 7 0 0 1 40 36 Z" fill="#FAF9F5"/>
-                  <path d="M33 49 V43 A7 7 0 0 1 40 36 H68 A7 7 0 0 1 75 43 V49 Z" fill="#141413"/>
-                  <path d="M42 58 H64 A2 2 0 0 1 64 62 H42 A2 2 0 0 1 42 58 Z" fill="#141413"/>
-                  <path d="M35 79 L76 55" stroke="#9C3D24" stroke-width="7" stroke-linecap="round" fill="none"/>
+                <svg viewBox="18 18 72 72" width="132" height="132" aria-hidden="true">
+                  <defs>
+                    <path id="tear-off-edge" d="M35 23 H93 A4 4 0 0 1 97 27 V101 L89 96 81 102 73 96 64 102 55 96 47 102 39 96 31 101 V27 A4 4 0 0 1 35 23 Z"/>
+                    <g id="tear-off-launcher">
+                      <rect width="108" height="108" fill="#F0EEE6"/>
+                      <g transform="translate(54 54) rotate(-7) scale(.63) translate(-64 -64)">
+                        <use href="#tear-off-edge" fill="#FAF9F5"/>
+                        <path d="M35 23 H93 A4 4 0 0 1 97 27 V40 H31 V27 A4 4 0 0 1 35 23 Z" fill="#A34826"/>
+                        <use href="#tear-off-edge" fill="none" stroke="#C9C4B4" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M42 54 L46 58 53 50 M42 73 L46 77 53 69" fill="none" stroke="#9C3D24" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M62 55 H84 M62 74 H78" fill="none" stroke="#141413" stroke-width="5" stroke-linecap="round"/>
+                      </g>
+                    </g>
+                  </defs>
+                  <use href="#tear-off-launcher"/>
                 </svg>
               </div>
               <div class="icon-row" style="flex-direction: column; gap: 14px">
                 <div class="icon-mini">
-                  <svg viewBox="0 0 108 108" width="56" height="56">
-                    <rect width="108" height="108" fill="#D97757"/>
-                    <path d="M42 25 V37 M66 25 V37" stroke="#141413" stroke-width="5" stroke-linecap="round" fill="none"/>
-                    <path d="M40 36 H68 A7 7 0 0 1 75 43 V69 A7 7 0 0 1 68 76 H40 A7 7 0 0 1 33 69 V43 A7 7 0 0 1 40 36 Z" fill="#FAF9F5"/>
-                    <path d="M33 49 V43 A7 7 0 0 1 40 36 H68 A7 7 0 0 1 75 43 V49 Z" fill="#141413"/>
-                    <path d="M35 79 L76 55" stroke="#9C3D24" stroke-width="7" stroke-linecap="round" fill="none"/>
+                  <svg viewBox="18 18 72 72" width="56" height="56" aria-hidden="true">
+                    <use href="#tear-off-launcher"/>
                   </svg>
                 </div>
                 <div class="icon-mini">
-                  <svg viewBox="0 0 108 108" width="56" height="56">
-                    <rect width="108" height="108" fill="#1F1E1B"/>
-                    <path d="M42 25 V37 M66 25 V37" stroke="#F2EFE6" stroke-width="5" stroke-linecap="round" fill="none"/>
-                    <path d="M40 36 H68 A7 7 0 0 1 75 43 V69 A7 7 0 0 1 68 76 H40 A7 7 0 0 1 33 69 V43 A7 7 0 0 1 40 36 Z" fill="#FAF9F5"/>
-                    <path d="M33 49 V43 A7 7 0 0 1 40 36 H68 A7 7 0 0 1 75 43 V49 Z" fill="#141413"/>
-                    <path d="M35 79 L76 55" stroke="#E2906F" stroke-width="7" stroke-linecap="round" fill="none"/>
+                  <svg viewBox="18 18 72 72" width="56" height="56" style="border-radius: 50%" aria-hidden="true">
+                    <use href="#tear-off-launcher"/>
                   </svg>
                 </div>
               </div>
             </div>
             <div class="icon-cap">
               <div class="n">DDL 清单</div>
-              <div class="d">陶土底 · 米纸页 · 墨色页眉 · 赭红斜杠</div>
+              <div class="d">米纸底 · 深陶土页眉 · 赭红勾选</div>
             </div>
           </div>
         </div>
@@ -689,7 +690,7 @@
     <h2>这一版在说什么</h2>
     <p class="k">交互提示</p>
     <ul>
-      <li>点任意卡片 → <b>编辑面板</b>（宋体页眉 + 铅笔框输入 + 印章选项）</li>
+      <li>点任意卡片 → <b>编辑面板</b>（宋体页眉 + 铅笔框输入 + 胶囊式提醒选项）</li>
       <li>卡片<b>左划</b> → 删除；<b>右划</b> → 标为完成</li>
       <li>删除后出现燕麦色<b>便条</b>，5 秒读条内可撤销</li>
       <li>逾期卡右侧「顺延 ▾」→ 今晚 / 明天 / 自定义</li>
@@ -713,7 +714,7 @@
     <ul>
       <li><b>陶土只做标记</b>：逾期、当前页签、日历签、启动图标；正文不用彩色。</li>
       <li><b>一套字面，两种字形</b>：中文一律思源宋体，西文与数字一律 Timeless Serif Text；两份字体原样随包发布，运行时按字回退，只有 400 / 600 两档，层级靠字号与留白。</li>
-      <li><b>零投影</b>：卡片靠 1dp 细线与纸的明度分层；唯一的「立体」是新建按钮上直下方的纸签圆角。</li>
+      <li><b>零投影</b>：卡片靠 1dp 细线与纸的明度分层。</li>
     </ul>
 
     <p class="k">数字</p>

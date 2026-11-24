@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,9 +34,8 @@ import com.gammac3.ddlapp.R
 import com.gammac3.ddlapp.ui.theme.UiFont
 
 /**
- * 顶栏入口小签：26dp 高、15dp 星芒图标 +「自动识别」。
+ * 顶栏入口胶囊：26dp 高、15dp 星芒图标 +「自动识别」。
  * 实心墨色 = 悬浮球已开启；细边 = 未开启。点击始终打开设置卡，不直接切换。
- * 形制与筛选页签、印章 chip 同一套：近乎直角的小圆，不用胶囊。
  */
 @Composable
 fun CaptureEntryCapsule(onClick: () -> Unit) {
@@ -46,7 +45,7 @@ fun CaptureEntryCapsule(onClick: () -> Unit) {
     val connected by CaptureServiceState.connected.collectAsStateWithLifecycle()
     val running = enabled && connected
 
-    val shape = RoundedCornerShape(3.dp)
+    val shape = CircleShape
     val background = if (running) MaterialTheme.colorScheme.inverseSurface else Color.Transparent
     val content = if (running) MaterialTheme.colorScheme.inverseOnSurface
     else MaterialTheme.colorScheme.onSurfaceVariant

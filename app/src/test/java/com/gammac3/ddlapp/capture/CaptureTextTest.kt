@@ -33,8 +33,22 @@ class CaptureTextTest {
     }
 
     @Test
-    fun `candidate with deadline skips ocr`() {
-        assertFalse(CaptureText.needsOcr(listOf(candidate("第三章习题", 60))))
+    fun `chat timestamp does not block ocr`() {
+        val candidates = DdlParser.parse("课程群\n14:30\n第三章习题", base)
+        assertTrue(candidates.any { it.deadline != null })
+        assertTrue(CaptureText.needsOcr(candidates))
+    }
+
+    @Test
+    fun `dated candidate without task title does not block ocr`() {
+        val candidates = DdlParser.parse("截止时间：11月13日 23:59", base)
+        assertTrue(CaptureText.needsOcr(candidates))
+    }
+
+    @Test
+    fun `named task with explicit deadline skips ocr`() {
+        val candidates = DdlParser.parse("第三章习题\n截止时间：11月13日 23:59", base)
+        assertFalse(CaptureText.needsOcr(candidates))
     }
 
     @Test
@@ -49,6 +63,24 @@ class CaptureTextTest {
             listOf(candidate("有截止", 60, 0.5f)),
         )
         assertEquals("有截止", merged.first().title)
+    }
+
+    @Test
+    fun `ocr with a title ranks above unpaired node deadline`() {
+        val merged = CaptureText.merge(
+            listOf(candidate("", 60, 0.9f)),
+            listOf(candidate("第三章习题", 90, 0.65f)),
+        )
+        assertEquals("第三章习题", merged.first().title)
+    }
+
+    @Test
+    fun `ocr pairing wins when candidate scores tie`() {
+        val merged = CaptureText.merge(
+            listOf(candidate("期末论文", 60, 0.65f)),
+            listOf(candidate("第三章习题", 60, 0.65f)),
+        )
+        assertEquals("第三章习题", merged.first().title)
     }
 
     @Test
