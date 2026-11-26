@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.data.DdlEntity
 import com.gammac3.ddlapp.data.DdlRepository
+import com.gammac3.ddlapp.data.DdlCompletion
 import com.gammac3.ddlapp.model.DdlRow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +71,9 @@ class DdlListViewModel(private val repository: DdlRepository) : ViewModel() {
                 tombstones = tombs,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DdlListUiState())
+
+    val completionEvents: StateFlow<List<DdlCompletion>> = repository.observeCompletionEvents()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun setFilter(f: DdlFilter) { filter.value = f }
 

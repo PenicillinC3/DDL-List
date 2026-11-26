@@ -143,6 +143,14 @@ fun DdlListScreen(
     viewModel: DdlListViewModel,
     onEdit: (DdlRow?) -> Unit,
 ) {
+    var showStatistics by rememberSaveable { mutableStateOf(false) }
+    if (showStatistics) {
+        DdlStatisticsScreen(
+            viewModel = viewModel,
+            onBack = { showStatistics = false },
+        )
+        return
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
@@ -316,6 +324,7 @@ fun DdlListScreen(
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Masthead(
                     modifier = Modifier.widthIn(max = 760.dp).fillMaxWidth(),
+                    statistics = { StatisticsEntry(onClick = { showStatistics = true }) },
                     actions = {
                         CaptureEntryCapsule(onClick = { captureSettingsOpen = true })
                         Box {
@@ -577,6 +586,7 @@ fun DdlListScreen(
 @Composable
 private fun Masthead(
     modifier: Modifier = Modifier,
+    statistics: @Composable () -> Unit,
     actions: @Composable RowScope.() -> Unit,
 ) {
     Column(modifier.fillMaxWidth().statusBarsPadding()) {
@@ -602,12 +612,28 @@ private fun Masthead(
                     .size(5.dp)
                     .background(Clay, CircleShape),
             )
+            statistics()
             Spacer(Modifier.weight(1f))
             actions()
         }
         HorizontalDivider(
             thickness = 1.dp,
             color = MaterialTheme.colorScheme.outlineVariant,
+        )
+    }
+}
+
+/**
+ * 完成统计入口：标题右侧的日历热力格图标，落在「DDL 清单」陶土句点之后。
+ */
+@Composable
+private fun StatisticsEntry(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            painter = painterResource(R.drawable.ic_statistics),
+            contentDescription = stringResource(R.string.menu_statistics),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(25.dp),
         )
     }
 }

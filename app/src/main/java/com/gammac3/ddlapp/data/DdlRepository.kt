@@ -14,6 +14,8 @@ class DdlRepository(
 
     fun observeAll(): Flow<List<DdlEntity>> = dao.observeAll()
 
+    fun observeCompletionEvents(): Flow<List<DdlCompletion>> = dao.observeCompletionEvents()
+
     suspend fun upsert(entity: DdlEntity): Long {
         val id = if (entity.id == 0L) dao.insert(entity) else {
             // Room @Update 对已删除的行影响 0 行；撤销删除时须以原 id 重新插入。
@@ -34,8 +36,7 @@ class DdlRepository(
     }
 
     suspend fun setDone(id: Long, done: Boolean) {
-        val entity = dao.byId(id) ?: return
-        dao.update(entity.copy(isDone = done))
+        if (!dao.setCompletion(id, done, clock())) return
         if (done) scheduler.cancelAll(id) else rescheduleFor(id)
         onChanged?.invoke()
     }

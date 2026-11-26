@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDL 清单 · 统计入口图标四版</title>
+<style>
+  :root{
+    --bg:#F0EEE6; --surface:#FAF9F5; --ink:#141413; --ink-soft:#3D3D3A; --muted:#5F5C53;
+    --hairline:#DFDACB; --outline:#C9C4B4; --clay:#D97757; --clay-deep:#A34826; --rust:#9C3D24;
+    --manilla:#F5E3C7; --oat:#E3DACC;
+  }
+  html[data-theme="dark"]{
+    --bg:#171614; --surface:#1F1E1B; --ink:#F2EFE6; --ink-soft:#D8D2C2; --muted:#A9A599;
+    --hairline:#33302A; --outline:#3E3A32; --clay:#E2906F; --clay-deep:#E2906F; --rust:#EE9A85;
+    --manilla:#3D2A1F; --oat:#33302A;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:34px 24px 56px; background:var(--bg); color:var(--ink);
+    font-family:Georgia,"Songti SC","SimSun","Source Han Serif SC",serif;
+    transition:background .2s,color .2s;
+  }
+  html[data-theme="dark"] body{background:#0E0D0C}
+  .wrap{max-width:1120px;margin:0 auto}
+  header.page{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+  h1{font-weight:400;font-size:30px;line-height:1.2;letter-spacing:.8px;margin:0 0 6px}
+  h1 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--clay);margin-left:6px;vertical-align:8px}
+  .sub{margin:0;font-size:13px;line-height:1.65;color:var(--muted);max-width:640px}
+  .toggle{
+    appearance:none;cursor:pointer;font:12px/1 system-ui,sans-serif;letter-spacing:.4px;
+    padding:9px 14px;border-radius:3px;border:1px solid var(--outline);background:transparent;color:var(--muted);
+  }
+  .toggle:hover{border-color:var(--clay);color:var(--clay-deep)}
+
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+  .option{
+    background:var(--surface);border:1px solid var(--hairline);border-radius:6px;
+    padding:22px 22px 18px;cursor:pointer;transition:border-color .15s,transform .15s;
+  }
+  .option:hover{border-color:var(--outline)}
+  .option.picked{border-color:var(--clay);box-shadow:inset 0 0 0 1px var(--clay)}
+  .tag{font:11px/1 system-ui,sans-serif;letter-spacing:1.4px;color:var(--clay-deep);margin-bottom:6px}
+  .name{font-size:19px;letter-spacing:.4px;margin:0 0 3px}
+  .why{font:12.5px/1.6 system-ui,sans-serif;color:var(--muted);margin:0 0 18px;min-height:40px}
+
+  .zoom{
+    display:flex;align-items:center;justify-content:center;gap:26px;
+    padding:22px 0 20px;border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);
+  }
+  .zoom .big{width:88px;height:88px;color:var(--clay-deep)}
+  .zoom .mid{width:40px;height:40px;color:var(--clay-deep);opacity:.9}
+  .zoom .small{width:25px;height:25px;color:var(--clay-deep);opacity:.8}
+  .zoom svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  /* 真实尺寸的报头场景 */
+  .scene{margin-top:18px;background:var(--bg);border:1px solid var(--hairline);border-radius:12px;padding:8px 14px 14px}
+  .mast{display:flex;align-items:center;min-height:44px}
+  .wordmark{font-family:Georgia,"Songti SC","SimSun",serif;font-size:25px;line-height:32px;letter-spacing:.8px;white-space:nowrap}
+  .wordmark .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--clay);margin-left:5px;vertical-align:12px}
+  /* 代码里 statistics() 紧贴字标句点，随后才是 weight 撑开的空隙与右侧动作组 */
+  .mast .entry{margin-right:auto}
+  .actions{margin-left:0;display:flex;align-items:center;gap:2px}
+  .entry{
+    appearance:none;background:none;border:0;cursor:default;padding:8px;margin-right:2px;
+    width:40px;height:40px;display:grid;place-items:center;color:var(--clay-deep);
+  }
+  .entry svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .capsule{
+    font:11px/1 system-ui,sans-serif;letter-spacing:.3px;color:var(--muted);
+    border:1px solid var(--hairline);border-radius:999px;padding:6px 9px;margin-right:2px;white-space:nowrap;
+  }
+  .more{font-size:20px;line-height:1;color:var(--muted);padding:6px 9px}
+  .rule{height:1px;background:var(--hairline);margin:2px -14px 0}
+  .tabs{display:flex;gap:24px;font-size:13px;letter-spacing:.4px;color:var(--muted);padding:10px 2px 0}
+  .tabs b{font-weight:400;color:var(--ink);border-bottom:1.5px solid var(--ink);padding-bottom:9px}
+  .tabs span{padding-bottom:9px}
+  .tabs{border-bottom:1px solid var(--hairline);margin-bottom:-1px}
+
+  footer{margin-top:26px;font:12.5px/1.7 system-ui,sans-serif;color:var(--muted)}
+  footer b{font-weight:600;color:var(--ink-soft)}
+  @media (max-width:760px){ .grid{grid-template-columns:1fr} body{padding:22px 14px 40px} .zoom .big{width:70px;height:70px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <div>
+      <h1>统计入口 · 四版图标<span class="dot"></span></h1>
+      <p class="sub">位置：首页「DDL 清单」标题右侧、自动识别胶囊左边。四版都是 24×24 的线性 SVG，笔画 1.7，主色沿用深陶土 <code>#A34826</code>，暗色自动提亮。点任一版可标记选择。</p>
+    </div>
+    <button class="toggle" id="themeBtn">切换暗色</button>
+  </header>
+
+  <div class="grid">
+
+    <!-- A -->
+    <section class="option" data-choice="A">
+      <div class="tag">方案 A</div>
+      <h2 class="name">纸本日历</h2>
+      <p class="why">最直白：一页带装订环的日历，右下角一格用陶土填实表示「这天完成了」。</p>
+      <div class="zoom">
+        <div class="big"><svg viewBox="0 0 24 24"><rect x="3.25" y="5.25" width="17.5" height="15.5" rx="1.6"/><path d="M7.75 3.25v3.6M16.25 3.25v3.6M3.5 9.25h17"/><path d="M7.6 12.6h1.2M11.4 12.6h1.2M15.2 12.6h1.2M7.6 16.2h1.2M11.4 16.2h1.2"/><rect x="14.7" y="14.9" width="2.6" height="2.6" rx=".5" fill="currentColor" stroke="none"/></svg></div>
+        <div class="mid"><svg viewBox="0 0 24 24"><rect x="3.25" y="5.25" width="17.5" height="15.5" rx="1.6"/><path d="M7.75 3.25v3.6M16.25 3.25v3.6M3.5 9.25h17"/><path d="M7.6 12.6h1.2M11.4 12.6h1.2M15.2 12.6h1.2M7.6 16.2h1.2M11.4 16.2h1.2"/><rect x="14.7" y="14.9" width="2.6" height="2.6" rx=".5" fill="currentColor" stroke="none"/></svg></div>
+        <div class="small"><svg viewBox="0 0 24 24"><rect x="3.25" y="5.25" width="17.5" height="15.5" rx="1.6"/><path d="M7.75 3.25v3.6M16.25 3.25v3.6M3.5 9.25h17"/><path d="M7.6 12.6h1.2M11.4 12.6h1.2M15.2 12.6h1.2M7.6 16.2h1.2M11.4 16.2h1.2"/><rect x="14.7" y="14.9" width="2.6" height="2.6" rx=".5" fill="currentColor" stroke="none"/></svg></div>
+      </div>
+      <div class="scene">
+        <div class="mast">
+          <span class="wordmark">DDL 清单<span class="dot"></span></span>
+          <button class="entry" aria-label="完成统计"><svg viewBox="0 0 24 24"><rect x="3.25" y="5.25" width="17.5" height="15.5" rx="1.6"/><path d="M7.75 3.25v3.6M16.25 3.25v3.6M3.5 9.25h17"/><path d="M7.6 12.6h1.2M11.4 12.6h1.2M15.2 12.6h1.2M7.6 16.2h1.2M11.4 16.2h1.2"/><rect x="14.7" y="14.9" width="2.6" height="2.6" rx=".5" fill="currentColor" stroke="none"/></svg></button>
+          <div class="actions">
+            <span class="capsule">自动识别</span><span class="more">⋯</span>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <div class="tabs"><b>全部</b><span>未完成</span><span>已完成</span></div>
+      </div>
+    </section>
+
+    <!-- B -->
+    <section class="option" data-choice="B">
+      <div class="tag">方案 B</div>
+      <h2 class="name">完成趋势</h2>
+      <p class="why">柱形＋一条上扬折线，强调「一段时间完成了几件」，统计感最强。</p>
+      <div class="zoom">
+        <div class="big"><svg viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.2 17.4v-3.6M10.4 17.4V9.4M14.6 17.4v-5.6M18.8 17.4V6.6"/><path d="m5.6 10.4 4.4-3.2 4.2 2.4 5.4-4.6" stroke-width="1.3"/><circle cx="19.6" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg></div>
+        <div class="mid"><svg viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.2 17.4v-3.6M10.4 17.4V9.4M14.6 17.4v-5.6M18.8 17.4V6.6"/><path d="m5.6 10.4 4.4-3.2 4.2 2.4 5.4-4.6" stroke-width="1.3"/><circle cx="19.6" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg></div>
+        <div class="small"><svg viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.2 17.4v-3.6M10.4 17.4V9.4M14.6 17.4v-5.6M18.8 17.4V6.6"/><path d="m5.6 10.4 4.4-3.2 4.2 2.4 5.4-4.6" stroke-width="1.3"/><circle cx="19.6" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg></div>
+      </div>
+      <div class="scene">
+        <div class="mast">
+          <span class="wordmark">DDL 清单<span class="dot"></span></span>
+          <button class="entry" aria-label="完成统计"><svg viewBox="0 0 24 24"><path d="M3.5 20.5h17"/><path d="M6.2 17.4v-3.6M10.4 17.4V9.4M14.6 17.4v-5.6M18.8 17.4V6.6"/><path d="m5.6 10.4 4.4-3.2 4.2 2.4 5.4-4.6" stroke-width="1.3"/><circle cx="19.6" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg></button>
+          <div class="actions">
+            <span class="capsule">自动识别</span><span class="more">⋯</span>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <div class="tabs"><b>全部</b><span>未完成</span><span>已完成</span></div>
+      </div>
+    </section>
+
+    <!-- C -->
+    <section class="option" data-choice="C">
+      <div class="tag">方案 C</div>
+      <h2 class="name">年度热力格</h2>
+      <p class="why">日历外框里嵌 6 个热力小格，用陶土三档深浅直接预示「年度热力图」。</p>
+      <div class="zoom">
+        <div class="big"><svg viewBox="0 0 24 24"><rect x="3.25" y="4.25" width="17.5" height="16.5" rx="1.6"/><path d="M7.75 2.4v3.4M16.25 2.4v3.4M3.5 8.4h17"/><rect x="6.4" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="10.5" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="14.6" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none"/><rect x="6.4" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="10.5" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="14.6" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".4"/></svg></div>
+        <div class="mid"><svg viewBox="0 0 24 24"><rect x="3.25" y="4.25" width="17.5" height="16.5" rx="1.6"/><path d="M7.75 2.4v3.4M16.25 2.4v3.4M3.5 8.4h17"/><rect x="6.4" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="10.5" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="14.6" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none"/><rect x="6.4" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="10.5" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="14.6" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".4"/></svg></div>
+        <div class="small"><svg viewBox="0 0 24 24"><rect x="3.25" y="4.25" width="17.5" height="16.5" rx="1.6"/><path d="M7.75 2.4v3.4M16.25 2.4v3.4M3.5 8.4h17"/><rect x="6.4" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="10.5" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="14.6" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none"/><rect x="6.4" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="10.5" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="14.6" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".4"/></svg></div>
+      </div>
+      <div class="scene">
+        <div class="mast">
+          <span class="wordmark">DDL 清单<span class="dot"></span></span>
+          <button class="entry" aria-label="完成统计"><svg viewBox="0 0 24 24"><rect x="3.25" y="4.25" width="17.5" height="16.5" rx="1.6"/><path d="M7.75 2.4v3.4M16.25 2.4v3.4M3.5 8.4h17"/><rect x="6.4" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="10.5" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="14.6" y="10.6" width="3" height="3" rx=".5" fill="currentColor" stroke="none"/><rect x="6.4" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".55"/><rect x="10.5" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".22"/><rect x="14.6" y="15" width="3" height="3" rx=".5" fill="currentColor" stroke="none" opacity=".4"/></svg></button>
+          <div class="actions">
+            <span class="capsule">自动识别</span><span class="more">⋯</span>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <div class="tabs"><b>全部</b><span>未完成</span><span>已完成</span></div>
+      </div>
+    </section>
+
+    <!-- D -->
+    <section class="option" data-choice="D">
+      <div class="tag">方案 D</div>
+      <h2 class="name">统计表</h2>
+      <p class="why">坐标轴＋四根等宽柱，纯数据表格意象，最小最安静，但日历联想为零。</p>
+      <div class="zoom">
+        <div class="big"><svg viewBox="0 0 24 24"><path d="M4.2 3.6v16.8h16.3"/><path d="M7.9 17.6v-4.4M11.6 17.6V8.2M15.3 17.6v-6.6M19 17.6V5.4" stroke-width="2.6"/></svg></div>
+        <div class="mid"><svg viewBox="0 0 24 24"><path d="M4.2 3.6v16.8h16.3"/><path d="M7.9 17.6v-4.4M11.6 17.6V8.2M15.3 17.6v-6.6M19 17.6V5.4" stroke-width="2.6"/></svg></div>
+        <div class="small"><svg viewBox="0 0 24 24"><path d="M4.2 3.6v16.8h16.3"/><path d="M7.9 17.6v-4.4M11.6 17.6V8.2M15.3 17.6v-6.6M19 17.6V5.4" stroke-width="2.6"/></svg></div>
+      </div>
+      <div class="scene">
+        <div class="mast">
+          <span class="wordmark">DDL 清单<span class="dot"></span></span>
+          <button class="entry" aria-label="完成统计"><svg viewBox="0 0 24 24"><path d="M4.2 3.6v16.8h16.3"/><path d="M7.9 17.6v-4.4M11.6 17.6V8.2M15.3 17.6v-6.6M19 17.6V5.4" stroke-width="2.6"/></svg></button>
+          <div class="actions">
+            <span class="capsule">自动识别</span><span class="more">⋯</span>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <div class="tabs"><b>全部</b><span>未完成</span><span>已完成</span></div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <b>怎么看：</b>每张卡从上到下是 88px / 40px / 25px 三档尺寸——25px 就是它在报头里的真实大小，重点看这一档是否还认得出。<br>
+    <b>我的建议：</b>C。它同时守住「日历」的直觉和「完成量」的语义，也正好预告了统计页里的年度热力图。A 更稳妥，D 最安静但会被误认成普通报表。
+  </footer>
+</div>
+<script>
+  document.querySelectorAll('.option').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.option').forEach(o=>o.classList.remove('picked'));
+      el.classList.add('picked');
+    });
+  });
+  const root=document.documentElement, btn=document.getElementById('themeBtn');
+  btn.addEventListener('click',()=>{
+    const dark = root.getAttribute('data-theme')==='dark';
+    root.setAttribute('data-theme', dark?'light':'dark');
+    btn.textContent = dark?'切换暗色':'切换亮色';
+  });
+</script>
+</body>
+</html>
