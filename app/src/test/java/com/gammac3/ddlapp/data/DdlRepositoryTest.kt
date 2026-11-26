@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,7 +20,10 @@ class DdlRepositoryTest {
     private class FakeDdlDao : DdlDao {
         private val store = LinkedHashMap<Long, DdlEntity>()
         private val flow = MutableStateFlow<List<DdlEntity>>(emptyList())
+        private val completions = LinkedHashMap<Long, DdlCompletion>()
+        private val completionFlow = MutableStateFlow<List<DdlCompletion>>(emptyList())
         private fun refresh() { flow.value = store.values.toList() }
+        private fun refreshCompletions() { completionFlow.value = completions.values.toList() }
 
         override fun observeAll(): Flow<List<DdlEntity>> = flow.map { it }
         override suspend fun insert(entity: DdlEntity): Long {
@@ -34,6 +38,17 @@ class DdlRepositoryTest {
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }
         override suspend fun all(): List<DdlEntity> = store.values.toList()
+        override fun observeCompletionEvents(): Flow<List<DdlCompletion>> = completionFlow
+        override suspend fun updateDone(id: Long, done: Boolean): Int {
+            val entity = store[id] ?: return 0
+            store[id] = entity.copy(isDone = done); refresh(); return 1
+        }
+        override suspend fun saveCompletion(completion: DdlCompletion) {
+            completions[completion.ddlId] = completion; refreshCompletions()
+        }
+        override suspend fun deleteCompletion(ddlId: Long) {
+            completions.remove(ddlId); refreshCompletions()
+        }
     }
 
     private class FakeAlarmScheduler : AlarmScheduler {
@@ -85,6 +100,28 @@ class DdlRepositoryTest {
         repo.setDone(id, true)
         repo.setDone(id, false)
         assertEquals(listOf(5L, 0L), sch.scheduled.getValue(id).map { it.leadMinutes })
+    }
+
+    @Test
+    fun `删除已完成DDL后完成事件仍保留`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        val id = repo.upsert(newEntity(now + 3_600_000L))
+        repo.setDone(id, true)
+        repo.delete(id)
+
+        assertEquals(listOf(DdlCompletion(id, now)), dao.observeCompletionEvents().first())
+    }
+
+    @Test
+    fun `取消完成会移除对应统计事件`() = runBlocking {
+        val dao = FakeDdlDao(); val sch = FakeAlarmScheduler()
+        val repo = DdlRepository(dao, sch) { now }
+        val id = repo.upsert(newEntity(now + 3_600_000L))
+        repo.setDone(id, true)
+        repo.setDone(id, false)
+
+        assertTrue(dao.observeCompletionEvents().first().isEmpty())
     }
 
     @Test

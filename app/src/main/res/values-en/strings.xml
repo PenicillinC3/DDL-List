@@ -15,6 +15,13 @@
     <string name="btn_undo">Undo</string>
     <string name="menu_export_json">Export JSON</string>
     <string name="menu_import_json">Import JSON</string>
+    <string name="menu_statistics">Completion stats</string>
+    <string name="statistics_title">Completion stats</string>
+    <string name="statistics_week">This week</string>
+    <string name="statistics_month">This month</string>
+    <string name="statistics_year">This year</string>
+    <string name="statistics_heatmap_hint">Darker clay means more completed</string>
+    <string name="statistics_day_count">%1$s: %2$d completed</string>
     <string name="export_file_prefix">DDL_List_</string>
 
     <!-- ===== List group headers ===== -->

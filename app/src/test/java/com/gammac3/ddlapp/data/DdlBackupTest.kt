@@ -15,6 +15,7 @@ class DdlBackupTest {
     private class FakeDdlDao : DdlDao {
         private val store = LinkedHashMap<Long, DdlEntity>()
         private val flow = MutableStateFlow<List<DdlEntity>>(emptyList())
+        private val completionFlow = MutableStateFlow<List<DdlCompletion>>(emptyList())
         private fun refresh() { flow.value = store.values.toList() }
         override fun observeAll(): Flow<List<DdlEntity>> = flow.map { it }
         override suspend fun insert(entity: DdlEntity): Long {
@@ -29,6 +30,10 @@ class DdlBackupTest {
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }
         override suspend fun all(): List<DdlEntity> = store.values.toList()
+        override fun observeCompletionEvents(): Flow<List<DdlCompletion>> = completionFlow
+        override suspend fun updateDone(id: Long, done: Boolean): Int = 0
+        override suspend fun saveCompletion(completion: DdlCompletion) = Unit
+        override suspend fun deleteCompletion(ddlId: Long) = Unit
     }
 
     private val now = 200_000_000_000L

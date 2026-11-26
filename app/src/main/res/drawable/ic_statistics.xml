@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 完成统计入口：日历外框内嵌 6 枚热力小格，用陶土深浅预告年度热力图。
+     单色占位，运行时由 Icon(tint = colorScheme.primary) 统一染色。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M4.85,4.25h14.3a1.6,1.6 0,0 1,1.6 1.6v13.3a1.6,1.6 0,0 1,-1.6 1.6H4.85a1.6,1.6 0,0 1,-1.6 -1.6V5.85a1.6,1.6 0,0 1,1.6 -1.6z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.7"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M7.75,2.4v3.4M16.25,2.4v3.4M3.5,8.4h17"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.22"
+        android:pathData="M6.9,10.6h2a0.5,0.5 0,0 1,0.5 0.5v2a0.5,0.5 0,0 1,-0.5 0.5h-2a0.5,0.5 0,0 1,-0.5 -0.5v-2a0.5,0.5 0,0 1,0.5 -0.5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.55"
+        android:pathData="M11,10.6h2a0.5,0.5 0,0 1,0.5 0.5v2a0.5,0.5 0,0 1,-0.5 0.5h-2a0.5,0.5 0,0 1,-0.5 -0.5v-2a0.5,0.5 0,0 1,0.5 -0.5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15.1,10.6h2a0.5,0.5 0,0 1,0.5 0.5v2a0.5,0.5 0,0 1,-0.5 0.5h-2a0.5,0.5 0,0 1,-0.5 -0.5v-2a0.5,0.5 0,0 1,0.5 -0.5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.55"
+        android:pathData="M6.9,15h2a0.5,0.5 0,0 1,0.5 0.5v2a0.5,0.5 0,0 1,-0.5 0.5h-2a0.5,0.5 0,0 1,-0.5 -0.5v-2a0.5,0.5 0,0 1,0.5 -0.5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.22"
+        android:pathData="M11,15h2a0.5,0.5 0,0 1,0.5 0.5v2a0.5,0.5 0,0 1,-0.5 0.5h-2a0.5,0.5 0,0 1,-0.5 -0.5v-2a0.5,0.5 0,0 1,0.5 -0.5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.4"
+        android:pathData="M15.1,15h2a0.5,0.5 0,0 1,0.5 0.5v2a0.5,0.5 0,0 1,-0.5 0.5h-2a0.5,0.5 0,0 1,-0.5 -0.5v-2a0.5,0.5 0,0 1,0.5 -0.5z" />
+</vector>

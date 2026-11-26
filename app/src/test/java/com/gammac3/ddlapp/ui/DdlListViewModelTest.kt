@@ -3,6 +3,7 @@ package com.gammac3.ddlapp.ui
 import com.gammac3.ddlapp.data.DdlBackup
 import com.gammac3.ddlapp.data.DdlDao
 import com.gammac3.ddlapp.data.DdlEntity
+import com.gammac3.ddlapp.data.DdlCompletion
 import com.gammac3.ddlapp.data.DdlRepository
 import com.gammac3.ddlapp.logic.TriggerPoint
 import com.gammac3.ddlapp.notify.AlarmScheduler
@@ -34,6 +35,7 @@ class DdlListViewModelTest {
     private class FakeDdlDao : DdlDao {
         private val store = LinkedHashMap<Long, DdlEntity>()
         private val flow = MutableStateFlow<List<DdlEntity>>(emptyList())
+        private val completionFlow = MutableStateFlow<List<DdlCompletion>>(emptyList())
         private fun refresh() { flow.value = store.values.toList() }
         override fun observeAll(): Flow<List<DdlEntity>> = flow
         override suspend fun insert(entity: DdlEntity): Long {
@@ -48,6 +50,19 @@ class DdlListViewModelTest {
         override suspend fun byId(id: Long): DdlEntity? = store[id]
         override suspend fun allActive(): List<DdlEntity> = store.values.filter { !it.isDone }
         override suspend fun all(): List<DdlEntity> = store.values.toList()
+        override fun observeCompletionEvents(): Flow<List<DdlCompletion>> = completionFlow
+        override suspend fun updateDone(id: Long, done: Boolean): Int {
+            val entity = store[id] ?: return 0
+            store[id] = entity.copy(isDone = done)
+            refresh()
+            return 1
+        }
+        override suspend fun saveCompletion(completion: DdlCompletion) {
+            completionFlow.value = completionFlow.value.filterNot { it.ddlId == completion.ddlId } + completion
+        }
+        override suspend fun deleteCompletion(ddlId: Long) {
+            completionFlow.value = completionFlow.value.filterNot { it.ddlId == ddlId }
+        }
     }
 
     private class FakeScheduler : AlarmScheduler {
